@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-25T01:30:00.000Z",
+  "title": "Design System: agent4any",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Cursor Link Blue",
+        "canonical": "#0066cc",
+        "tonalRamp": ["#0a2a4d", "#0d3d73", "#0f5199", "#0066cc", "#3385d6", "#66a3e0", "#99c2eb", "#cce0f5"]
+      },
+      "primary-dim": {
+        "role": "primary",
+        "displayName": "Cursor Link Blue wash",
+        "canonical": "rgba(0, 102, 204, 0.1)",
+        "tonalRamp": ["rgba(0,102,204,0.35)", "rgba(0,102,204,0.28)", "rgba(0,102,204,0.22)", "rgba(0,102,204,0.16)", "rgba(0,102,204,0.12)", "rgba(0,102,204,0.1)", "rgba(0,102,204,0.06)", "rgba(0,102,204,0.03)"]
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "On Blue",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#1e1e1e", "#3c3c3c", "#717171", "#9a9a9a", "#c8c8c8", "#e8e8e8", "#f6f6f6", "#ffffff"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Working Ink",
+        "canonical": "#3c3c3c",
+        "tonalRamp": ["#1e1e1e", "#2a2a2a", "#3c3c3c", "#555555", "#717171", "#9a9a9a", "#c4c4c4", "#e8e8e8"]
+      },
+      "ink-bright": {
+        "role": "neutral",
+        "displayName": "Title Ink",
+        "canonical": "#1e1e1e",
+        "tonalRamp": ["#111111", "#1e1e1e", "#3c3c3c", "#555555", "#717171", "#9a9a9a", "#d0d0d0", "#f4f4f5"]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Quiet Ink",
+        "canonical": "#717171",
+        "tonalRamp": ["#3c3c3c", "#555555", "#717171", "#8a8a8a", "#9a9a9a", "#b8b8b8", "#d4d4d4", "#ebebeb"]
+      },
+      "muted-dim": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "#9a9a9a",
+        "tonalRamp": ["#555555", "#717171", "#8a8a8a", "#9a9a9a", "#b0b0b0", "#c8c8c8", "#e0e0e0", "#f0f0f0"]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#3c3c3c", "#9a9a9a", "#c8c8c8", "#e8e8e8", "#ebebeb", "#f4f4f5", "#f6f6f6", "#ffffff"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#3c3c3c", "#9a9a9a", "#c8c8c8", "#e8e8e8", "#ebebeb", "#f4f4f5", "#f6f6f6", "#ffffff"]
+      },
+      "surface-elevated": {
+        "role": "neutral",
+        "displayName": "Cool Wash",
+        "canonical": "#f6f6f6",
+        "tonalRamp": ["#717171", "#9a9a9a", "#c8c8c8", "#e0e0e0", "#ebebeb", "#f0f0f0", "#f6f6f6", "#fafafa"]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Hover Veil",
+        "canonical": "#f0f0f0",
+        "tonalRamp": ["#9a9a9a", "#c4c4c4", "#d8d8d8", "#e4e4e4", "#ebebeb", "#f0f0f0", "#f6f6f6", "#fafafa"]
+      },
+      "user-bg": {
+        "role": "neutral",
+        "displayName": "User Chip",
+        "canonical": "#f4f4f5",
+        "tonalRamp": ["#717171", "#9a9a9a", "#c8c8c8", "#e0e0e0", "#ebebeb", "#f0f0f0", "#f4f4f5", "#fafafa"]
+      },
+      "stage-canvas": {
+        "role": "neutral",
+        "displayName": "Stage Dust",
+        "canonical": "#fafafa",
+        "tonalRamp": ["#9a9a9a", "#c8c8c8", "#e0e0e0", "#e8e8e8", "#f0f0f0", "#f4f4f5", "#f6f6f6", "#fafafa"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e8e8e8",
+        "tonalRamp": ["#9a9a9a", "#c4c4c4", "#d4d4d4", "#e0e0e0", "#e8e8e8", "#ebebeb", "#f0f0f0", "#f6f6f6"]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#ebebeb",
+        "tonalRamp": ["#9a9a9a", "#c4c4c4", "#d8d8d8", "#e4e4e4", "#e8e8e8", "#ebebeb", "#f0f0f0", "#f6f6f6"]
+      },
+      "danger": {
+        "role": "primary",
+        "displayName": "Alarm Red",
+        "canonical": "#e51400",
+        "tonalRamp": ["#5c0800", "#8a0c00", "#b81000", "#e51400", "#ea4333", "#f07266", "#f5a199", "#fad0cc"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Login brand and the largest chrome wordmark (15px / 600)." },
+      "headline": { "displayName": "Headline", "purpose": "Empty-state titles." },
+      "title": { "displayName": "Title", "purpose": "Chat title and widget titles." },
+      "body": { "displayName": "Body", "purpose": "Messages, composer, table cells." },
+      "label": { "displayName": "Label", "purpose": "Field labels, uppercase Stage header, artifact tags." },
+      "mono": { "displayName": "Mono", "purpose": "SQL, JSON, type tags." },
+      "kpi": { "displayName": "KPI", "purpose": "The only large figure on a card." }
+    },
+    "shadows": [
+      { "name": "bubble-rest", "value": "0 1px 2px rgba(0, 0, 0, 0.04)", "purpose": "Outgoing user message at rest." },
+      { "name": "composer-rest", "value": "0 1px 3px rgba(0, 0, 0, 0.06)", "purpose": "Composer box at rest." },
+      { "name": "focus-halo", "value": "0 0 0 1px rgba(0, 102, 204, 0.1)", "purpose": "Composer and selected widget focus." }
+    ],
+    "motion": [
+      { "name": "rise", "value": "0.2s ease", "purpose": "New chat messages: 3px rise + fade." },
+      { "name": "drop-in", "value": "0.18s ease", "purpose": "Stage widgets: 98% scale to rest." }
+    ],
+    "breakpoints": [
+      { "name": "stack", "value": "960px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Commit control — login and other one-verb actions.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">로그인</button>",
+      "css": ".ds-btn-primary { background: var(--accent, #0066cc); color: #fff; border: none; border-radius: 6px; padding: 8px 12px; font-weight: 500; font-size: 12px; font-family: Pretendard, system-ui, sans-serif; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 1px solid #0066cc; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.45; cursor: default; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary chrome action.",
+      "html": "<button class=\"ds-btn-ghost\" type=\"button\">취소</button>",
+      "css": ".ds-btn-ghost { background: transparent; border: 1px solid #e8e8e8; border-radius: 6px; color: #3c3c3c; padding: 6px 10px; font-size: 12px; font-family: Pretendard, system-ui, sans-serif; cursor: pointer; } .ds-btn-ghost:hover { background: #f0f0f0; } .ds-btn-ghost:focus-visible { outline: 1px solid #0066cc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Send Control",
+      "kind": "button",
+      "refersTo": "button-send",
+      "description": "Composer commit. Blue only when there is text to send.",
+      "html": "<button class=\"ds-btn-send\" type=\"button\" aria-label=\"보내기\">↑</button>",
+      "css": ".ds-btn-send { width: 28px; height: 28px; border: none; border-radius: 6px; background: #0066cc; color: #fff; font-size: 14px; line-height: 1; display: grid; place-items: center; cursor: pointer; } .ds-btn-send:hover { filter: brightness(1.08); } .ds-btn-send:focus-visible { outline: 1px solid #0066cc; outline-offset: 2px; } .ds-btn-send:disabled { background: #f6f6f6; color: #717171; opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Login and settings fields.",
+      "html": "<label class=\"ds-field\"><span>이메일</span><input class=\"ds-input\" type=\"email\" placeholder=\"admin@example.com\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #717171; font-family: Pretendard, system-ui, sans-serif; } .ds-input { border: 1px solid #e8e8e8; background: #fff; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #1e1e1e; font-family: inherit; } .ds-input:focus { outline: 1px solid #0066cc; border-color: #0066cc; }"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "Chat input box — the working verb of the pinboard.",
+      "html": "<div class=\"ds-composer\"><textarea class=\"ds-composer-text\" rows=\"2\" placeholder=\"질문을 입력하세요\"></textarea><div class=\"ds-composer-bar\"><span class=\"ds-composer-hint\">Enter로 보내기</span><button class=\"ds-btn-send\" type=\"button\" aria-label=\"보내기\">↑</button></div></div>",
+      "css": ".ds-composer { border: 1px solid #e8e8e8; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-family: Pretendard, system-ui, sans-serif; } .ds-composer:focus-within { border-color: #0066cc; box-shadow: 0 0 0 1px rgba(0,102,204,0.1); } .ds-composer-text { width: 100%; border: none; background: transparent; resize: none; padding: 12px 14px 4px; min-height: 44px; color: #1e1e1e; font-size: 13px; line-height: 1.5; font-family: inherit; display: block; box-sizing: border-box; } .ds-composer-text:focus { outline: none; } .ds-composer-text::placeholder { color: #9a9a9a; } .ds-composer-bar { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 8px 14px; } .ds-composer-hint { font-size: 10px; color: #9a9a9a; } .ds-btn-send { width: 28px; height: 28px; border: none; border-radius: 6px; background: #0066cc; color: #fff; font-size: 14px; display: grid; place-items: center; cursor: pointer; }"
+    },
+    {
+      "name": "Login Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Centered paper card. Border only, no shadow.",
+      "html": "<section class=\"ds-card\"><h1>agent4any</h1><p>자연어로 묻고, 위젯을 Stage에 꽂습니다.</p></section>",
+      "css": ".ds-card { width: min(360px, 100%); background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 12px; font-family: Pretendard, system-ui, sans-serif; } .ds-card h1 { font-size: 15px; font-weight: 600; margin: 0; color: #1e1e1e; } .ds-card p { margin: 0; color: #717171; font-size: 12px; }"
+    },
+    {
+      "name": "Stage Widget",
+      "kind": "card",
+      "refersTo": "widget-card",
+      "description": "Pinned artifact on the Stage pinboard.",
+      "html": "<article class=\"ds-widget\"><header class=\"ds-widget-chrome\"><span class=\"ds-widget-handle\">⋮⋮</span><span class=\"ds-widget-title\">공격 유형 비중</span></header><div class=\"ds-widget-body\">차트</div></article>",
+      "css": ".ds-widget { background: #f6f6f6; border: 1px solid #e8e8e8; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; font-family: Pretendard, system-ui, sans-serif; min-height: 140px; } .ds-widget-chrome { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-bottom: 1px solid #e8e8e8; background: #fff; } .ds-widget-handle { color: #9a9a9a; font-size: 11px; } .ds-widget-title { flex: 1; font-size: 12px; font-weight: 500; color: #3c3c3c; } .ds-widget-body { flex: 1; padding: 8px; background: #fff; font-size: 12px; color: #717171; }"
+    },
+    {
+      "name": "User Bubble",
+      "kind": "custom",
+      "refersTo": "user-bubble",
+      "description": "Outgoing chat chip.",
+      "html": "<div class=\"ds-user-bubble\">지난달 공격당한 서버 순위를 보여줘.</div>",
+      "css": ".ds-user-bubble { max-width: min(85%, 640px); background: #f4f4f5; border: 1px solid #e8e8e8; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.55; color: #1e1e1e; font-family: Pretendard, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }"
+    },
+    {
+      "name": "Segmented Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Preview / JSON toggle on an artifact.",
+      "html": "<div class=\"ds-segmented\"><button type=\"button\" class=\"active\">미리보기</button><button type=\"button\">JSON</button></div>",
+      "css": ".ds-segmented { display: inline-flex; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; overflow: hidden; font-family: Pretendard, system-ui, sans-serif; } .ds-segmented button { border: none; background: transparent; padding: 3px 8px; font-size: 11px; color: #717171; cursor: pointer; } .ds-segmented button + button { border-left: 1px solid #e8e8e8; } .ds-segmented button.active { background: #f0f0f0; color: #1e1e1e; } .ds-segmented button:focus-visible { outline: 1px solid #0066cc; outline-offset: -1px; }"
+    },
+    {
+      "name": "Conversation Nav",
+      "kind": "nav",
+      "refersTo": "card",
+      "description": "240px conversation list row.",
+      "html": "<nav class=\"ds-nav\"><button type=\"button\" class=\"ds-nav-row active\">SOC · 8월 공격</button><button type=\"button\" class=\"ds-nav-row\">Global Sales · APAC</button></nav>",
+      "css": ".ds-nav { width: 240px; background: #fff; border-right: 1px solid #e8e8e8; padding: 8px; font-family: Pretendard, system-ui, sans-serif; } .ds-nav-row { display: block; width: 100%; text-align: left; border: none; background: transparent; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 500; color: #3c3c3c; cursor: pointer; } .ds-nav-row:hover { background: #f0f0f0; } .ds-nav-row.active { background: #f0f0f0; color: #1e1e1e; } .ds-nav-row:focus-visible { outline: 1px solid #0066cc; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Conversation Pinboard",
+    "overview": "A question becomes a card. A useful card gets pinned. The interface is a workbench, not a poster: chat on the left, a dotted Stage on the right, widgets you can grab. Density is high and decoration is absent. Pretendard at 13px, one link-blue accent, hairline borders, and two whites (paper and a slightly cooler wash) do all the sorting.\n\nThe mood is restrained operator UI. Gradients, glass, dashboard-hero layouts, and ornamental illustration are out. Filled blue is for the one action that commits (login, send). It does not paint backgrounds.",
+    "keyCharacteristics": [
+      "White paper + #f6f6f6 wash; almost no shadow",
+      "Cursor Link Blue used for focus, links, and the commit control only",
+      "11–13px type, 6–8px corners, 240px sidebar",
+      "Stage is a pinboard (dot grid), not a designed dashboard canvas",
+      "Motion is a 3px rise or a 2% drop-in — notice, then stop"
+    ],
+    "rules": [
+      { "name": "The Link-Only Blue Rule", "body": "Cursor Link Blue is a pointer, not a material. If a surface is larger than a button, it stays paper or wash.", "section": "colors" },
+      { "name": "The Two-White Rule", "body": "Depth is paper vs cool wash. Do not invent a third gray family for “cards.”", "section": "colors" },
+      { "name": "The No-Poster Type Rule", "body": "Do not introduce a display size above 15px for chrome. Large type is for data (KPI), not for the shell.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "New chrome gets a border, not a shadow. Shadows stay on the two existing resting objects.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep chrome at 11–15px Pretendard and put large type only on KPI values.",
+      "Do separate zones with paper / cool wash / #e8e8e8 — not with new shadow tiers.",
+      "Do use Cursor Link Blue for the commit control, focus, and links.",
+      "Do treat Stage as a pinboard the user fills. Empty dotted canvas is correct."
+    ],
+    "donts": [
+      "Don't paint large surfaces with #0066cc or gradients.",
+      "Don't introduce display type, glass, or a designed dashboard hero on Stage.",
+      "Don't copy the dark Orion viewer placeholder (#060d18) into the operator UI.",
+      "Don't add a third gray family or a second accent."
+    ]
+  }
+}

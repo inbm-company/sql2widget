@@ -1,0 +1,20 @@
+import base64
+import hashlib
+
+from cryptography.fernet import Fernet
+
+from app.config import APP_SECRET
+
+
+def _fernet() -> Fernet:
+    digest = hashlib.sha256(APP_SECRET.encode("utf-8")).digest()
+    key = base64.urlsafe_b64encode(digest)
+    return Fernet(key)
+
+
+def encrypt_secret(plain: str) -> str:
+    return _fernet().encrypt(plain.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_secret(token: str) -> str:
+    return _fernet().decrypt(token.encode("utf-8")).decode("utf-8")

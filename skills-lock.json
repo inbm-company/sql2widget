@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "eli5": {
+      "source": "nathanksou/eli5",
+      "sourceType": "github",
+      "skillPath": "eli5/SKILL.md",
+      "computedHash": "edc69268b45552912c469b7b39a649ff687342881611c33bf2161ed728496c25"
+    },
+    "eli5-compress": {
+      "source": "nathanksou/eli5",
+      "sourceType": "github",
+      "skillPath": "eli5-compress/SKILL.md",
+      "computedHash": "7a370da09b14e495d4d730ee41f95d5b6ca22a6e515822343bfeabf3b113c659"
+    }
+  }
+}

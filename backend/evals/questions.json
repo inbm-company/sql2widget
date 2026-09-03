@@ -1,0 +1,74 @@
+[
+  {
+    "id": "q1",
+    "question": "지난달 공격당한 서버들의 공격 순위, 방법, 해결 방안을 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["BarTable", "MarkdownBlock"],
+      "min_widgets": 2
+    }
+  },
+  {
+    "id": "q2",
+    "question": "공격 유형별 비중을 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["PieTable", "PieChart"],
+      "min_widgets": 1
+    }
+  },
+  {
+    "id": "q3",
+    "question": "심각도별 공격 현황을 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["KpiStat", "DataTable"],
+      "min_widgets": 2
+    }
+  },
+  {
+    "id": "q4",
+    "question": "자산별 위험도 순위를 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["RankList", "DataTable"],
+      "min_widgets": 2
+    }
+  },
+  {
+    "id": "q5",
+    "question": "최근 7일 공격 추이를 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["LineChart"],
+      "min_widgets": 1
+    }
+  },
+  {
+    "id": "q6",
+    "question": "열린 취약점 목록을 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["DataTable"],
+      "min_widgets": 1
+    }
+  },
+  {
+    "id": "q7",
+    "question": "차단된 IP 목록을 보여줘.",
+    "expect": {
+      "artifact_type": "dashboard",
+      "components_any": ["DataTable"],
+      "min_widgets": 1
+    }
+  },
+  {
+    "id": "q8",
+    "question": "SOC 보안 현황을 보고서 형태로 만들어줘.",
+    "expect": {
+      "artifact_type": "report",
+      "components_any": ["MarkdownBlock", "DataTable"],
+      "min_widgets": 3
+    }
+  }
+]
