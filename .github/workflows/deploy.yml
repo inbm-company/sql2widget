@@ -9,6 +9,11 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: read
+env:
+  VPS_HOST: crudy.cloud
+  VPS_PORT: "22"
+  VPS_USER: deploy
+  DEPLOY_PATH: /home/deploy/sql2widget
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -80,20 +85,15 @@ jobs:
       - name: Configure SSH
         env:
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          VPS_HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
         run: |
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$HOME/.ssh/github_actions_vps"
           chmod 600 "$HOME/.ssh/github_actions_vps"
-          printf '%s\n' "$VPS_HOST_KEY" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/known_hosts"
+          install -m 600 .github/ssh_known_hosts "$HOME/.ssh/known_hosts"
       - name: Log VPS in to GHCR
         env:
           GHCR_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USERNAME: ${{ github.actor }}
-          VPS_HOST: ${{ vars.VPS_HOST }}
-          VPS_PORT: ${{ vars.VPS_PORT }}
-          VPS_USER: ${{ vars.VPS_USER }}
         run: |
           printf '%s' "$GHCR_READ_TOKEN" | ssh \
             -i "$HOME/.ssh/github_actions_vps" \
@@ -102,11 +102,6 @@ jobs:
             "$VPS_USER@$VPS_HOST" \
             "docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin"
       - name: Upload deployment configuration
-        env:
-          VPS_HOST: ${{ vars.VPS_HOST }}
-          VPS_PORT: ${{ vars.VPS_PORT }}
-          VPS_USER: ${{ vars.VPS_USER }}
-          DEPLOY_PATH: /home/deploy/sql2widget
         run: |
           ssh -i "$HOME/.ssh/github_actions_vps" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$DEPLOY_PATH/scripts'"
           scp -i "$HOME/.ssh/github_actions_vps" -P "$VPS_PORT" -o BatchMode=yes compose.production.yml "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/"
@@ -114,9 +109,5 @@ jobs:
       - name: Deploy immutable images
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VPS_HOST: ${{ vars.VPS_HOST }}
-          VPS_PORT: ${{ vars.VPS_PORT }}
-          VPS_USER: ${{ vars.VPS_USER }}
-          DEPLOY_PATH: /home/deploy/sql2widget
         run: |
           ssh -i "$HOME/.ssh/github_actions_vps" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "sh '$DEPLOY_PATH/scripts/deploy.sh' 'ghcr.io/${{ github.repository }}-backend:${{ github.sha }}' 'ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}'"
