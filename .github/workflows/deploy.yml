@@ -76,21 +76,20 @@ jobs:
       contents: read
       packages: read
     env:
-      VPS_HOST: ${{ vars.VPS_HOST || 'crudy.cloud' }}
-      VPS_USER: ${{ vars.VPS_USER || 'deploy' }}
-      VPS_PORT: ${{ vars.VPS_PORT || '22' }}
-      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/deploy/sql2widget' }}
+      VPS_HOST: crudy.cloud
+      VPS_USER: deploy
+      VPS_PORT: 22
+      DEPLOY_PATH: /home/deploy/sql2widget
     steps:
       - uses: actions/checkout@v6
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
         run: |
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/deploy_key"
           chmod 600 "$HOME/.ssh/deploy_key"
-          printf '%s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          ssh-keyscan -H "$VPS_HOST" > "$HOME/.ssh/known_hosts"
       - name: Upload deployment configuration
         run: |
           ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$DEPLOY_PATH/scripts'"
