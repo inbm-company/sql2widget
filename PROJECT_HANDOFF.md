@@ -106,7 +106,7 @@ DESIGN.md
 저장소:
 
 ```powershell
-git clone https://github.com/inbm-project/sql2widget.git
+git clone https://github.com/inbm-company/sql2widget.git
 cd sql2widget
 Copy-Item .env.example .env
 docker compose up --build
