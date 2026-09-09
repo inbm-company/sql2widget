@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${CUSTOMER_POSTGRES_DB:-agent4any_customer_demo}
     ports:
-      - "5433:5432"
+      - "5436:5432"
     volumes:
       - pg_customer_data:/var/lib/postgresql/data
       - ./backend/sql/sample_customer:/docker-entrypoint-initdb.d:ro

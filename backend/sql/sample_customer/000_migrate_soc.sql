@@ -25,12 +25,11 @@ BEGIN
         criticality = COALESCE(criticality, 'medium')
     WHERE zone IS NULL OR criticality IS NULL;
 
-    UPDATE servers SET site = COALESCE(site, zone) WHERE site IS NULL;
-
     IF EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'servers' AND column_name = 'site'
     ) THEN
+      UPDATE servers SET site = COALESCE(site, zone) WHERE site IS NULL;
       ALTER TABLE servers ALTER COLUMN site DROP NOT NULL;
       ALTER TABLE servers DROP COLUMN site;
     END IF;

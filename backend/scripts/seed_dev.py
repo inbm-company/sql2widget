@@ -2,6 +2,7 @@
 """Seed demo tenant, admin user, DB connection, permissions, docs."""
 
 import secrets
+import os
 
 import psycopg
 
@@ -10,9 +11,9 @@ from app.config import DATABASE_URL, DEMO_CUSTOMER_DATABASE_URL, STAGE_GLOBAL_DA
 from app.repositories import connections as conn_repo
 
 ADMIN_EMAIL = "admin@example.com"
-ADMIN_PASSWORD = "demo-password"
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "demo-password")
 VIEWER_EMAIL = "viewer@example.com"
-VIEWER_PASSWORD = "demo-password"
+VIEWER_PASSWORD = os.getenv("VIEWER_PASSWORD", "demo-password")
 TENANT_ID = "tenant_demo"
 USER_ID = "user_admin"
 VIEWER_ID = "user_viewer"
@@ -27,6 +28,11 @@ GLOBAL_TABLES = ["regions", "products", "monthly_sales"]
 
 
 def main() -> None:
+    if os.getenv("APP_ENV") == "production" and (
+        len(ADMIN_PASSWORD) < 16 or len(VIEWER_PASSWORD) < 16
+        or len(os.getenv("APP_SECRET", "")) < 32
+    ):
+        raise RuntimeError("Production requires strong ADMIN_PASSWORD, VIEWER_PASSWORD and APP_SECRET")
     password_hash = hash_password(ADMIN_PASSWORD)
     viewer_hash = hash_password(VIEWER_PASSWORD)
     with psycopg.connect(DATABASE_URL) as conn:
@@ -51,7 +57,7 @@ def main() -> None:
                     """,
                     (USER_ID, TENANT_ID, ADMIN_EMAIL, password_hash, "admin"),
                 )
-                print(f"created user {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
+                print(f"created user {ADMIN_EMAIL}")
 
             cur.execute("SELECT id FROM users WHERE email = %s", (VIEWER_EMAIL,))
             viewer_existing = cur.fetchone()
@@ -65,7 +71,7 @@ def main() -> None:
                     """,
                     (VIEWER_ID, TENANT_ID, VIEWER_EMAIL, viewer_hash, "viewer"),
                 )
-                print(f"created user {VIEWER_EMAIL} / {VIEWER_PASSWORD}")
+                print(f"created user {VIEWER_EMAIL}")
 
             # document chunks for RAG scaffold
             cur.execute(

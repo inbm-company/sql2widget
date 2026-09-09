@@ -1,0 +1,104 @@
+name: Test and deploy sql2widget
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: sql2widget-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: frontend
+      - name: Start integration environment
+        run: |
+          cp .env.example .env
+          docker compose up -d --build db db-customer db-stage-global backend
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8010/api/health; then exit 0; fi
+            sleep 3
+          done
+          exit 1
+      - name: Backend tests
+        run: docker compose exec -T backend pytest -q
+      - name: Login and chat smoke
+        run: docker compose exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py
+      - name: Clean up
+        if: always()
+        run: docker compose down
+  build:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            file: backend/Dockerfile
+          - service: frontend
+            file: frontend/Dockerfile.production
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.service }}
+          file: ${{ matrix.file }}
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/${{ github.repository }}-${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST }}
+      VPS_USER: ${{ vars.VPS_USER }}
+      VPS_PORT: ${{ vars.VPS_PORT }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+      - name: Upload deployment configuration
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$DEPLOY_PATH/scripts'"
+          scp -i "$HOME/.ssh/deploy_key" -P "$VPS_PORT" compose.production.yml "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/"
+          scp -i "$HOME/.ssh/deploy_key" -P "$VPS_PORT" scripts/deploy.sh "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/scripts/"
+      - name: Deploy immutable images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GH_TOKEN" | ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          ssh -i "$HOME/.ssh/deploy_key" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "sh '$DEPLOY_PATH/scripts/deploy.sh' 'ghcr.io/${{ github.repository }}-backend:${{ github.sha }}' 'ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}'"

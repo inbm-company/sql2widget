@@ -1,7 +1,16 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8010";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 const TOKEN_KEY = "agent4any_access";
 const REFRESH_KEY = "agent4any_refresh";
+const AI_SETTINGS_KEY = "agent4any_ai_settings";
+
+export function getAiSettings() {
+  try { return JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || "{}"); } catch { return {}; }
+}
+
+export function setAiSettings(settings) {
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
+}
 
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -54,6 +63,12 @@ async function request(path, options = {}, { retry = true } = {}) {
   };
   const token = getAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (path === "/api/chat") {
+    const ai = getAiSettings();
+    if (ai.apiKey) headers["X-LLM-API-Key"] = ai.apiKey;
+    if (ai.provider) headers["X-LLM-Provider"] = ai.provider;
+    if (ai.model) headers["X-LLM-Model"] = ai.model;
+  }
 
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? 15000;

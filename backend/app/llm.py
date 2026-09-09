@@ -92,8 +92,24 @@ def plan_with_llm(
     user_id: str,
     conversation_id: str | None,
     repair_hint: str | None = None,
+    runtime_provider: str | None = None,
+    runtime_api_key: str | None = None,
+    runtime_model: str | None = None,
+    runtime_base_url: str | None = None,
 ) -> dict[str, Any]:
-    provider = effective_provider()
+    provider = (runtime_provider or effective_provider()).lower()
+    api_key = runtime_api_key or config.LLM_API_KEY
+    if provider in {"gemini", "google"}:
+        provider = "gemini"
+        runtime_base_url = runtime_base_url or "https://generativelanguage.googleapis.com/v1beta/openai"
+        runtime_model = runtime_model or "gemini-2.5-flash"
+    elif runtime_provider:
+        if provider not in {"openai", "openai_compatible", "compatible", "mock"}:
+            return {"provider": "mock", "plan": None, "error": "Unsupported AI provider"}
+        provider = "openai" if provider != "mock" else provider
+        runtime_base_url = "https://api.openai.com/v1"
+    if not api_key.strip():
+        provider = "mock"
     if provider == "mock":
         log_usage(
             tenant_id=tenant_id,
@@ -105,8 +121,8 @@ def plan_with_llm(
         )
         return {"provider": "mock", "plan": None}
 
-    model = config.LLM_MODEL or "gpt-4o-mini"
-    base = (config.LLM_BASE_URL or "https://api.openai.com/v1").rstrip("/")
+    model = runtime_model or config.LLM_MODEL or "gpt-4o-mini"
+    base = (runtime_base_url or config.LLM_BASE_URL or "https://api.openai.com/v1").rstrip("/")
     user_content = {
         "question": message,
         "schema": schema_text,
@@ -117,7 +133,7 @@ def plan_with_llm(
             resp = client.post(
                 f"{base}/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {config.LLM_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
                 json={
@@ -139,19 +155,19 @@ def plan_with_llm(
             tenant_id=tenant_id,
             user_id=user_id,
             conversation_id=conversation_id,
-            provider="openai",
+            provider=provider,
             model=model,
             prompt_tokens=int(usage.get("prompt_tokens") or 0),
             completion_tokens=int(usage.get("completion_tokens") or 0),
             success=True,
         )
-        return {"provider": "openai", "plan": plan, "model": model}
+        return {"provider": provider, "plan": plan, "model": model}
     except Exception as exc:  # noqa: BLE001
         log_usage(
             tenant_id=tenant_id,
             user_id=user_id,
             conversation_id=conversation_id,
-            provider="openai",
+            provider=provider,
             model=model,
             success=False,
             error=str(exc)[:500],

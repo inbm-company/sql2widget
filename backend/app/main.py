@@ -1,5 +1,5 @@
 import psycopg
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
@@ -130,7 +130,7 @@ def delete_conversation(conversation_id: str, user=Depends(get_current_user)):
 
 
 @app.post("/api/chat")
-def chat(body: ChatRequest, user=Depends(get_current_user)):
+def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     conv = conv_repo.get_conversation(body.conversation_id, user["tenant_id"], user["id"])
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -145,6 +145,11 @@ def chat(body: ChatRequest, user=Depends(get_current_user)):
         user_role=user["role"],
         conversation_id=body.conversation_id,
         connection_id=body.connection_id,
+        llm_settings={
+            "provider": request.headers.get("X-LLM-Provider", ""),
+            "api_key": request.headers.get("X-LLM-API-Key", ""),
+            "model": request.headers.get("X-LLM-Model", ""),
+        },
     )
     assistant_msg = conv_repo.add_message(
         body.conversation_id, "assistant", summary, artifact

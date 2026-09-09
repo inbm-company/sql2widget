@@ -276,14 +276,17 @@ def run_agent(
     user_role: str = "user",
     conversation_id: str | None = None,
     connection_id: str | None = None,
+    llm_settings: dict[str, str] | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
 
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
     meta["connection_id"] = used_conn
 
-    # Fast path: mock provider or no key
-    if effective_provider() == "mock":
+    # Fast path: mock provider or no key. Browser AI settings can override env config.
+    runtime_llm = llm_settings or {}
+    has_runtime_llm = bool(runtime_llm.get("api_key"))
+    if effective_provider() == "mock" and not has_runtime_llm:
         summary, artifact = run_mock_agent(
             message,
             db_url=db_url,
@@ -306,6 +309,10 @@ def run_agent(
         tenant_id=tenant_id,
         user_id=user_id,
         conversation_id=conversation_id,
+        runtime_provider=(llm_settings or {}).get("provider"),
+        runtime_api_key=(llm_settings or {}).get("api_key"),
+        runtime_model=(llm_settings or {}).get("model"),
+        runtime_base_url=(llm_settings or {}).get("base_url"),
     )
     plan = llm_result.get("plan")
     if not plan:
@@ -329,6 +336,9 @@ def run_agent(
             user_id=user_id,
             conversation_id=conversation_id,
             repair_hint=f"Previous SQL/plan failed: {first_exc}. Fix SQL and JSON.",
+            runtime_provider=runtime_llm.get("provider"),
+            runtime_api_key=runtime_llm.get("api_key"),
+            runtime_model=runtime_llm.get("model"),
         )
         plan2 = repair.get("plan")
         if not plan2:

@@ -21,7 +21,7 @@ docker compose up --build
 - Frontend: http://127.0.0.1:5173
 - API: http://127.0.0.1:8001/api/health (host `8000` 충돌 시 `8001` 사용)
 - Service DB host port: `5434` (container `5432`; host `5432`가 이미 쓰이면 충돌 방지)
-- Sample customer DB host port: `5433`
+- Sample customer DB host port: `5436` (if `5433` is already used)
 
 Login:
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { api } from "./api";
+import { api, getAiSettings, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
 
 export default function AdminPanel({ open, onClose }) {
@@ -13,6 +13,7 @@ export default function AdminPanel({ open, onClose }) {
   const [perms, setPerms] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
   const [status, setStatus] = useState("");
+  const [aiSettings, setAiForm] = useState(() => ({ provider: "gemini", model: "gemini-2.5-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", apiKey: "", ...getAiSettings() }));
   const [form, setForm] = useState({
     name: "",
     host: "db-customer",
@@ -101,6 +102,12 @@ export default function AdminPanel({ open, onClose }) {
     );
   }
 
+  function saveAiSettings(e) {
+    e.preventDefault();
+    setAiSettings(aiSettings);
+    setStatus("AI 연결 설정을 저장했습니다.");
+  }
+
   if (!open) return null;
 
   return createPortal(
@@ -112,6 +119,17 @@ export default function AdminPanel({ open, onClose }) {
             닫기
           </button>
         </header>
+
+        <section>
+          <h3>AI 연결</h3>
+          <form className="admin-form" onSubmit={saveAiSettings}>
+            <label>Provider<select value={aiSettings.provider} onChange={(e) => setAiForm((f) => ({ ...f, provider: e.target.value }))}><option value="gemini">Gemini</option><option value="openai">OpenAI 호환</option></select></label>
+            <label>Model<input value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder="gemini-2.5-flash" /></label>
+            <label>API key<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} placeholder="Gemini API key" autoComplete="off" /></label>
+            <p className="muted small">키는 이 브라우저에만 저장되고 채팅 요청에만 사용됩니다.</p>
+            <button type="submit" className="primary">AI 설정 저장</button>
+          </form>
+        </section>
 
         <section>
           <h3>DB 연결</h3>

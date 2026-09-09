@@ -1,0 +1,78 @@
+name: sql2widget
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agent4any
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: agent4any
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U agent4any -d agent4any']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  db-customer:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agent4any
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: agent4any_customer_demo
+    volumes: [pg_customer_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U agent4any -d agent4any_customer_demo']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  db-stage-global:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agent4any
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: agent4any_stage_global
+    volumes: [pg_stage_global_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U agent4any -d agent4any_stage_global']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  backend:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE}
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+      VIEWER_PASSWORD: ${VIEWER_PASSWORD:?Set VIEWER_PASSWORD}
+      DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db:5432/agent4any
+      DEMO_CUSTOMER_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-customer:5432/agent4any_customer_demo
+      STAGE_GLOBAL_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-stage-global:5432/agent4any_stage_global
+      LLM_PROVIDER: mock
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
+    depends_on:
+      db: {condition: service_healthy}
+      db-customer: {condition: service_healthy}
+      db-stage-global: {condition: service_healthy}
+    command: >-
+      sh -c "python scripts/migrate.py && python scripts/migrate_customer.py &&
+      python scripts/migrate_stage_global.py && python scripts/seed_dev.py &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}
+    restart: unless-stopped
+    ports: ["127.0.0.1:${APP_PORT:-3003}:80"]
+    depends_on:
+      backend: {condition: service_healthy}
+volumes:
+  pg_data:
+  pg_customer_data:
+  pg_stage_global_data:
