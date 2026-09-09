@@ -79,7 +79,7 @@ jobs:
       VPS_HOST: ${{ vars.VPS_HOST }}
       VPS_USER: ${{ vars.VPS_USER }}
       VPS_PORT: ${{ vars.VPS_PORT }}
-      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/home/deploy/sql2widget' }}
     steps:
       - uses: actions/checkout@v6
       - name: Configure SSH
