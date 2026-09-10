@@ -14,6 +14,7 @@ from app.repositories import connections as conn_repo
 
 
 DEMO_SCHEMA = """
+PostgreSQL schema for the fallback SOC demo connection.
 tables:
 - servers(id, hostname, zone, criticality, owner, created_at)
 - attack_events(id, server_id, attack_method, severity, occurred_at)
@@ -21,6 +22,10 @@ tables:
 - vulnerability_findings(id, cve, asset_id, score, status)
 - blocked_ips(id, ip, reason, blocked_at, hit_count)
 """
+
+
+class AgentRunError(RuntimeError):
+    """A configured live model failed; do not hide it behind demo output."""
 
 
 def _wid() -> str:
@@ -186,6 +191,20 @@ def _resolve_db_url(
     return DEMO_CUSTOMER_DATABASE_URL, None, soc_default
 
 
+def _schema_text_for_connection(
+    tenant_id: str,
+    connection_id: str | None,
+    allowed_tables: set[str] | None,
+) -> str:
+    """Build the LLM schema input from the selected connection's allowlist."""
+    if not connection_id:
+        return DEMO_SCHEMA
+    row = conn_repo.get_connection(connection_id, tenant_id)
+    if not row:
+        return DEMO_SCHEMA
+    return conn_repo.schema_context_for_connection(row, allowed_tables or set())
+
+
 def _materialize_plan(
     plan: dict[str, Any],
     *,
@@ -303,9 +322,11 @@ def run_agent(
         meta["provider"] = "mock"
         return summary, artifact, meta
 
+    schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
+
     llm_result = plan_with_llm(
         message,
-        schema_text=DEMO_SCHEMA,
+        schema_text=schema_text,
         tenant_id=tenant_id,
         user_id=user_id,
         conversation_id=conversation_id,
@@ -316,6 +337,11 @@ def run_agent(
     )
     plan = llm_result.get("plan")
     if not plan:
+        if has_runtime_llm:
+            raise AgentRunError(
+                f"{llm_result.get('provider') or 'LLM'} request failed: "
+                f"{llm_result.get('error') or 'No plan returned'}"
+            )
         summary, artifact = run_mock_agent(message)
         meta["provider"] = "mock_fallback"
         meta["error"] = llm_result.get("error")
@@ -331,7 +357,7 @@ def run_agent(
     except Exception as first_exc:  # noqa: BLE001
         repair = plan_with_llm(
             message,
-            schema_text=DEMO_SCHEMA,
+            schema_text=schema_text,
             tenant_id=tenant_id,
             user_id=user_id,
             conversation_id=conversation_id,

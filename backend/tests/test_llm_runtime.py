@@ -30,13 +30,14 @@ def test_gemini_uses_its_endpoint_and_reports_provider(monkeypatch):
     assert result["provider"] == "gemini"
     assert calls[0][0] == "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
     assert calls[0][1]["headers"]["Authorization"] == "Bearer test-key"
-    assert calls[0][1]["json"]["model"] == "gemini-2.5-flash"
+    assert calls[0][1]["json"]["model"] == "gemini-3.6-flash"
 
 
 def test_repair_keeps_runtime_credentials(monkeypatch):
     calls = []
     monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *args, **kwargs: ("db", "test", set()))
     monkeypatch.setattr(agent_service, "effective_provider", lambda: "mock")
+    monkeypatch.setattr(agent_service, "_schema_text_for_connection", lambda *args, **kwargs: "schema")
 
     def plan(*args, **kwargs):
         calls.append(kwargs)
@@ -57,3 +58,25 @@ def test_repair_keeps_runtime_credentials(monkeypatch):
         assert call["runtime_api_key"] == "test-key"
         assert call["runtime_provider"] == "gemini"
         assert call["runtime_model"] == "test-model"
+
+
+def test_live_model_error_is_not_hidden_by_mock(monkeypatch):
+    monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *args, **kwargs: ("db", "test", set()))
+    monkeypatch.setattr(agent_service, "effective_provider", lambda: "mock")
+    monkeypatch.setattr(agent_service, "_schema_text_for_connection", lambda *args, **kwargs: "schema")
+    monkeypatch.setattr(
+        agent_service,
+        "plan_with_llm",
+        lambda *args, **kwargs: {"provider": "gemini", "plan": None, "error": "HTTP 404: model unavailable"},
+    )
+
+    import pytest
+
+    with pytest.raises(agent_service.AgentRunError, match="HTTP 404"):
+        agent_service.run_agent(
+            "test",
+            tenant_id="tenant",
+            user_id="user",
+            connection_id="test",
+            llm_settings={"provider": "gemini", "api_key": "test-key"},
+        )

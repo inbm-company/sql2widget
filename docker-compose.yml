@@ -49,6 +49,23 @@ services:
       timeout: 5s
       retries: 20
 
+  db-northwind:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agent4any}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
+      POSTGRES_DB: ${NORTHWIND_POSTGRES_DB:-agent4any_northwind}
+    ports:
+      - "5437:5432"
+    volumes:
+      - pg_northwind_data:/var/lib/postgresql/data
+      - ./backend/sql/northwind:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent4any} -d ${NORTHWIND_POSTGRES_DB:-agent4any_northwind}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
   backend:
     build:
       context: ./backend
@@ -59,6 +76,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db:5432/${POSTGRES_DB:-agent4any}
       DEMO_CUSTOMER_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-customer:5432/${CUSTOMER_POSTGRES_DB:-agent4any_customer_demo}
       STAGE_GLOBAL_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-stage-global:5432/${STAGE_GLOBAL_POSTGRES_DB:-agent4any_stage_global}
+      NORTHWIND_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-northwind:5432/${NORTHWIND_POSTGRES_DB:-agent4any_northwind}
       APP_SECRET: ${APP_SECRET:-dev-secret-replace-with-at-least-32-chars!!}
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
@@ -74,10 +92,13 @@ services:
         condition: service_healthy
       db-stage-global:
         condition: service_healthy
+      db-northwind:
+        condition: service_healthy
     command: >
       sh -c "python scripts/migrate.py &&
              python scripts/migrate_customer.py &&
              python scripts/migrate_stage_global.py &&
+             python scripts/migrate_northwind.py &&
              python scripts/seed_dev.py &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
@@ -100,4 +121,5 @@ volumes:
   pg_data:
   pg_customer_data:
   pg_stage_global_data:
+  pg_northwind_data:
   frontend_node_modules:

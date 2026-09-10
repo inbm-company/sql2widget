@@ -22,6 +22,10 @@ STAGE_GLOBAL_DATABASE_URL = env(
     "STAGE_GLOBAL_DATABASE_URL",
     "postgresql://agent4any:agent4any@127.0.0.1:5435/agent4any_stage_global",
 )
+NORTHWIND_DATABASE_URL = env(
+    "NORTHWIND_DATABASE_URL",
+    "postgresql://agent4any:agent4any@127.0.0.1:5437/agent4any_northwind",
+)
 LLM_PROVIDER = env("LLM_PROVIDER", "mock")
 LLM_API_KEY = env("LLM_API_KEY", "")
 LLM_BASE_URL = env("LLM_BASE_URL", "https://api.openai.com/v1")

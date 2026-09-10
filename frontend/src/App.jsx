@@ -7,7 +7,11 @@ import {
   getAccessToken,
   setTokens,
 } from "./api";
-import { SOC_SAMPLE_QUESTIONS, GLOBAL_SAMPLE_QUESTIONS } from "./constants.js";
+import {
+  SOC_SAMPLE_QUESTIONS,
+  GLOBAL_SAMPLE_QUESTIONS,
+  NORTHWIND_SAMPLE_QUESTIONS,
+} from "./constants.js";
 import AdminPanel from "./AdminPanel.jsx";
 import StageCanvas, { addWidgetToStage } from "./StageCanvas.jsx";
 import ViewerStagePage from "./ViewerStagePage.jsx";
@@ -408,8 +412,12 @@ function Workspace({ user, onLogout }) {
   const activeTitle =
     conversations?.find((c) => c.id === activeId)?.title || "Chat";
 
-  const isGlobalDb = connectionId === "dbconn_global";
-  const sampleQuestions = isGlobalDb ? GLOBAL_SAMPLE_QUESTIONS : SOC_SAMPLE_QUESTIONS;
+  const sampleQuestions =
+    connectionId === "dbconn_global"
+      ? GLOBAL_SAMPLE_QUESTIONS
+      : connectionId === "dbconn_northwind"
+        ? NORTHWIND_SAMPLE_QUESTIONS
+        : SOC_SAMPLE_QUESTIONS;
 
   return (
     <div className={`workspace ${stageOpen ? "" : "stage-collapsed"}`}>

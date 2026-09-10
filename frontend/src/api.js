@@ -3,9 +3,21 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 const TOKEN_KEY = "agent4any_access";
 const REFRESH_KEY = "agent4any_refresh";
 const AI_SETTINGS_KEY = "agent4any_ai_settings";
+const RETIRED_GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
 
 export function getAiSettings() {
-  try { return JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || "{}"); } catch { return {}; }
+  try {
+    const settings = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || "{}");
+    if (settings.provider === "gemini" && settings.model === RETIRED_GEMINI_MODEL) {
+      const migrated = { ...settings, model: DEFAULT_GEMINI_MODEL };
+      localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(migrated));
+      return migrated;
+    }
+    return settings;
+  } catch {
+    return {};
+  }
 }
 
 export function setAiSettings(settings) {
@@ -139,6 +151,8 @@ export const api = {
   chat: (conversationId, message, connectionId) =>
     request("/api/chat", {
       method: "POST",
+      // Gemini can take up to 60s, and the backend may run one repair attempt.
+      timeoutMs: 150000,
       body: JSON.stringify({
         conversation_id: conversationId,
         message,

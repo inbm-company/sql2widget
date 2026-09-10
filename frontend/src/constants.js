@@ -15,3 +15,10 @@ export const GLOBAL_SAMPLE_QUESTIONS = [
   "최근 12개월 매출 추이를 보여줘.",
   "글로벌 매출 현황을 보고서 형태로 만들어줘.",
 ];
+
+export const NORTHWIND_SAMPLE_QUESTIONS = [
+  "고객별 총 주문 금액 순위를 보여줘.",
+  "카테고리별 매출 비중을 보여줘.",
+  "월별 주문 매출 추이를 보여줘.",
+  "재고가 적은 제품 목록을 보여줘.",
+];

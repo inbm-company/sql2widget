@@ -22,6 +22,7 @@ docker compose up --build
 - API: http://127.0.0.1:8001/api/health (host `8000` 충돌 시 `8001` 사용)
 - Service DB host port: `5434` (container `5432`; host `5432`가 이미 쓰이면 충돌 방지)
 - Sample customer DB host port: `5436` (if `5433` is already used)
+- Northwind-style sample DB host port: `5437`
 
 Login:
 
@@ -41,6 +42,12 @@ demo-password
 7. 차단된 IP 목록을 보여줘.
 8. SOC 보안 현황을 보고서 형태로 만들어줘.
 
+Northwind-style sample questions (Gemini key required for generic schema reasoning):
+
+1. 고객별 총 주문 금액 순위를 보여줘.
+2. 카테고리별 매출 비중을 보여줘.
+3. 월별 주문 매출 추이를 보여줘.
+
 ## State rules
 
 1. Server fetch → `useSWR`
@@ -58,7 +65,9 @@ LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
 ```
 
-키 없거나 오류 시 Mock으로 자동 폴백. 사용량은 `llm_usage` 테이블에 기록.
+키가 없으면 Mock을 사용한다. 키가 설정된 실모델 요청의 오류는 Mock으로 숨기지 않고 화면에 표시한다. 사용량은 `llm_usage` 테이블에 기록.
+
+브라우저 Admin의 Gemini 기본 모델은 `gemini-3.6-flash`다. 이전 `gemini-2.5-flash` 설정은 신규 Gemini API 사용자에게 제공되지 않아 앱이 자동으로 `3.6`으로 마이그레이션한다.
 
 ## Smoke
 

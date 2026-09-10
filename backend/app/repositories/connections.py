@@ -1,6 +1,9 @@
 import secrets
 from urllib.parse import urlparse
 
+import psycopg
+from psycopg.rows import dict_row
+
 from app.crypto import decrypt_secret, encrypt_secret
 from app.db import fetch_all, fetch_one, get_conn
 
@@ -169,3 +172,127 @@ def allowed_tables_for_role(tenant_id: str, connection_id: str, role: str) -> se
         (tenant_id, connection_id, role),
     )
     return {r["table_name"] for r in rows}
+
+
+def schema_metadata(row: dict, allowed_tables: set[str]) -> dict:
+    """Read only permitted PostgreSQL schema metadata; never inspect row values."""
+    names = sorted({name.lower() for name in allowed_tables})
+    if not names:
+        return {"tables": [], "foreign_keys": []}
+
+    url = connection_url(row)
+    with psycopg.connect(url, row_factory=dict_row) as conn:
+        conn.read_only = True
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT table_schema, table_name, column_name, data_type, udt_name,
+                       is_nullable, ordinal_position
+                FROM information_schema.columns
+                WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+                  AND lower(table_name) = ANY(%s)
+                ORDER BY table_schema, table_name, ordinal_position
+                """,
+                (names,),
+            )
+            columns = cur.fetchall()
+            cur.execute(
+                """
+                SELECT kcu.table_schema, kcu.table_name, kcu.column_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON tc.constraint_name = kcu.constraint_name
+                 AND tc.table_schema = kcu.table_schema
+                 AND tc.table_name = kcu.table_name
+                WHERE tc.constraint_type = 'PRIMARY KEY'
+                  AND tc.table_schema NOT IN ('pg_catalog', 'information_schema')
+                  AND lower(tc.table_name) = ANY(%s)
+                ORDER BY kcu.table_schema, kcu.table_name, kcu.ordinal_position
+                """,
+                (names,),
+            )
+            primary_keys = cur.fetchall()
+            cur.execute(
+                """
+                SELECT tc.table_schema, tc.table_name, kcu.column_name,
+                       ccu.table_schema AS foreign_table_schema,
+                       ccu.table_name AS foreign_table_name,
+                       ccu.column_name AS foreign_column_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON tc.constraint_name = kcu.constraint_name
+                 AND tc.table_schema = kcu.table_schema
+                 AND tc.table_name = kcu.table_name
+                JOIN information_schema.constraint_column_usage ccu
+                  ON ccu.constraint_name = tc.constraint_name
+                 AND ccu.constraint_schema = tc.table_schema
+                WHERE tc.constraint_type = 'FOREIGN KEY'
+                  AND tc.table_schema NOT IN ('pg_catalog', 'information_schema')
+                  AND lower(tc.table_name) = ANY(%s)
+                ORDER BY tc.table_schema, tc.table_name, kcu.ordinal_position
+                """,
+                (names,),
+            )
+            foreign_keys = cur.fetchall()
+
+    primary_key_columns = {
+        (item["table_schema"], item["table_name"], item["column_name"])
+        for item in primary_keys
+    }
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for column in columns:
+        key = (column["table_schema"], column["table_name"])
+        grouped.setdefault(key, []).append(
+            {
+                "name": column["column_name"],
+                "type": column["data_type"],
+                "udt_name": column["udt_name"],
+                "nullable": column["is_nullable"] == "YES",
+                "primary_key": (*key, column["column_name"]) in primary_key_columns,
+            }
+        )
+    return {
+        "tables": [
+            {"schema": schema, "name": name, "columns": table_columns}
+            for (schema, name), table_columns in grouped.items()
+        ],
+        "foreign_keys": [dict(item) for item in foreign_keys],
+    }
+
+
+def format_schema_context(metadata: dict) -> str:
+    """Compact, deterministic schema-only text safe to send to an LLM."""
+    tables = metadata.get("tables") or []
+    if not tables:
+        return "No permitted tables are available for this connection."
+
+    lines = [
+        "PostgreSQL schema for the selected connection.",
+        "Use only these permitted tables and columns. Do not query other tables.",
+        "",
+        "Tables:",
+    ]
+    for table in tables:
+        lines.append(f"- {table['schema']}.{table['name']}")
+        for column in table["columns"]:
+            suffix = []
+            if column["primary_key"]:
+                suffix.append("PK")
+            if not column["nullable"]:
+                suffix.append("NOT NULL")
+            qualifier = f" [{', '.join(suffix)}]" if suffix else ""
+            lines.append(f"  - {column['name']}: {column['type']}{qualifier}")
+
+    foreign_keys = metadata.get("foreign_keys") or []
+    if foreign_keys:
+        lines.extend(["", "Foreign keys:"])
+        for fk in foreign_keys:
+            lines.append(
+                "- {table_schema}.{table_name}.{column_name} -> "
+                "{foreign_table_schema}.{foreign_table_name}.{foreign_column_name}".format(**fk)
+            )
+    return "\n".join(lines)
+
+
+def schema_context_for_connection(row: dict, allowed_tables: set[str]) -> str:
+    return format_schema_context(schema_metadata(row, allowed_tables))

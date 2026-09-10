@@ -32,11 +32,14 @@ Composite props:
 - BarTable: {categories:[], series:[{name,data}], columns:[], rows:[], value?, delta?, label?}
 Rules:
 - Customer DB is PostgreSQL. SQL must be a single read-only SELECT/WITH.
-- Allowed tables only: servers, attack_events, incidents, vulnerability_findings, blocked_ips.
+- The user prompt contains the only allowed tables, columns, and relationships.
+- Never use a table or column not present in that supplied schema.
 - Prefer aggregations suitable for charts.
 - Do not invent document remediation without sources.
 - Use only allowed component names.
 """
+
+GEMINI_DEFAULT_MODEL = "gemini-3.6-flash"
 
 
 def log_usage(
@@ -102,7 +105,7 @@ def plan_with_llm(
     if provider in {"gemini", "google"}:
         provider = "gemini"
         runtime_base_url = runtime_base_url or "https://generativelanguage.googleapis.com/v1beta/openai"
-        runtime_model = runtime_model or "gemini-2.5-flash"
+        runtime_model = runtime_model or GEMINI_DEFAULT_MODEL
     elif runtime_provider:
         if provider not in {"openai", "openai_compatible", "compatible", "mock"}:
             return {"provider": "mock", "plan": None, "error": "Unsupported AI provider"}
@@ -162,6 +165,19 @@ def plan_with_llm(
             success=True,
         )
         return {"provider": provider, "plan": plan, "model": model}
+    except httpx.HTTPStatusError as exc:
+        detail = exc.response.text[:500].replace("\n", " ")
+        error = f"HTTP {exc.response.status_code}: {detail}"
+        log_usage(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            provider=provider,
+            model=model,
+            success=False,
+            error=error,
+        )
+        return {"provider": provider, "plan": None, "error": error}
     except Exception as exc:  # noqa: BLE001
         log_usage(
             tenant_id=tenant_id,

@@ -7,7 +7,12 @@ import os
 import psycopg
 
 from app.auth import hash_password
-from app.config import DATABASE_URL, DEMO_CUSTOMER_DATABASE_URL, STAGE_GLOBAL_DATABASE_URL
+from app.config import (
+    DATABASE_URL,
+    DEMO_CUSTOMER_DATABASE_URL,
+    NORTHWIND_DATABASE_URL,
+    STAGE_GLOBAL_DATABASE_URL,
+)
 from app.repositories import connections as conn_repo
 
 ADMIN_EMAIL = "admin@example.com"
@@ -25,6 +30,14 @@ DEMO_TABLES = [
     "blocked_ips",
 ]
 GLOBAL_TABLES = ["regions", "products", "monthly_sales"]
+NORTHWIND_TABLES = [
+    "categories",
+    "customers",
+    "employees",
+    "products",
+    "orders",
+    "order_details",
+]
 
 
 def main() -> None:
@@ -155,6 +168,29 @@ def main() -> None:
         print("seeded dbconn_global + table permissions")
     except Exception as exc:  # noqa: BLE001
         print(f"global connection seed skipped/failed: {exc}")
+
+    try:
+        conn_repo.upsert_from_url(
+            tenant_id=TENANT_ID,
+            name="Northwind Sample DB",
+            url=NORTHWIND_DATABASE_URL,
+            created_by=USER_ID,
+            connection_id="dbconn_northwind",
+        )
+        northwind_rows = [
+            {"schema_name": "public", "table_name": table}
+            for table in NORTHWIND_TABLES
+        ]
+        for role in ("admin", "user", "viewer"):
+            conn_repo.replace_table_permissions(
+                tenant_id=TENANT_ID,
+                connection_id="dbconn_northwind",
+                role=role,
+                tables=northwind_rows,
+            )
+        print("seeded dbconn_northwind + table permissions")
+    except Exception as exc:  # noqa: BLE001
+        print(f"northwind connection seed skipped/failed: {exc}")
 
     print("seed done")
 

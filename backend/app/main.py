@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
 from app import config
-from app.agent_service import run_agent
+from app.agent_service import AgentRunError, run_agent
 from app.auth import (
     create_access_token,
     get_current_user,
@@ -138,19 +138,22 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     user_msg = conv_repo.add_message(body.conversation_id, "user", body.message, None)
     conv_repo.touch_title_from_message(body.conversation_id, body.message)
 
-    summary, artifact, meta = run_agent(
-        body.message,
-        tenant_id=user["tenant_id"],
-        user_id=user["id"],
-        user_role=user["role"],
-        conversation_id=body.conversation_id,
-        connection_id=body.connection_id,
-        llm_settings={
-            "provider": request.headers.get("X-LLM-Provider", ""),
-            "api_key": request.headers.get("X-LLM-API-Key", ""),
-            "model": request.headers.get("X-LLM-Model", ""),
-        },
-    )
+    try:
+        summary, artifact, meta = run_agent(
+            body.message,
+            tenant_id=user["tenant_id"],
+            user_id=user["id"],
+            user_role=user["role"],
+            conversation_id=body.conversation_id,
+            connection_id=body.connection_id,
+            llm_settings={
+                "provider": request.headers.get("X-LLM-Provider", ""),
+                "api_key": request.headers.get("X-LLM-API-Key", ""),
+                "model": request.headers.get("X-LLM-Model", ""),
+            },
+        )
+    except AgentRunError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     assistant_msg = conv_repo.add_message(
         body.conversation_id, "assistant", summary, artifact
     )

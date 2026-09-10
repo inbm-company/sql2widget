@@ -40,6 +40,7 @@ def main() -> int:
     print("connections:", names)
     assert "dbconn_demo" in names
     assert "dbconn_global" in names
+    assert "dbconn_northwind" in names
 
     cases = [
         ("dbconn_global", "지역별 매출 순위를 보여줘."),
@@ -50,6 +51,7 @@ def main() -> int:
         ("dbconn_demo", "심각도별 공격 현황을 보여줘."),
         ("dbconn_demo", "열린 취약점 목록을 보여줘."),
         ("dbconn_demo", "지난달 공격당한 서버들의 공격 순위, 방법, 해결 방안을 보여줘."),
+        ("dbconn_northwind", "고객별 총 주문 금액 순위를 보여줘."),
     ]
 
     failures: list[str] = []
