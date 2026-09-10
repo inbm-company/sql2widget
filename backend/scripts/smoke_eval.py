@@ -26,11 +26,13 @@ def main() -> int:
     r.raise_for_status()
     tokens = r.json()
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    projects = client.get("/api/projects", headers=headers).json()
+    project_id = projects[0]["id"]
 
     results = []
     for q in QUESTIONS:
         conv = client.post(
-            "/api/conversations", headers=headers, json={"title": q[:30]}
+            "/api/conversations", headers=headers, json={"project_id": project_id, "title": q[:30]}
         )
         conv.raise_for_status()
         conv_id = conv.json()["id"]

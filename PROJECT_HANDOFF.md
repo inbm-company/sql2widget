@@ -17,7 +17,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 
 ## 1. 제품
 
-비기술 사용자가 자연어로 고객 DB를 조회하고, 허용된 위젯으로 받은 뒤, **대화마다 1개**인 Stage에 핀한다.
+비기술 사용자가 자연어로 고객 DB를 조회하고, 허용된 위젯으로 받은 뒤, **프로젝트마다 1개**인 Stage에 핀한다. 프로젝트는 여러 대화를 가진다.
 
 성공은 위젯이 채팅에 나오고 몇 개를 Stage에 꽂는 것이다. 완성된 공유 대시보드 템플릿을 자동 생성하는 것은 목표가 아니다.
 
@@ -44,7 +44,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 - 프론트: Vite, React, JavaScript.
 - 상태: fetch → `useSWR`, 전역 슬롯 → `useStore`, Provider/`SWRConfig` 금지, 입력·드래그 → `useState`.
 - 로컬 기동 기준: Docker Compose.
-- 스테이지는 대화마다 1개. 레이아웃은 `react-grid-layout`.
+- 스테이지는 프로젝트마다 1개. 레이아웃은 `react-grid-layout`.
 - 고객 DB는 읽기 전용 `SELECT`만.
 - 위젯 이름은 서버 화이트리스트. 모르는 키/차트 타입은 버린다.
 - LLM 기본은 Mock. 실모델은 OpenAI-compatible. 키 없거나 실패하면 Mock 폴백.
@@ -60,7 +60,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
-- Viewer: 채팅·DnD 없음. `/c/:id/view` 읽기 전용.
+- Viewer: 채팅·DnD 없음. `/p/:id/view` 읽기 전용.
 - SOC + Global Sales 샘플 DB (호스트 포트 5433, 5435). 서비스 DB 5434.
 - `llm_usage` 기록 골격.
 
@@ -141,12 +141,14 @@ docker compose exec backend python scripts/smoke_stage.py
 POST /api/auth/login
 POST /api/auth/refresh
 GET  /api/auth/me
-GET/POST /api/conversations
+GET/POST /api/projects
+GET  /api/conversations?project_id={id}
+POST /api/conversations
 GET/PATCH/DELETE /api/conversations/{id}
 POST /api/chat
-GET/PUT /api/conversations/{id}/stage
-POST /api/conversations/{id}/stage/widgets
-PATCH/DELETE /api/conversations/{id}/stage/widgets/{widget_id}
+GET/PUT /api/projects/{id}/stage
+POST /api/projects/{id}/stage/widgets
+PATCH/DELETE /api/projects/{id}/stage/widgets/{widget_id}
 GET/POST /api/database-connections
 POST /api/database-connections/{id}/test
 GET  /api/database-connections/{id}/tables

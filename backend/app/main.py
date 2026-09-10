@@ -15,6 +15,7 @@ from app.auth import (
 from app.contracts import (
     ChatRequest,
     CreateConversationRequest,
+    CreateProjectRequest,
     UpdateConversationRequest,
     DatabaseConnectionIn,
     LoginRequest,
@@ -29,6 +30,7 @@ from app.llm import effective_provider
 from app.query import execute_readonly
 from app.repositories import connections as conn_repo
 from app.repositories import conversations as conv_repo
+from app.repositories import projects as project_repo
 from app.repositories import stages as stage_repo
 
 app = FastAPI(title="agent4any", version="0.1.0")
@@ -89,14 +91,31 @@ def me(user=Depends(get_current_user)):
     return user
 
 
+@app.get("/api/projects")
+def list_projects(user=Depends(get_current_user)):
+    return project_repo.list_projects(user["tenant_id"], user["id"])
+
+
+@app.post("/api/projects")
+def create_project(body: CreateProjectRequest, user=Depends(get_current_user)):
+    return project_repo.create_project(user["tenant_id"], user["id"], body.title)
+
+
 @app.get("/api/conversations")
-def list_conversations(user=Depends(get_current_user)):
-    return conv_repo.list_conversations(user["tenant_id"], user["id"])
+def list_conversations(project_id: str, user=Depends(get_current_user)):
+    if not project_repo.get_project(project_id, user["tenant_id"], user["id"]):
+        raise HTTPException(status_code=404, detail="Project not found")
+    return conv_repo.list_conversations(user["tenant_id"], user["id"], project_id)
 
 
 @app.post("/api/conversations")
 def create_conversation(body: CreateConversationRequest, user=Depends(get_current_user)):
-    return conv_repo.create_conversation(user["tenant_id"], user["id"], body.title)
+    conv = conv_repo.create_conversation(
+        user["tenant_id"], user["id"], body.project_id, body.title
+    )
+    if not conv:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return conv
 
 
 @app.get("/api/conversations/{conversation_id}")
@@ -265,25 +284,25 @@ def preview_sql(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@app.get("/api/conversations/{conversation_id}/stage")
-def get_stage(conversation_id: str, user=Depends(get_current_user)):
+@app.get("/api/projects/{project_id}/stage")
+def get_stage(project_id: str, user=Depends(get_current_user)):
     stage = stage_repo.get_or_create_stage(
-        conversation_id, user["tenant_id"], user["id"]
+        project_id, user["tenant_id"], user["id"]
     )
     if not stage:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     return stage
 
 
-@app.put("/api/conversations/{conversation_id}/stage")
+@app.put("/api/projects/{project_id}/stage")
 def put_stage(
-    conversation_id: str, body: StagePutRequest, user=Depends(get_current_user)
+    project_id: str, body: StagePutRequest, user=Depends(get_current_user)
 ):
     stage = stage_repo.get_or_create_stage(
-        conversation_id, user["tenant_id"], user["id"]
+        project_id, user["tenant_id"], user["id"]
     )
     if not stage:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     try:
         widgets = stage_repo.replace_stage_widgets(
             stage["id"],
@@ -294,15 +313,15 @@ def put_stage(
     return {**stage, "widgets": widgets}
 
 
-@app.post("/api/conversations/{conversation_id}/stage/widgets")
+@app.post("/api/projects/{project_id}/stage/widgets")
 def add_stage_widget(
-    conversation_id: str, body: StageWidgetIn, user=Depends(get_current_user)
+    project_id: str, body: StageWidgetIn, user=Depends(get_current_user)
 ):
     stage = stage_repo.get_or_create_stage(
-        conversation_id, user["tenant_id"], user["id"]
+        project_id, user["tenant_id"], user["id"]
     )
     if not stage:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     try:
         widget = stage_repo.add_widget(stage["id"], body.model_dump())
     except ValueError as exc:
@@ -310,18 +329,18 @@ def add_stage_widget(
     return widget
 
 
-@app.patch("/api/conversations/{conversation_id}/stage/widgets/{widget_id}")
+@app.patch("/api/projects/{project_id}/stage/widgets/{widget_id}")
 def patch_stage_widget(
-    conversation_id: str,
+    project_id: str,
     widget_id: str,
     body: StageWidgetPatch,
     user=Depends(get_current_user),
 ):
     stage = stage_repo.get_or_create_stage(
-        conversation_id, user["tenant_id"], user["id"]
+        project_id, user["tenant_id"], user["id"]
     )
     if not stage:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     widget = stage_repo.patch_widget(
         stage["id"], widget_id, body.model_dump(exclude_unset=True)
     )
@@ -330,15 +349,15 @@ def patch_stage_widget(
     return widget
 
 
-@app.delete("/api/conversations/{conversation_id}/stage/widgets/{widget_id}")
+@app.delete("/api/projects/{project_id}/stage/widgets/{widget_id}")
 def delete_stage_widget(
-    conversation_id: str, widget_id: str, user=Depends(get_current_user)
+    project_id: str, widget_id: str, user=Depends(get_current_user)
 ):
     stage = stage_repo.get_or_create_stage(
-        conversation_id, user["tenant_id"], user["id"]
+        project_id, user["tenant_id"], user["id"]
     )
     if not stage:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     ok = stage_repo.delete_widget(stage["id"], widget_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Widget not found")

@@ -22,7 +22,7 @@ docker compose up --build
 - API: http://127.0.0.1:8001/api/health (host `8000` 충돌 시 `8001` 사용)
 - Service DB host port: `5434` (container `5432`; host `5432`가 이미 쓰이면 충돌 방지)
 - Sample customer DB host port: `5436` (if `5433` is already used)
-- Northwind-style sample DB host port: `5437`
+- Full Northwind sample DB host port: `5437` (operational date fields are recentized across 2026-08-01 to 2026-09-10)
 
 Login:
 
@@ -42,7 +42,7 @@ demo-password
 7. 차단된 IP 목록을 보여줘.
 8. SOC 보안 현황을 보고서 형태로 만들어줘.
 
-Northwind-style sample questions (Gemini key required for generic schema reasoning):
+Full Northwind sample questions (Gemini key required for generic schema reasoning):
 
 1. 고객별 총 주문 금액 순위를 보여줘.
 2. 카테고리별 매출 비중을 보여줘.

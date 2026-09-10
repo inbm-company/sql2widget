@@ -13,17 +13,17 @@ Primary users are non-technical operators who ask questions in natural language 
 - SOC / security staff asking about attacks, vulnerabilities, and incidents
 - Sales / analysts asking about revenue, attainment, and regions
 
-A `viewer` role can look at a conversation Stage without moving or resizing widgets. An `admin` role can chat, drag, move, and resize.
+A `viewer` role can look at a project Stage without moving or resizing widgets. An `admin` role can chat, drag, move, and resize.
 
 ## Product Purpose
 
-agent4any turns a natural-language question into catalog widget artifacts (charts, lists, tables, KPI). The user reviews those widgets in chat, then drags a few onto a per-conversation Stage. The Stage auto-saves.
+agent4any turns a natural-language question into catalog widget artifacts (charts, lists, tables, KPI). The user reviews those widgets in project chats, then drags a few onto the project's Stage. The Stage auto-saves.
 
 A session succeeds when the right widgets appear in chat and the user pins a few to Stage. A reusable, shareable dashboard is not the success definition for this MVP.
 
 ## Positioning
 
-The agent proposes candidate widgets from a closed catalog. The user composes the Stage. There is no finished dashboard template the agent fills in. Neighboring “ask a database” tools can return an answer; this product’s difference is conversation-scoped pinning onto a Stage, not a generated poster dashboard.
+The agent proposes candidate widgets from a closed catalog. The user composes the Stage. There is no finished dashboard template the agent fills in. Neighboring “ask a database” tools can return an answer; this product’s difference is project-scoped pinning onto a Stage, not a generated poster dashboard.
 
 ## Operating Context
 
@@ -37,7 +37,7 @@ The agent proposes candidate widgets from a closed catalog. The user composes th
 
 Confirmed:
 
-- One Stage per conversation (`conversation_id`).
+- One Stage per project (`project_id`). A project contains multiple conversations.
 - Stage layout is `react-grid-layout`; layout persists and restores.
 - Widgets must be on the server whitelist. Unknown component names are rejected or fall back to `DataTable`. Current catalog includes KPI, tables, rank lists, bar/line/pie (and table companions), markdown, sources, filters, sparklines.
 - Customer DBs are read-only `SELECT`.
@@ -67,4 +67,4 @@ Product name: agent4any. No binding visual identity was recorded in init. The in
 2. Pin, don’t poster: success is the right widgets in chat, then a few on Stage.
 3. Catalog furniture, user layout: the agent proposes; the user composes.
 4. Closed types, open values: invent no charts or chrome; keep data honest.
-5. Conversation-scoped: one Stage per chat, not a global dashboard library.
+5. Project-scoped: one Stage per project, not a global dashboard library.

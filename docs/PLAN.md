@@ -2,12 +2,12 @@
 
 ## 1. 제품 한 줄
 
-비기술 사용자가 자연어로 **SOC 보안 데이터**를 조회하고, 차트·리스트·표 위젯으로 결과를 확인한 뒤, **대화별 스테이지**에 드래그해 배치·자동 저장하는 에이전트 MVP.
+비기술 사용자가 자연어로 **SOC 보안 데이터**를 조회하고, 차트·리스트·표 위젯으로 결과를 확인한 뒤, **프로젝트별 스테이지**에 드래그해 배치·자동 저장하는 에이전트 MVP.
 
 ## 2. 확정 결정
 
 - Docker Compose가 로컬 개발 기준 경로
-- 스테이지는 **대화마다 1개** (`conversation_id`)
+- 프로젝트 아래에 여러 대화가 있고, 스테이지는 **프로젝트마다 1개** (`project_id`)
 - 스테이지 레이아웃: `react-grid-layout`
 - LLM: 1차는 Mock only (SOC 시나리오 8종, 고객 DB SELECT 기반 props)
 - 상태관리:
@@ -57,21 +57,23 @@ POST /api/auth/login
 POST /api/auth/refresh
 GET  /api/auth/me
 
+GET  /api/projects
+POST /api/projects
 POST /api/conversations
-GET  /api/conversations
+GET  /api/conversations?project_id={id}
 GET  /api/conversations/{id}
 POST /api/chat
 
-GET  /api/conversations/{id}/stage
-PUT  /api/conversations/{id}/stage
-POST /api/conversations/{id}/stage/widgets
-PATCH /api/conversations/{id}/stage/widgets/{widget_id}
-DELETE /api/conversations/{id}/stage/widgets/{widget_id}
+GET  /api/projects/{id}/stage
+PUT  /api/projects/{id}/stage
+POST /api/projects/{id}/stage/widgets
+PATCH /api/projects/{id}/stage/widgets/{widget_id}
+DELETE /api/projects/{id}/stage/widgets/{widget_id}
 ```
 
 ## 8. 스테이지 모델
 
-- 대화당 stage 1행
+- 프로젝트당 stage 1행
 - 위젯: `layout { i, x, y, w, h }`, `component`, `title`, `props`, `source_widget_id`
 
 ## 9. 완료 기준 (1차)

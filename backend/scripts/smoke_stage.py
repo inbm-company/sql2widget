@@ -15,8 +15,10 @@ def main() -> int:
     )
     r.raise_for_status()
     headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    projects = client.get("/api/projects", headers=headers).json()
+    project_id = projects[0]["id"]
     conv = client.post(
-        "/api/conversations", headers=headers, json={"title": "stage smoke"}
+        "/api/conversations", headers=headers, json={"project_id": project_id, "title": "stage smoke"}
     ).json()
     chat = client.post(
         "/api/chat",
@@ -28,7 +30,7 @@ def main() -> int:
     ).json()
     w = chat["artifact"]["widgets"][0]
     added = client.post(
-        f"/api/conversations/{conv['id']}/stage/widgets",
+        f"/api/projects/{project_id}/stage/widgets",
         headers=headers,
         json={
             "source_widget_id": w["widget_id"],
@@ -40,12 +42,12 @@ def main() -> int:
         },
     ).json()
     patched = client.patch(
-        f"/api/conversations/{conv['id']}/stage/widgets/{added['id']}",
+        f"/api/projects/{project_id}/stage/widgets/{added['id']}",
         headers=headers,
         json={"layout": {"i": "a", "x": 2, "y": 1, "w": 6, "h": 5}},
     ).json()
     stage = client.get(
-        f"/api/conversations/{conv['id']}/stage", headers=headers
+        f"/api/projects/{project_id}/stage", headers=headers
     ).json()
     ok = (
         len(stage["widgets"]) >= 1

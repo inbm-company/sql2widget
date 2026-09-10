@@ -31,20 +31,20 @@ def _widget_row_to_dict(row: dict) -> dict:
     }
 
 
-def get_or_create_stage(conversation_id: str, tenant_id: str, user_id: str) -> dict | None:
-    conv = fetch_one(
+def get_or_create_stage(project_id: str, tenant_id: str, user_id: str) -> dict | None:
+    project = fetch_one(
         """
-        SELECT id FROM conversations
+        SELECT id FROM projects
         WHERE id = %s AND tenant_id = %s AND user_id = %s
         """,
-        (conversation_id, tenant_id, user_id),
+        (project_id, tenant_id, user_id),
     )
-    if not conv:
+    if not project:
         return None
 
     stage = fetch_one(
-        "SELECT id, conversation_id, updated_at FROM stages WHERE conversation_id = %s",
-        (conversation_id,),
+        "SELECT id, project_id, updated_at FROM stages WHERE project_id = %s",
+        (project_id,),
     )
     if not stage:
         stage_id = _id("stg")
@@ -52,11 +52,11 @@ def get_or_create_stage(conversation_id: str, tenant_id: str, user_id: str) -> d
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO stages (id, conversation_id, tenant_id, user_id)
+                    INSERT INTO stages (id, project_id, tenant_id, user_id)
                     VALUES (%s, %s, %s, %s)
-                    RETURNING id, conversation_id, updated_at
+                    RETURNING id, project_id, updated_at
                     """,
-                    (stage_id, conversation_id, tenant_id, user_id),
+                    (stage_id, project_id, tenant_id, user_id),
                 )
                 stage = cur.fetchone()
 
@@ -70,7 +70,7 @@ def get_or_create_stage(conversation_id: str, tenant_id: str, user_id: str) -> d
     )
     return {
         "id": stage["id"],
-        "conversation_id": stage["conversation_id"],
+        "project_id": stage["project_id"],
         "updated_at": stage["updated_at"],
         "widgets": [_widget_row_to_dict(w) for w in widgets],
     }

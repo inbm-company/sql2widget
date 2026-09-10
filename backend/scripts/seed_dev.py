@@ -32,11 +32,19 @@ DEMO_TABLES = [
 GLOBAL_TABLES = ["regions", "products", "monthly_sales"]
 NORTHWIND_TABLES = [
     "categories",
+    "customer_customer_demo",
+    "customer_demographics",
     "customers",
+    "employee_territories",
     "employees",
-    "products",
-    "orders",
     "order_details",
+    "orders",
+    "products",
+    "region",
+    "shippers",
+    "suppliers",
+    "territories",
+    "us_states",
 ]
 
 
@@ -85,6 +93,16 @@ def main() -> None:
                     (VIEWER_ID, TENANT_ID, VIEWER_EMAIL, viewer_hash, "viewer"),
                 )
                 print(f"created user {VIEWER_EMAIL}")
+
+            for user_id in (USER_ID, VIEWER_ID):
+                cur.execute(
+                    """
+                    INSERT INTO projects (id, tenant_id, user_id, title)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING
+                    """,
+                    (f"prj_default_{user_id}", TENANT_ID, user_id, "디폴트"),
+                )
 
             # document chunks for RAG scaffold
             cur.execute(

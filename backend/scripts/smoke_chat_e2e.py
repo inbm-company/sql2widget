@@ -35,6 +35,8 @@ def main() -> int:
         body={"email": "admin@example.com", "password": "demo-password"},
     )
     token = login["access_token"]
+    _, projects = req("GET", "/api/projects", token=token)
+    project_id = projects[0]["id"]
     _, conns = req("GET", "/api/database-connections", token=token)
     names = {c["id"]: c["name"] for c in conns}
     print("connections:", names)
@@ -60,7 +62,7 @@ def main() -> int:
             "POST",
             "/api/conversations",
             token=token,
-            body={"title": f"smoke {connection_id}"},
+            body={"project_id": project_id, "title": f"smoke {connection_id}"},
         )
         status, chat = req(
             "POST",
@@ -97,7 +99,7 @@ def main() -> int:
         w0 = widgets[0]
         _, created = req(
             "POST",
-            f"/api/conversations/{conv['id']}/stage/widgets",
+            f"/api/projects/{project_id}/stage/widgets",
             token=token,
             body={
                 "source_widget_id": w0.get("widget_id"),
@@ -117,7 +119,7 @@ def main() -> int:
             "POST",
             "/api/conversations",
             token=token,
-            body={"title": f"repeat-{i}"},
+            body={"project_id": project_id, "title": f"repeat-{i}"},
         )
         req(
             "POST",

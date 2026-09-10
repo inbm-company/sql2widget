@@ -14,11 +14,11 @@ function debounce(fn, ms) {
   };
 }
 
-export default function StageCanvas({ conversationId, readOnly = false, variant = "default" }) {
+export default function StageCanvas({ projectId, readOnly = false, variant = "default" }) {
   const { data: ui } = useStore(storeKeys.ui);
   const { data: stage, mutate } = useSWR(
-    storeKeys.stage(conversationId),
-    () => api.getStage(conversationId),
+    storeKeys.stage(projectId),
+    () => api.getStage(projectId),
     { revalidateOnFocus: false }
   );
   const [width, setWidth] = useState(480);
@@ -42,7 +42,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [conversationId]);
+  }, [projectId]);
 
   const layout = useMemo(
     () =>
@@ -61,7 +61,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
   const persistLayout = useMemo(
     () =>
       debounce(async (nextLayout) => {
-        if (!conversationId) return;
+        if (!projectId) return;
         setStore(storeKeys.ui, (u) => ({ ...u, saveStatus: "saving" }));
         try {
           await Promise.all(
@@ -70,7 +70,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
                 (w) => (w.layout?.i || w.id) === item.i
               );
               if (!widget) return null;
-              return api.patchStageWidget(conversationId, widget.id, {
+              return api.patchStageWidget(projectId, widget.id, {
                 layout: {
                   i: item.i,
                   x: item.x,
@@ -87,7 +87,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
           setStore(storeKeys.ui, (u) => ({ ...u, saveStatus: "error" }));
         }
       }, 500),
-    [conversationId, localWidgets, mutate]
+    [projectId, localWidgets, mutate]
   );
 
   const onLayoutChange = useCallback(
@@ -119,7 +119,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
       if (readOnly) return;
       event.preventDefault();
       const raw = event.dataTransfer.getData("application/x-agent4any-widget");
-      if (!raw || !conversationId) return;
+      if (!raw || !projectId) return;
       let payload;
       try {
         payload = JSON.parse(raw);
@@ -130,7 +130,7 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
       try {
         const dropProps = { ...(payload.props || {}) };
         if (payload.sql) dropProps.__sql = payload.sql;
-        const created = await api.addStageWidget(conversationId, {
+        const created = await api.addStageWidget(projectId, {
           source_widget_id: payload.widget_id,
           source_artifact_id: payload.artifact_id,
           component: payload.component,
@@ -151,20 +151,20 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
         setStore(storeKeys.ui, (u) => ({ ...u, saveStatus: "error" }));
       }
     },
-    [conversationId, mutate, readOnly]
+    [projectId, mutate, readOnly]
   );
 
   async function removeWidget(widgetId) {
-    if (!conversationId) return;
-    await api.deleteStageWidget(conversationId, widgetId);
+    if (!projectId) return;
+    await api.deleteStageWidget(projectId, widgetId);
     setLocalWidgets((prev) => prev.filter((w) => w.id !== widgetId));
     mutate();
   }
 
-  if (!conversationId) {
+  if (!projectId) {
     return (
       <div className="stage-empty pane-pad">
-        <p>대화를 선택하면 스테이지가 열립니다.</p>
+        <p>프로젝트를 선택하면 스테이지가 열립니다.</p>
       </div>
     );
   }
@@ -243,8 +243,8 @@ export default function StageCanvas({ conversationId, readOnly = false, variant 
   );
 }
 
-export async function addWidgetToStage(conversationId, widgetPayload, mutateStage) {
-  const stage = await api.getStage(conversationId);
+export async function addWidgetToStage(projectId, widgetPayload, mutateStage) {
+  const stage = await api.getStage(projectId);
   const yMax = (stage.widgets || []).reduce(
     (max, w) => Math.max(max, (w.layout?.y || 0) + (w.layout?.h || 4)),
     0
@@ -254,7 +254,7 @@ export async function addWidgetToStage(conversationId, widgetPayload, mutateStag
   const composite = ["BarTable", "PieTable", "KpiSparkline"].includes(
     widgetPayload.component
   );
-  await api.addStageWidget(conversationId, {
+  await api.addStageWidget(projectId, {
     source_widget_id: widgetPayload.widget_id,
     source_artifact_id: widgetPayload.artifact_id,
     component: widgetPayload.component,

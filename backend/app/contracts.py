@@ -13,11 +13,16 @@ class RefreshRequest(BaseModel):
 
 
 class CreateConversationRequest(BaseModel):
+    project_id: str
     title: str | None = None
 
 
 class UpdateConversationRequest(BaseModel):
     title: str
+
+
+class CreateProjectRequest(BaseModel):
+    title: str | None = None
 
 
 class ChatRequest(BaseModel):

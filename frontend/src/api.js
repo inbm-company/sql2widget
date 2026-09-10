@@ -132,11 +132,18 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   me: () => request("/api/auth/me"),
-  listConversations: () => request("/api/conversations"),
-  createConversation: (title) =>
-    request("/api/conversations", {
+  listProjects: () => request("/api/projects"),
+  createProject: (title) =>
+    request("/api/projects", {
       method: "POST",
       body: JSON.stringify({ title }),
+    }),
+  listConversations: (projectId) =>
+    request(`/api/conversations?project_id=${encodeURIComponent(projectId)}`),
+  createConversation: (projectId, title) =>
+    request("/api/conversations", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, title }),
     }),
   getConversation: (id) => request(`/api/conversations/${id}`),
   updateConversation: (id, title) =>
@@ -159,25 +166,24 @@ export const api = {
         connection_id: connectionId || null,
       }),
     }),
-  getStage: (conversationId) =>
-    request(`/api/conversations/${conversationId}/stage`),
-  putStage: (conversationId, widgets) =>
-    request(`/api/conversations/${conversationId}/stage`, {
+  getStage: (projectId) => request(`/api/projects/${projectId}/stage`),
+  putStage: (projectId, widgets) =>
+    request(`/api/projects/${projectId}/stage`, {
       method: "PUT",
       body: JSON.stringify({ widgets }),
     }),
-  addStageWidget: (conversationId, widget) =>
-    request(`/api/conversations/${conversationId}/stage/widgets`, {
+  addStageWidget: (projectId, widget) =>
+    request(`/api/projects/${projectId}/stage/widgets`, {
       method: "POST",
       body: JSON.stringify(widget),
     }),
-  patchStageWidget: (conversationId, widgetId, patch) =>
-    request(`/api/conversations/${conversationId}/stage/widgets/${widgetId}`, {
+  patchStageWidget: (projectId, widgetId, patch) =>
+    request(`/api/projects/${projectId}/stage/widgets/${widgetId}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  deleteStageWidget: (conversationId, widgetId) =>
-    request(`/api/conversations/${conversationId}/stage/widgets/${widgetId}`, {
+  deleteStageWidget: (projectId, widgetId) =>
+    request(`/api/projects/${projectId}/stage/widgets/${widgetId}`, {
       method: "DELETE",
     }),
   listConnections: () => request("/api/database-connections"),

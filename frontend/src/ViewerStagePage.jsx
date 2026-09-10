@@ -1,16 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import StageCanvas from "./StageCanvas.jsx";
-import { api } from "./api";
-import { storeKeys, useSWR } from "./store";
 
 export default function ViewerStagePage({ user, onLogout }) {
-  const { conversationId } = useParams();
-  const { data: conversation } = useSWR(
-    conversationId ? storeKeys.conversation(conversationId) : null,
-    () => api.getConversation(conversationId)
-  );
-
-  const title = conversation?.title || "Stage Viewer";
+  const { projectId } = useParams();
 
   return (
     <div className="viewer-page">
@@ -19,7 +11,7 @@ export default function ViewerStagePage({ user, onLogout }) {
           <Link to="/" className="viewer-back">
             ← Editor
           </Link>
-          <h1 className="viewer-title">{title}</h1>
+          <h1 className="viewer-title">Project Stage</h1>
         </div>
         <div className="viewer-header-right">
           <span className="viewer-filter-pill">Period: Last 12 months</span>
@@ -31,7 +23,7 @@ export default function ViewerStagePage({ user, onLogout }) {
       </header>
       <main className="viewer-main">
         <StageCanvas
-          conversationId={conversationId}
+          projectId={projectId}
           readOnly
           variant="orion"
         />

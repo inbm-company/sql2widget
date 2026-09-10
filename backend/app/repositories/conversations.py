@@ -9,47 +9,48 @@ def _id(prefix: str) -> str:
     return f"{prefix}_{secrets.token_hex(8)}"
 
 
-def list_conversations(tenant_id: str, user_id: str) -> list[dict]:
+def list_conversations(tenant_id: str, user_id: str, project_id: str) -> list[dict]:
     return fetch_all(
         """
         SELECT id, title, created_at, updated_at
         FROM conversations
-        WHERE tenant_id = %s AND user_id = %s
+        WHERE tenant_id = %s AND user_id = %s AND project_id = %s
         ORDER BY updated_at DESC
         """,
-        (tenant_id, user_id),
+        (tenant_id, user_id, project_id),
     )
 
 
-def create_conversation(tenant_id: str, user_id: str, title: str | None = None) -> dict:
+def create_conversation(
+    tenant_id: str, user_id: str, project_id: str, title: str | None = None
+) -> dict | None:
     conv_id = _id("conv")
-    stage_id = _id("stg")
     final_title = title or "새 대화"
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO conversations (id, tenant_id, user_id, title)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO conversations (id, tenant_id, user_id, project_id, title)
+                SELECT %s, %s, %s, p.id, %s
+                FROM projects p
+                WHERE p.id = %s AND p.tenant_id = %s AND p.user_id = %s
                 RETURNING id, title, created_at, updated_at
                 """,
-                (conv_id, tenant_id, user_id, final_title),
+                (conv_id, tenant_id, user_id, final_title, project_id, tenant_id, user_id),
             )
             row = cur.fetchone()
-            cur.execute(
-                """
-                INSERT INTO stages (id, conversation_id, tenant_id, user_id)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (stage_id, conv_id, tenant_id, user_id),
-            )
+            if row:
+                cur.execute(
+                    "UPDATE projects SET updated_at = now() WHERE id = %s",
+                    (project_id,),
+                )
     return row
 
 
 def get_conversation(conversation_id: str, tenant_id: str, user_id: str) -> dict | None:
     conv = fetch_one(
         """
-        SELECT id, title, created_at, updated_at
+        SELECT id, project_id, title, created_at, updated_at
         FROM conversations
         WHERE id = %s AND tenant_id = %s AND user_id = %s
         """,
@@ -98,6 +99,14 @@ def add_message(
             row = cur.fetchone()
             cur.execute(
                 "UPDATE conversations SET updated_at = now() WHERE id = %s",
+                (conversation_id,),
+            )
+            cur.execute(
+                """
+                UPDATE projects
+                SET updated_at = now()
+                WHERE id = (SELECT project_id FROM conversations WHERE id = %s)
+                """,
                 (conversation_id,),
             )
     if row.get("artifact") and isinstance(row["artifact"], str):

@@ -86,7 +86,7 @@ function LoginForm({ onSuccess }) {
   );
 }
 
-function ArtifactPreviewCard({ widget, artifact, conversationId, onAdded, readOnly = false }) {
+function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = false }) {
   const [showSql, setShowSql] = useState(false);
   const sql = resolveWidgetSql(widget);
   const sqlAvailable = canShowSql(widget) && Boolean(sql);
@@ -107,7 +107,7 @@ function ArtifactPreviewCard({ widget, artifact, conversationId, onAdded, readOn
   }
 
   async function addDirect() {
-    await addWidgetToStage(conversationId, {
+    await addWidgetToStage(projectId, {
       widget_id: widget.widget_id,
       artifact_id: artifact.artifact_id,
       component: widget.component,
@@ -171,7 +171,7 @@ function ArtifactPreviewCard({ widget, artifact, conversationId, onAdded, readOn
   );
 }
 
-function AssistantAnswer({ content, artifact, conversationId, onAdded, readOnly = false }) {
+function AssistantAnswer({ content, artifact, projectId, onAdded, readOnly = false }) {
   const [view, setView] = useState("widget");
   const hasArtifact = Boolean(artifact?.widgets?.length || artifact?.artifact_id);
 
@@ -210,7 +210,7 @@ function AssistantAnswer({ content, artifact, conversationId, onAdded, readOnly 
                   key={w.widget_id}
                   widget={w}
                   artifact={artifact}
-                  conversationId={conversationId}
+                  projectId={projectId}
                   onAdded={onAdded}
                   readOnly={readOnly}
                 />
@@ -342,6 +342,7 @@ function ConversationItem({
 function Workspace({ user, onLogout }) {
   const isViewer = user.role === "viewer";
   const canEdit = !isViewer;
+  const [activeProjectId, setActiveProjectId] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -350,9 +351,14 @@ function Workspace({ user, onLogout }) {
   const [stageOpen, setStageOpen] = useState(true);
   const [connectionId, setConnectionId] = useState("");
 
+  const { data: projects, mutate: mutateProjects } = useSWR(
+    storeKeys.projects,
+    () => api.listProjects()
+  );
+
   const { data: conversations, mutate: mutateConvs } = useSWR(
-    storeKeys.conversations,
-    () => api.listConversations()
+    storeKeys.conversations(activeProjectId),
+    () => api.listConversations(activeProjectId)
   );
 
   const { data: conversation, mutate: mutateConv } = useSWR(
@@ -370,9 +376,18 @@ function Workspace({ user, onLogout }) {
     }
   }, [connections, connectionId]);
 
+  async function newProject() {
+    const project = await api.createProject("새 프로젝트");
+    await mutateProjects();
+    setActiveProjectId(project.id);
+    setActiveId(null);
+  }
+
   async function newChat() {
-    const conv = await api.createConversation("New Chat");
+    if (!activeProjectId) return;
+    const conv = await api.createConversation(activeProjectId, "New Chat");
     await mutateConvs();
+    await mutateProjects();
     setActiveId(conv.id);
   }
 
@@ -386,7 +401,7 @@ function Workspace({ user, onLogout }) {
       await api.chat(activeId, message, connectionId || null);
       await mutateConv();
       await mutateConvs();
-      await swrMutate(storeKeys.stage(activeId));
+      await swrMutate(storeKeys.stage(activeProjectId));
     } catch (err) {
       setChatError(err?.message || "응답 생성에 실패했습니다. 다시 시도해 주세요.");
       if (text === input || !input) setInput(message);
@@ -404,13 +419,14 @@ function Workspace({ user, onLogout }) {
     if (activeId === deletedId) {
       setActiveId(remaining[0]?.id ?? null);
       await swrMutate(storeKeys.conversation(deletedId), undefined, { revalidate: false });
-      await swrMutate(storeKeys.stage(deletedId), undefined, { revalidate: false });
     }
     await mutateConvs();
+    await mutateProjects();
   }
 
   const activeTitle =
     conversations?.find((c) => c.id === activeId)?.title || "Chat";
+  const activeProject = projects?.find((p) => p.id === activeProjectId);
 
   const sampleQuestions =
     connectionId === "dbconn_global"
@@ -424,25 +440,48 @@ function Workspace({ user, onLogout }) {
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="brand">agent4any</div>
-          <button type="button" className="sidebar-new" onClick={newChat} title="New chat" disabled={isViewer}>
+          <button type="button" className="sidebar-new" onClick={newProject} title="New project" disabled={isViewer}>
             <span className="sidebar-new-icon">+</span>
-            New chat
+            New project
           </button>
         </div>
 
-        <ul className="conv-list" title="대화에 마우스를 올리면 이름 변경·삭제">
-          {(conversations || []).map((c) => (
-            <ConversationItem
-              key={c.id}
-              conv={c}
-              active={c.id === activeId}
-              onSelect={setActiveId}
-              onRenamed={mutateConvs}
-              onDeleted={handleConversationDeleted}
-              readOnly={isViewer}
-            />
+        <div className="project-list">
+          {(projects || []).map((project) => (
+            <div key={project.id} className="project-group">
+              <button
+                type="button"
+                className={`project-item ${project.id === activeProjectId ? "active" : ""}`}
+                onClick={() => {
+                  setActiveProjectId((current) => current === project.id ? null : project.id);
+                  setActiveId(null);
+                }}
+              >
+                <span>{project.title}</span>
+              </button>
+              {project.id === activeProjectId ? (
+                <>
+                  <button type="button" className="project-new-chat" onClick={newChat} disabled={isViewer}>
+                    + New chat
+                  </button>
+                  <ul className="conv-list project-conversations" title="대화에 마우스를 올리면 이름 변경·삭제">
+                    {(conversations || []).map((c) => (
+                      <ConversationItem
+                        key={c.id}
+                        conv={c}
+                        active={c.id === activeId}
+                        onSelect={setActiveId}
+                        onRenamed={mutateConvs}
+                        onDeleted={handleConversationDeleted}
+                        readOnly={isViewer}
+                      />
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+            </div>
           ))}
-        </ul>
+        </div>
 
         <div className="sidebar-footer">
           <label className="conn-select">
@@ -464,8 +503,8 @@ function Workspace({ user, onLogout }) {
                 Admin
               </button>
             ) : null}
-            {activeId ? (
-              <Link to={`/c/${activeId}/view`} className="link-btn">
+            {activeProjectId ? (
+              <Link to={`/p/${activeProjectId}/view`} className="link-btn">
                 Open viewer
               </Link>
             ) : null}
@@ -483,11 +522,15 @@ function Workspace({ user, onLogout }) {
       </aside>
 
       <main className="chat-pane">
-        {!activeId ? (
+        {!activeProjectId ? (
           <div className="chat-empty">
-            <p className="chat-empty-title">What would you like to know?</p>
-            <p className="muted">Ask about SOC security data, then drag widgets to the stage.</p>
-            <button type="button" className="primary" onClick={newChat}>
+            <p className="chat-empty-title">프로젝트를 선택하세요.</p>
+          </div>
+        ) : !activeId ? (
+          <div className="chat-empty">
+            <p className="chat-empty-title">{activeProject?.title}</p>
+            <p className="muted">이 프로젝트에 새 챗을 만들어 질문을 시작하세요.</p>
+            <button type="button" className="primary" onClick={newChat} disabled={isViewer}>
               New chat
             </button>
           </div>
@@ -496,7 +539,7 @@ function Workspace({ user, onLogout }) {
             <header className="chat-header">
               <h1 className="chat-title">{activeTitle}</h1>
               {activeId ? (
-                <Link to={`/c/${activeId}/view`} className="chat-view-link">
+                <Link to={`/p/${activeProjectId}/view`} className="chat-view-link">
                   Viewer ↗
                 </Link>
               ) : null}
@@ -528,8 +571,8 @@ function Workspace({ user, onLogout }) {
                     <AssistantAnswer
                       content={m.content}
                       artifact={m.artifact}
-                      conversationId={activeId}
-                      onAdded={() => swrMutate(storeKeys.stage(activeId))}
+                      projectId={activeProjectId}
+                      onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
                       readOnly={isViewer}
                     />
                   )}
@@ -577,7 +620,7 @@ function Workspace({ user, onLogout }) {
       </main>
 
       <section className={`stage-pane ${stageOpen && canEdit ? "" : "is-hidden"}`}>
-        <StageCanvas conversationId={activeId} readOnly={isViewer} />
+        <StageCanvas projectId={activeProjectId} readOnly={isViewer} />
       </section>
 
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
@@ -622,7 +665,7 @@ export default function App() {
   return (
     <Routes>
       <Route
-        path="/c/:conversationId/view"
+        path="/p/:projectId/view"
         element={
           <ViewerStagePage
             user={user}

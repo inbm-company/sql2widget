@@ -289,6 +289,58 @@ button {
   min-height: 0;
 }
 
+.project-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 8px;
+}
+
+.project-group + .project-group {
+  margin-top: 4px;
+}
+
+.project-item,
+.project-new-chat {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  border-radius: var(--radius-sm);
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.project-item:hover,
+.project-item.active {
+  background: var(--hover);
+}
+
+.project-new-chat {
+  padding: 5px 8px 5px 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.project-new-chat:hover {
+  color: var(--ink);
+}
+
+.project-conversations {
+  flex: none;
+  max-height: 260px;
+  padding: 0 0 4px 12px;
+}
+
 .conv-item {
   display: flex;
   align-items: center;

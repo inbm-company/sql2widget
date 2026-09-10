@@ -71,8 +71,9 @@ export function setStore(key, updater) {
 export const storeKeys = {
   ...CLIENT_KEYS,
   me: "api:/auth/me",
-  conversations: "api:/conversations",
+  projects: "api:/projects",
+  conversations: (projectId) => (projectId ? `api:/conversations/${projectId}` : null),
   conversation: (id) => (id ? `api:/conversations/${id}` : null),
-  stage: (id) => (id ? `api:/stage/${id}` : null),
+  stage: (projectId) => (projectId ? `api:/stage/${projectId}` : null),
   connections: "api:/database-connections",
 };
