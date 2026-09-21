@@ -25,18 +25,40 @@ def create_conversation(
     tenant_id: str, user_id: str, project_id: str, title: str | None = None
 ) -> dict | None:
     conv_id = _id("conv")
-    final_title = title or "새 대화"
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
+                SELECT id FROM projects
+                WHERE id = %s AND tenant_id = %s AND user_id = %s
+                FOR UPDATE
+                """,
+                (project_id, tenant_id, user_id),
+            )
+            if not cur.fetchone():
+                return None
+
+            requested_title = (title or "").strip()
+            if not requested_title or requested_title == "New Chat":
+                cur.execute(
+                    """
+                    SELECT COUNT(*)::int AS count
+                    FROM conversations
+                    WHERE project_id = %s
+                    """,
+                    (project_id,),
+                )
+                final_title = f"New Chat {cur.fetchone()['count'] + 1}"
+            else:
+                final_title = requested_title[:120]
+
+            cur.execute(
+                """
                 INSERT INTO conversations (id, tenant_id, user_id, project_id, title)
-                SELECT %s, %s, %s, p.id, %s
-                FROM projects p
-                WHERE p.id = %s AND p.tenant_id = %s AND p.user_id = %s
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id, title, created_at, updated_at
                 """,
-                (conv_id, tenant_id, user_id, final_title, project_id, tenant_id, user_id),
+                (conv_id, tenant_id, user_id, project_id, final_title),
             )
             row = cur.fetchone()
             if row:

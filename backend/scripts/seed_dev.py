@@ -37,6 +37,7 @@ NORTHWIND_TABLES = [
     "customers",
     "employee_territories",
     "employees",
+    "northwind_data_provenance",
     "order_details",
     "orders",
     "products",

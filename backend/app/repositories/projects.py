@@ -40,3 +40,18 @@ def create_project(tenant_id: str, user_id: str, title: str | None = None) -> di
         """,
         (project_id, tenant_id, user_id, (title or "새 프로젝트").strip()[:120] or "새 프로젝트"),
     )
+
+
+def update_project(
+    project_id: str, tenant_id: str, user_id: str, title: str
+) -> dict | None:
+    final_title = title.strip()[:120] or "새 프로젝트"
+    return fetch_one(
+        """
+        UPDATE projects
+        SET title = %s, updated_at = now()
+        WHERE id = %s AND tenant_id = %s AND user_id = %s
+        RETURNING id, title, created_at, updated_at
+        """,
+        (final_title, project_id, tenant_id, user_id),
+    )

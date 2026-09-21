@@ -138,6 +138,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ title }),
     }),
+  updateProject: (projectId, title) =>
+    request(`/api/projects/${projectId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    }),
   listConversations: (projectId) =>
     request(`/api/conversations?project_id=${encodeURIComponent(projectId)}`),
   createConversation: (projectId, title) =>

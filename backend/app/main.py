@@ -16,6 +16,7 @@ from app.contracts import (
     ChatRequest,
     CreateConversationRequest,
     CreateProjectRequest,
+    UpdateProjectRequest,
     UpdateConversationRequest,
     DatabaseConnectionIn,
     LoginRequest,
@@ -99,6 +100,18 @@ def list_projects(user=Depends(get_current_user)):
 @app.post("/api/projects")
 def create_project(body: CreateProjectRequest, user=Depends(get_current_user)):
     return project_repo.create_project(user["tenant_id"], user["id"], body.title)
+
+
+@app.patch("/api/projects/{project_id}")
+def update_project(
+    project_id: str, body: UpdateProjectRequest, user=Depends(get_current_user)
+):
+    project = project_repo.update_project(
+        project_id, user["tenant_id"], user["id"], body.title
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
 
 
 @app.get("/api/conversations")

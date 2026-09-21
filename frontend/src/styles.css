@@ -300,9 +300,30 @@ button {
   margin-top: 4px;
 }
 
+.project-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.project-header:hover,
+.project-header.active {
+  background: var(--hover);
+}
+
+.project-header--editing {
+  padding: 3px 4px;
+}
+
+.project-tree {
+  border-left: 1px solid var(--border);
+  margin: 0 0 4px 16px;
+}
+
 .project-item,
 .project-new-chat {
-  width: 100%;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -315,18 +336,28 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
+  width: 100%;
   padding: 7px 8px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.project-item:hover,
-.project-item.active {
-  background: var(--hover);
+.project-rename-input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .project-new-chat {
-  padding: 5px 8px 5px 16px;
+  padding: 5px 8px 5px 12px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -335,13 +366,26 @@ button {
   color: var(--ink);
 }
 
+.project-new-chat--header {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  align-self: center;
+  justify-self: center;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1;
+}
+
 .project-conversations {
   flex: none;
-  max-height: 260px;
-  padding: 0 0 4px 12px;
+  max-height: none;
+  overflow: visible;
+  padding: 0 0 4px 4px;
 }
 
 .conv-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -415,6 +459,19 @@ button {
 
 .conv-action-btn--danger:hover {
   color: var(--danger);
+}
+
+.conv-delete-error {
+  position: absolute;
+  left: 8px;
+  top: calc(100% + 2px);
+  z-index: 2;
+  padding: 3px 5px;
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--danger);
+  font-size: 10px;
 }
 
 .conv-item--editing {
@@ -586,6 +643,27 @@ button {
   line-height: 1.55;
   font-size: 13px;
   color: var(--ink);
+}
+
+.assistant-pending {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.loading-dots {
+  display: inline-block;
+  width: 18px;
+  overflow: hidden;
+  animation: loading-dots 1.2s steps(4, end) infinite;
+  letter-spacing: 2px;
+}
+
+@keyframes loading-dots {
+  from { width: 4px; }
+  to { width: 18px; }
 }
 
 .assistant-block {

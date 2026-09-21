@@ -25,6 +25,10 @@ class CreateProjectRequest(BaseModel):
     title: str | None = None
 
 
+class UpdateProjectRequest(BaseModel):
+    title: str
+
+
 class ChatRequest(BaseModel):
     conversation_id: str
     message: str

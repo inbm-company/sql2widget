@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { mutate as swrMutate } from "swr";
 import {
@@ -234,6 +234,7 @@ function ConversationItem({
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(conv.title);
   const [busy, setBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (!renaming) setDraft(conv.title);
@@ -260,11 +261,13 @@ function ConversationItem({
   }
 
   async function remove() {
-    if (!window.confirm("정말로 삭제하시겠습니까?")) return;
     setBusy(true);
+    setDeleteError("");
     try {
       await api.deleteConversation(conv.id);
       onDeleted?.(conv.id);
+    } catch (err) {
+      setDeleteError(err?.message || "삭제하지 못했습니다.");
     } finally {
       setBusy(false);
     }
@@ -335,7 +338,94 @@ function ConversationItem({
           </>
         ) : null}
       </div>
+      {deleteError ? <span className="conv-delete-error">{deleteError}</span> : null}
     </li>
+  );
+}
+
+function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, readOnly = false }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(project.title);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(project.title);
+  }, [project.title, editing]);
+
+  async function saveRename() {
+    const title = draft.trim();
+    if (!title || title === project.title) {
+      setEditing(false);
+      setDraft(project.title);
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.updateProject(project.id, title);
+      await onRenamed?.();
+      setEditing(false);
+    } catch {
+      setDraft(project.title);
+      setEditing(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={`project-header ${active ? "active" : ""} ${editing ? "project-header--editing" : ""}`}>
+      {editing ? (
+        <input
+          className="project-rename-input"
+          value={draft}
+          autoFocus
+          disabled={busy}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+            if (event.key === "Escape") {
+              setDraft(project.title);
+              setEditing(false);
+            }
+          }}
+          onBlur={saveRename}
+        />
+      ) : (
+        <button
+          type="button"
+          className="project-item"
+          title={readOnly ? project.title : "더블 클릭하여 이름 변경"}
+          onClick={(event) => {
+            if (event.detail === 1) onToggle();
+          }}
+          onDoubleClick={() => {
+            if (readOnly) return;
+            onToggle(true);
+            setEditing(true);
+          }}
+        >
+          <span>{project.title}</span>
+        </button>
+      )}
+      {active && !editing ? (
+        <button
+          type="button"
+          className="project-new-chat project-new-chat--header"
+          onClick={(event) => {
+            event.stopPropagation();
+            onNewChat(project.id);
+          }}
+          disabled={readOnly}
+          aria-label="New chat"
+          title="New chat"
+        >
+          +
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -346,10 +436,12 @@ function Workspace({ user, onLogout }) {
   const [activeId, setActiveId] = useState(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
   const [chatError, setChatError] = useState("");
   const [adminOpen, setAdminOpen] = useState(false);
   const [stageOpen, setStageOpen] = useState(true);
   const [connectionId, setConnectionId] = useState("");
+  const messagesRef = useRef(null);
 
   const { data: projects, mutate: mutateProjects } = useSWR(
     storeKeys.projects,
@@ -376,6 +468,12 @@ function Workspace({ user, onLogout }) {
     }
   }, [connections, connectionId]);
 
+  useEffect(() => {
+    if (sending) {
+      messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [sending]);
+
   async function newProject() {
     const project = await api.createProject("새 프로젝트");
     await mutateProjects();
@@ -383,11 +481,12 @@ function Workspace({ user, onLogout }) {
     setActiveId(null);
   }
 
-  async function newChat() {
-    if (!activeProjectId) return;
-    const conv = await api.createConversation(activeProjectId, "New Chat");
-    await mutateConvs();
+  async function newChat(projectId = activeProjectId) {
+    if (!projectId) return;
+    const conv = await api.createConversation(projectId, "New Chat");
+    if (projectId === activeProjectId) await mutateConvs();
     await mutateProjects();
+    setActiveProjectId(projectId);
     setActiveId(conv.id);
   }
 
@@ -395,6 +494,7 @@ function Workspace({ user, onLogout }) {
     const message = text.trim();
     if (!message || !activeId || sending) return;
     setSending(true);
+    setPendingMessage(message);
     setChatError("");
     if (text === input) setInput("");
     try {
@@ -407,6 +507,7 @@ function Workspace({ user, onLogout }) {
       if (text === input || !input) setInput(message);
     } finally {
       setSending(false);
+      setPendingMessage("");
     }
   }
 
@@ -449,21 +550,19 @@ function Workspace({ user, onLogout }) {
         <div className="project-list">
           {(projects || []).map((project) => (
             <div key={project.id} className="project-group">
-              <button
-                type="button"
-                className={`project-item ${project.id === activeProjectId ? "active" : ""}`}
-                onClick={() => {
-                  setActiveProjectId((current) => current === project.id ? null : project.id);
+              <ProjectHeader
+                project={project}
+                active={project.id === activeProjectId}
+                onToggle={(open) => {
+                  setActiveProjectId((current) => open ? project.id : current === project.id ? null : project.id);
                   setActiveId(null);
                 }}
-              >
-                <span>{project.title}</span>
-              </button>
+                onRenamed={mutateProjects}
+                onNewChat={newChat}
+                readOnly={isViewer}
+              />
               {project.id === activeProjectId ? (
-                <>
-                  <button type="button" className="project-new-chat" onClick={newChat} disabled={isViewer}>
-                    + New chat
-                  </button>
+                <div className="project-tree">
                   <ul className="conv-list project-conversations" title="대화에 마우스를 올리면 이름 변경·삭제">
                     {(conversations || []).map((c) => (
                       <ConversationItem
@@ -477,7 +576,7 @@ function Workspace({ user, onLogout }) {
                       />
                     ))}
                   </ul>
-                </>
+                </div>
               ) : null}
             </div>
           ))}
@@ -545,7 +644,7 @@ function Workspace({ user, onLogout }) {
               ) : null}
             </header>
 
-            <div className="messages">
+            <div className="messages" ref={messagesRef}>
               {(conversation?.messages || []).length === 0 ? (
                 <div className="prompt-suggestions">
                   <p className="prompt-label">Suggested</p>
@@ -578,6 +677,17 @@ function Workspace({ user, onLogout }) {
                   )}
                 </div>
               ))}
+              {sending ? (
+                <>
+                  <div className="msg user pending-user">
+                    <div className="msg-content user-bubble">{pendingMessage}</div>
+                  </div>
+                  <div className="msg assistant assistant-pending" role="status" aria-live="polite">
+                    <span className="loading-dots" aria-hidden="true">•••</span>
+                    답변 생성 중…
+                  </div>
+                </>
+              ) : null}
             </div>
 
             {canEdit ? (
@@ -597,7 +707,7 @@ function Workspace({ user, onLogout }) {
                     }}
                   />
                   <div className="composer-bar">
-                    <span className="composer-hint">Enter to send · Shift+Enter for newline</span>
+                    <span className="composer-hint">{sending ? "답변 생성 중…" : "Enter to send · Shift+Enter for newline"}</span>
                     <button
                       type="button"
                       className="composer-send"

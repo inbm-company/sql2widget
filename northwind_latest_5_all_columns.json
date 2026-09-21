@@ -1,0 +1,609 @@
+{
+  "categories":
+  [
+      {
+          "category_id": 8,
+          "description": "Seaweed and fish",
+          "category_name": "Seafood"
+      },
+      {
+          "category_id": 7,
+          "description": "Dried fruit and bean curd",
+          "category_name": "Produce"
+      },
+      {
+          "category_id": 6,
+          "description": "Prepared meats",
+          "category_name": "Meat/Poultry"
+      },
+      {
+          "category_id": 5,
+          "description": "Breads, crackers, pasta, and cereal",
+          "category_name": "Grains/Cereals"
+      },
+      {
+          "category_id": 4,
+          "description": "Cheeses",
+          "category_name": "Dairy Products"
+      }
+  ],
+  "customer_customer_demo":
+  [],
+  "customer_demographics":
+  [],
+  "customers":
+  [
+      {
+          "fax": "(26) 642-7012",
+          "city": "Warszawa",
+          "phone": "(26) 642-7012",
+          "region": null,
+          "address": "ul. Filtrowa 68",
+          "country": "Poland",
+          "customer_id": "WOLZA",
+          "postal_code": "01-012",
+          "company_name": "Wolski  Zajazd",
+          "contact_name": "Zbyszek Piestrzeniewicz",
+          "contact_title": "Owner"
+      },
+      {
+          "fax": "90-224 8858",
+          "city": "Helsinki",
+          "phone": "90-224 8858",
+          "region": null,
+          "address": "Keskuskatu 45",
+          "country": "Finland",
+          "customer_id": "WILMK",
+          "postal_code": "21240",
+          "company_name": "Wilman Kala",
+          "contact_name": "Matti Karttunen",
+          "contact_title": "Owner/Marketing Assistant"
+      },
+      {
+          "fax": "(206) 555-4115",
+          "city": "Seattle",
+          "phone": "(206) 555-4112",
+          "region": "WA",
+          "address": "305 - 14th Ave. S. Suite 3B",
+          "country": "USA",
+          "customer_id": "WHITC",
+          "postal_code": "98128",
+          "company_name": "White Clover Markets",
+          "contact_name": "Karl Jablonski",
+          "contact_title": "Owner"
+      },
+      {
+          "fax": null,
+          "city": "Resende",
+          "phone": "(14) 555-8122",
+          "region": "SP",
+          "address": "Rua do Mercado, 12",
+          "country": "Brazil",
+          "customer_id": "WELLI",
+          "postal_code": "08737-363",
+          "company_name": "Wellington Importadora",
+          "contact_name": "Paula Parente",
+          "contact_title": "Sales Manager"
+      },
+      {
+          "fax": "981-443655",
+          "city": "Oulu",
+          "phone": "981-443655",
+          "region": null,
+          "address": "Torikatu 38",
+          "country": "Finland",
+          "customer_id": "WARTH",
+          "postal_code": "90110",
+          "company_name": "Wartian Herkku",
+          "contact_name": "Pirkko Koskitalo",
+          "contact_title": "Accounting Manager"
+      }
+  ],
+  "employee_territories":
+  [
+      {
+          "employee_id": 9,
+          "territory_id": "55439"
+      },
+      {
+          "employee_id": 9,
+          "territory_id": "55113"
+      },
+      {
+          "employee_id": 9,
+          "territory_id": "48304"
+      },
+      {
+          "employee_id": 9,
+          "territory_id": "48084"
+      },
+      {
+          "employee_id": 9,
+          "territory_id": "48075"
+      }
+  ],
+  "employees":
+  [
+      {
+          "city": "London",
+          "notes": "Anne has a BA degree in English from St. Lawrence College.  She is fluent in French and German.",
+          "title": "Sales Representative",
+          "region": null,
+          "address": "7 Houndstooth Rd.",
+          "country": "UK",
+          "extension": "452",
+          "hire_date": "1994-11-15",
+          "last_name": "Dodsworth",
+          "birth_date": "1966-01-27",
+          "first_name": "Anne",
+          "home_phone": "(71) 555-4444",
+          "photo_path": "http://accweb/emmployees/davolio.bmp",
+          "reports_to": 5,
+          "employee_id": 9,
+          "postal_code": "WG2 7LT",
+          "title_of_courtesy": "Ms."
+      },
+      {
+          "city": "Seattle",
+          "notes": "Laura received a BA in psychology from the University of Washington.  She has also completed a course in business French.  She reads and writes French.",
+          "title": "Inside Sales Coordinator",
+          "region": "WA",
+          "address": "4726 - 11th Ave. N.E.",
+          "country": "USA",
+          "extension": "2344",
+          "hire_date": "1994-03-05",
+          "last_name": "Callahan",
+          "birth_date": "1958-01-09",
+          "first_name": "Laura",
+          "home_phone": "(206) 555-1189",
+          "photo_path": "http://accweb/emmployees/davolio.bmp",
+          "reports_to": 2,
+          "employee_id": 8,
+          "postal_code": "98105",
+          "title_of_courtesy": "Ms."
+      },
+      {
+          "city": "London",
+          "notes": "Robert King served in the Peace Corps and traveled extensively before completing his degree in English at the University of Michigan in 1992, the year he joined the company.  After completing a course entitled Selling in Europe, he was transferred to the London office in March 1993.",
+          "title": "Sales Representative",
+          "region": null,
+          "address": "Edgeham Hollow\\nWinchester Way",
+          "country": "UK",
+          "extension": "465",
+          "hire_date": "1994-01-02",
+          "last_name": "King",
+          "birth_date": "1960-05-29",
+          "first_name": "Robert",
+          "home_phone": "(71) 555-5598",
+          "photo_path": "http://accweb/emmployees/davolio.bmp",
+          "reports_to": 5,
+          "employee_id": 7,
+          "postal_code": "RG1 9SP",
+          "title_of_courtesy": "Mr."
+      },
+      {
+          "city": "London",
+          "notes": "Michael is a graduate of Sussex University (MA, economics, 1983) and the University of California at Los Angeles (MBA, marketing, 1986).  He has also taken the courses Multi-Cultural Selling and Time Management for the Sales Professional.  He is fluent in Japanese and can read and write French, Portuguese, and Spanish.",
+          "title": "Sales Representative",
+          "region": null,
+          "address": "Coventry House\\nMiner Rd.",
+          "country": "UK",
+          "extension": "428",
+          "hire_date": "1993-10-17",
+          "last_name": "Suyama",
+          "birth_date": "1963-07-02",
+          "first_name": "Michael",
+          "home_phone": "(71) 555-7773",
+          "photo_path": "http://accweb/emmployees/davolio.bmp",
+          "reports_to": 5,
+          "employee_id": 6,
+          "postal_code": "EC2 7JR",
+          "title_of_courtesy": "Mr."
+      },
+      {
+          "city": "London",
+          "notes": "Steven Buchanan graduated from St. Andrews University, Scotland, with a BSC degree in 1976.  Upon joining the company as a sales representative in 1992, he spent 6 months in an orientation program at the Seattle office and then returned to his permanent post in London.  He was promoted to sales manager in March 1993.  Mr. Buchanan has completed the courses Successful Telemarketing and International Sales Management.  He is fluent in French.",
+          "title": "Sales Manager",
+          "region": null,
+          "address": "14 Garrett Hill",
+          "country": "UK",
+          "extension": "3453",
+          "hire_date": "1993-10-17",
+          "last_name": "Buchanan",
+          "birth_date": "1955-03-04",
+          "first_name": "Steven",
+          "home_phone": "(71) 555-4848",
+          "photo_path": "http://accweb/emmployees/buchanan.bmp",
+          "reports_to": 2,
+          "employee_id": 5,
+          "postal_code": "SW1 8JR",
+          "title_of_courtesy": "Mr."
+      }
+  ],
+  "order_details":
+  [
+      {
+          "discount": 0,
+          "order_id": 11077,
+          "quantity": 2,
+          "product_id": 77,
+          "unit_price": 13
+      },
+      {
+          "discount": 0,
+          "order_id": 11077,
+          "quantity": 4,
+          "product_id": 75,
+          "unit_price": 7.75
+      },
+      {
+          "discount": 0.01,
+          "order_id": 11077,
+          "quantity": 2,
+          "product_id": 73,
+          "unit_price": 15
+      },
+      {
+          "discount": 0,
+          "order_id": 11077,
+          "quantity": 1,
+          "product_id": 66,
+          "unit_price": 17
+      },
+      {
+          "discount": 0.03,
+          "order_id": 11077,
+          "quantity": 2,
+          "product_id": 64,
+          "unit_price": 33.25
+      }
+  ],
+  "orders":
+  [
+      {
+          "freight": 8.53,
+          "order_id": 11077,
+          "ship_via": 2,
+          "ship_city": "Albuquerque",
+          "ship_name": "Rattlesnake Canyon Grocery",
+          "order_date": "2026-09-08",
+          "customer_id": "RATTC",
+          "employee_id": 1,
+          "ship_region": "NM",
+          "ship_address": "2817 Milton Dr.",
+          "ship_country": "USA",
+          "shipped_date": null,
+          "required_date": "2026-09-10",
+          "ship_postal_code": "87110"
+      },
+      {
+          "freight": 38.28,
+          "order_id": 11076,
+          "ship_via": 2,
+          "ship_city": "Marseille",
+          "ship_name": "Bon app'",
+          "order_date": "2026-09-08",
+          "customer_id": "BONAP",
+          "employee_id": 4,
+          "ship_region": null,
+          "ship_address": "12, rue des Bouchers",
+          "ship_country": "France",
+          "shipped_date": null,
+          "required_date": "2026-09-10",
+          "ship_postal_code": "13008"
+      },
+      {
+          "freight": 6.19,
+          "order_id": 11075,
+          "ship_via": 2,
+          "ship_city": "Genève",
+          "ship_name": "Richter Supermarkt",
+          "order_date": "2026-09-08",
+          "customer_id": "RICSU",
+          "employee_id": 8,
+          "ship_region": null,
+          "ship_address": "Starenweg 5",
+          "ship_country": "Switzerland",
+          "shipped_date": null,
+          "required_date": "2026-09-10",
+          "ship_postal_code": "1204"
+      },
+      {
+          "freight": 18.44,
+          "order_id": 11074,
+          "ship_via": 2,
+          "ship_city": "Kobenhavn",
+          "ship_name": "Simons bistro",
+          "order_date": "2026-09-08",
+          "customer_id": "SIMOB",
+          "employee_id": 7,
+          "ship_region": null,
+          "ship_address": "Vinbæltet 34",
+          "ship_country": "Denmark",
+          "shipped_date": null,
+          "required_date": "2026-09-10",
+          "ship_postal_code": "1734"
+      },
+      {
+          "freight": 14.01,
+          "order_id": 11061,
+          "ship_via": 3,
+          "ship_city": "Eugene",
+          "ship_name": "Great Lakes Food Market",
+          "order_date": "2026-09-08",
+          "customer_id": "GREAL",
+          "employee_id": 4,
+          "ship_region": "OR",
+          "ship_address": "2732 Baker Blvd.",
+          "ship_country": "USA",
+          "shipped_date": null,
+          "required_date": "2026-09-10",
+          "ship_postal_code": "97403"
+      }
+  ],
+  "products":
+  [
+      {
+          "product_id": 77,
+          "unit_price": 13,
+          "category_id": 2,
+          "supplier_id": 12,
+          "discontinued": 0,
+          "product_name": "Original Frankfurter grüne Soße",
+          "reorder_level": 15,
+          "units_in_stock": 32,
+          "units_on_order": 0,
+          "quantity_per_unit": "12 boxes"
+      },
+      {
+          "product_id": 76,
+          "unit_price": 18,
+          "category_id": 1,
+          "supplier_id": 23,
+          "discontinued": 0,
+          "product_name": "Lakkalikööri",
+          "reorder_level": 20,
+          "units_in_stock": 57,
+          "units_on_order": 0,
+          "quantity_per_unit": "500 ml"
+      },
+      {
+          "product_id": 75,
+          "unit_price": 7.75,
+          "category_id": 1,
+          "supplier_id": 12,
+          "discontinued": 0,
+          "product_name": "Rhönbräu Klosterbier",
+          "reorder_level": 25,
+          "units_in_stock": 125,
+          "units_on_order": 0,
+          "quantity_per_unit": "24 - 0.5 l bottles"
+      },
+      {
+          "product_id": 74,
+          "unit_price": 10,
+          "category_id": 7,
+          "supplier_id": 4,
+          "discontinued": 0,
+          "product_name": "Longlife Tofu",
+          "reorder_level": 5,
+          "units_in_stock": 4,
+          "units_on_order": 20,
+          "quantity_per_unit": "5 kg pkg."
+      },
+      {
+          "product_id": 73,
+          "unit_price": 15,
+          "category_id": 8,
+          "supplier_id": 17,
+          "discontinued": 0,
+          "product_name": "Röd Kaviar",
+          "reorder_level": 5,
+          "units_in_stock": 101,
+          "units_on_order": 0,
+          "quantity_per_unit": "24 - 150 g jars"
+      }
+  ],
+  "region":
+  [
+      {
+          "region_id": 4,
+          "region_description": "Southern"
+      },
+      {
+          "region_id": 3,
+          "region_description": "Northern"
+      },
+      {
+          "region_id": 2,
+          "region_description": "Western"
+      },
+      {
+          "region_id": 1,
+          "region_description": "Eastern"
+      }
+  ],
+  "schema_migrations":
+  [
+      {
+          "version": "003_full_northwind_recent.sql",
+          "applied_at": "2026-09-10T08:16:07.778235+00:00"
+      },
+      {
+          "version": "002_seed.sql",
+          "applied_at": "2026-09-09T08:42:06.168843+00:00"
+      },
+      {
+          "version": "001_schema.sql",
+          "applied_at": "2026-09-09T08:42:06.168843+00:00"
+      }
+  ],
+  "shippers":
+  [
+      {
+          "phone": "1-800-225-5345",
+          "shipper_id": 6,
+          "company_name": "DHL"
+      },
+      {
+          "phone": "1-800-782-7892",
+          "shipper_id": 5,
+          "company_name": "UPS"
+      },
+      {
+          "phone": "1-800-222-0451",
+          "shipper_id": 4,
+          "company_name": "Alliance Shippers"
+      },
+      {
+          "phone": "(503) 555-9931",
+          "shipper_id": 3,
+          "company_name": "Federal Shipping"
+      },
+      {
+          "phone": "(503) 555-3199",
+          "shipper_id": 2,
+          "company_name": "United Package"
+      }
+  ],
+  "suppliers":
+  [
+      {
+          "fax": "(514) 555-2921",
+          "city": "Ste-Hyacinthe",
+          "phone": "(514) 555-2955",
+          "region": "Québec",
+          "address": "148 rue Chasseur",
+          "country": "Canada",
+          "homepage": null,
+          "postal_code": "J2S 7S8",
+          "supplier_id": 29,
+          "company_name": "Forêts d'érables",
+          "contact_name": "Chantal Goulet",
+          "contact_title": "Accounting Manager"
+      },
+      {
+          "fax": "38.76.98.58",
+          "city": "Annecy",
+          "phone": "38.76.98.06",
+          "region": null,
+          "address": "Bat. B 3, rue des Alpes",
+          "country": "France",
+          "homepage": null,
+          "postal_code": "74000",
+          "supplier_id": 28,
+          "company_name": "Gai pâturage",
+          "contact_name": "Eliane Noz",
+          "contact_title": "Sales Representative"
+      },
+      {
+          "fax": null,
+          "city": "Montceau",
+          "phone": "85.57.00.07",
+          "region": null,
+          "address": "22, rue H. Voiron",
+          "country": "France",
+          "homepage": null,
+          "postal_code": "71300",
+          "supplier_id": 27,
+          "company_name": "Escargots Nouveaux",
+          "contact_name": "Marie Delamare",
+          "contact_title": "Sales Manager"
+      },
+      {
+          "fax": "(089) 6547667",
+          "city": "Salerno",
+          "phone": "(089) 6547665",
+          "region": null,
+          "address": "Via dei Gelsomini, 153",
+          "country": "Italy",
+          "homepage": null,
+          "postal_code": "84100",
+          "supplier_id": 26,
+          "company_name": "Pasta Buttini s.r.l.",
+          "contact_name": "Giovanni Giudici",
+          "contact_title": "Order Administrator"
+      },
+      {
+          "fax": null,
+          "city": "Montréal",
+          "phone": "(514) 555-9022",
+          "region": "Québec",
+          "address": "2960 Rue St. Laurent",
+          "country": "Canada",
+          "homepage": null,
+          "postal_code": "H1J 1C3",
+          "supplier_id": 25,
+          "company_name": "Ma Maison",
+          "contact_name": "Jean-Guy Lauzon",
+          "contact_title": "Marketing Manager"
+      }
+  ],
+  "territories":
+  [
+      {
+          "region_id": 2,
+          "territory_id": "98104",
+          "territory_description": "Seattle"
+      },
+      {
+          "region_id": 2,
+          "territory_id": "98052",
+          "territory_description": "Redmond"
+      },
+      {
+          "region_id": 2,
+          "territory_id": "98004",
+          "territory_description": "Bellevue"
+      },
+      {
+          "region_id": 2,
+          "territory_id": "95060",
+          "territory_description": "Santa Cruz"
+      },
+      {
+          "region_id": 2,
+          "territory_id": "95054",
+          "territory_description": "Santa Clara"
+      }
+  ],
+  "us_states":
+  [
+      {
+          "state_id": 51,
+          "state_abbr": "WY",
+          "state_name": "Wyoming",
+          "state_region": "west"
+      },
+      {
+          "state_id": 50,
+          "state_abbr": "WI",
+          "state_name": "Wisconsin",
+          "state_region": "midwest"
+      },
+      {
+          "state_id": 49,
+          "state_abbr": "WV",
+          "state_name": "West Virginia",
+          "state_region": "south"
+      },
+      {
+          "state_id": 48,
+          "state_abbr": "WA",
+          "state_name": "Washington",
+          "state_region": "west"
+      },
+      {
+          "state_id": 47,
+          "state_abbr": "VA",
+          "state_name": "Virginia",
+          "state_region": "east"
+      }
+  ],
+  "_meta": {
+    "row_limit_per_table": 5,
+    "binary_columns_excluded": ["categories.picture", "employees.photo"],
+    "orders_sort": "required_date DESC, order_id DESC",
+    "other_tables_sort": "primary key DESC where available"
+  }
+}

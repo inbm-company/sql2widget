@@ -66,6 +66,39 @@ services:
       timeout: 5s
       retries: 20
 
+  db-skax-nms:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agent4any}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
+      POSTGRES_DB: ${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}
+    ports:
+      - "5438:5432"
+    volumes:
+      - pg_skax_nms_data:/var/lib/postgresql/data
+      - ./backend/sql/skax_nms:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent4any} -d ${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  db-chat-vector:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agent4any}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
+      POSTGRES_DB: ${CHAT_VECTOR_POSTGRES_DB:-agent4any_chat_vector}
+    ports:
+      - "5439:5432"
+    volumes:
+      - pg_chat_vector_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent4any} -d ${CHAT_VECTOR_POSTGRES_DB:-agent4any_chat_vector}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
   backend:
     build:
       context: ./backend
@@ -77,6 +110,9 @@ services:
       DEMO_CUSTOMER_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-customer:5432/${CUSTOMER_POSTGRES_DB:-agent4any_customer_demo}
       STAGE_GLOBAL_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-stage-global:5432/${STAGE_GLOBAL_POSTGRES_DB:-agent4any_stage_global}
       NORTHWIND_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-northwind:5432/${NORTHWIND_POSTGRES_DB:-agent4any_northwind}
+      SKAX_NMS_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-skax-nms:5432/${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}
+      CHAT_VECTOR_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-chat-vector:5432/${CHAT_VECTOR_POSTGRES_DB:-agent4any_chat_vector}
+      CHAT_EMBEDDING_DIM: ${CHAT_EMBEDDING_DIM:-1536}
       APP_SECRET: ${APP_SECRET:-dev-secret-replace-with-at-least-32-chars!!}
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
@@ -94,12 +130,18 @@ services:
         condition: service_healthy
       db-northwind:
         condition: service_healthy
+      db-skax-nms:
+        condition: service_healthy
+      db-chat-vector:
+        condition: service_healthy
     command: >
       sh -c "python scripts/migrate.py &&
              python scripts/migrate_customer.py &&
              python scripts/migrate_stage_global.py &&
              python scripts/migrate_northwind.py &&
+             python scripts/migrate_chat_vector.py &&
              python scripts/seed_dev.py &&
+             python scripts/seed_skax_nms.py &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
@@ -122,4 +164,6 @@ volumes:
   pg_customer_data:
   pg_stage_global_data:
   pg_northwind_data:
+  pg_skax_nms_data:
+  pg_chat_vector_data:
   frontend_node_modules:

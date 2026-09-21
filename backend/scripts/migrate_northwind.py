@@ -8,11 +8,13 @@ from pathlib import Path
 import psycopg
 
 from app.config import NORTHWIND_DATABASE_URL
+from seed_northwind_recent import seed as seed_recent_operational_data
 
 
 MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "sql" / "northwind"
 FULL_DATASET_PATH = MIGRATIONS_DIR / "northwind_full.sql.gz.b64"
 FULL_DATASET_MIGRATION = "003_full_northwind_recent.sql"
+RECENT_OPERATIONAL_DATA_MIGRATION = "004_recent_operational_data.sql"
 
 RECENT_DATE_SQL = """
 WITH date_bounds AS (
@@ -81,6 +83,8 @@ def main() -> None:
                 if version == FULL_DATASET_MIGRATION:
                     cur.execute(full_dataset_sql())
                     cur.execute(RECENT_DATE_SQL)
+                elif version == RECENT_OPERATIONAL_DATA_MIGRATION:
+                    seed_recent_operational_data(cur)
                 else:
                     cur.execute(path.read_text(encoding="utf-8"))
                 cur.execute(

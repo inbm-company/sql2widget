@@ -23,6 +23,7 @@ docker compose up --build
 - Service DB host port: `5434` (container `5432`; host `5432`가 이미 쓰이면 충돌 방지)
 - Sample customer DB host port: `5436` (if `5433` is already used)
 - Full Northwind sample DB host port: `5437` (operational date fields are recentized across 2026-08-01 to 2026-09-10)
+- SKAX NMS snapshot DB host port: `5438` (`cinamon` schema, including table data)
 
 Login:
 
@@ -47,6 +48,9 @@ Full Northwind sample questions (Gemini key required for generic schema reasonin
 1. 고객별 총 주문 금액 순위를 보여줘.
 2. 카테고리별 매출 비중을 보여줘.
 3. 월별 주문 매출 추이를 보여줘.
+
+SKAX NMS는 관리자 연결 목록의 `SKAX NMS DB`를 선택해 사용한다. 이 데이터베이스도
+고정 Mock 질의가 아닌 실제 AI 연결 설정이 있어야 자연어 스키마 추론이 동작한다.
 
 ## State rules
 
