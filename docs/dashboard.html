@@ -474,39 +474,75 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
 
 <!-- ===================== STAGE ===================== -->
 <section id="stage">
-  <div class="doc-title">기능</div>
-  <h1 class="page">Stage (핀보드)</h1>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>stages.py</code>, <code>StageCanvas.jsx</code></p>
-  <p>Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다.</p>
-
-  <h2>F-10 Stage에 위젯 추가</h2>
-  <p>드래그(<code>application/x-agent4any-widget</code> MIME) 또는 "Add to stage" 버튼, 둘 다 <code>POST /api/projects/{id}/stage/widgets</code>로 귀결.</p>
-  <ul>
-    <li><code>component</code>가 화이트리스트 밖이면 <strong>400</strong>.</li>
-    <li>합성 위젯(BarTable/PieTable/KpiSparkline)은 기본 <code>w:6 h:7</code>, 그 외는 <code>w:4 h:4</code>.</li>
-    <li><code>source_widget_id</code>/<code>source_artifact_id</code>로 출처 추적.</li>
-  </ul>
-
-  <h2>F-11 Stage 배치 / 저장</h2>
-  <ul>
-    <li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li>
-    <li>프로젝트당 Stage 1행, 없으면 GET 시 생성.</li>
-    <li><code>react-grid-layout</code>(12열, rowHeight 36, compactType vertical).</li>
-    <li>이동·리사이즈는 <strong>500ms 디바운스</strong> 후 변경된 위젯만 PATCH 저장.</li>
-    <li>저장 상태(대기/저장 중…/저장됨/저장 실패)는 전역 슬롯에 있으며 readOnly에는 표시하지 않는다.</li>
-  </ul>
-
-  <h2>데이터 모델</h2>
-  <pre><code>stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
+<div class="doc-title">기능</div>
+<h1 class="page">기능: Stage (핀보드)</h1>
+<table>
+<tr><th>항목</th><th>내용</th></tr>
+<tr><td>문서명</td><td>기능 문서 — Stage 배치</td></tr>
+<tr><td>기준일</td><td>2026-09-30 (구현 기준)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/graph-rag-sources.md">graph-rag-sources.md</a>(프로젝트 그래프), <a href="features/widgets-artifact.md">widgets-artifact.md</a>(위젯 카탈로그), <a href="features/viewer.md">viewer.md</a>(읽기 전용 표시)</td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/repositories/stages.py</code>, <code>backend/app/main.py</code>(<code>/api/projects/{id}/stage*</code>), <code>frontend/src/StageCanvas.jsx</code>, <code>frontend/src/ProjectGraph.jsx</code></td></tr>
+</table>
+<p>Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2).</p>
+<h2>F-10 Stage에 위젯 추가</h2>
+<p>두 가지 경로 모두 최종적으로 <code>POST /api/projects/{id}/stage/widgets</code>를 호출한다.</p>
+<ol>
+<li><strong>드래그</strong>: <code>ArtifactPreviewCard</code>가 <code>dataTransfer</code>에 MIME 타입 <code>application/x-agent4any-widget</code>로 위젯 JSON을 싣는다. <code>StageCanvas</code>의 그리드가 <code>onDrop</code>에서 이를 파싱해 드롭 좌표(<code>layoutItem.x/y</code>)에 추가한다.</li>
+<li><strong>버튼</strong>: 카드의 &quot;Add to stage&quot; 클릭 → <code>addWidgetToStage()</code> 헬퍼가 현재 Stage의 최대 <code>y</code>값 아래(<code>yMax</code>)에 이어 붙인다.</li>
+</ol>
+<p>공통 처리:</p>
+<ul>
+<li><code>component</code>가 화이트리스트 밖이면 <strong>400</strong>으로 거부(채팅 쪽 <code>DataTable</code> 폴백과는 다르다 — § <a href="features/widgets-artifact.md">widgets-artifact.md</a>).</li>
+<li>위젯에 SQL이 있었으면 <code>props.__sql</code>에 실어 함께 저장(나중에 Stage에서도 SQL 보기가 가능하도록).</li>
+<li>합성 위젯(<code>BarTable</code>, <code>PieTable</code>, <code>KpiSparkline</code>)은 기본 크기 <code>w:6 h:7</code>, 그 외는 <code>w:4 h:4</code>(버튼 경로 기준. 드래그 경로는 그리드가 준 드롭 크기를 그대로 쓰고 기본값은 <code>w:4 h:4</code>).</li>
+<li><code>source_widget_id</code> / <code>source_artifact_id</code>로 어떤 채팅 응답에서 왔는지 추적.</li>
+</ul>
+<h2>F-11 Stage 배치 / 저장</h2>
+<ul>
+<li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li>
+<li>프로젝트당 Stage 1행. <code>GET .../stage</code> 호출 시 없으면 생성(<code>get_or_create_stage</code>).</li>
+<li>레이아웃 엔진은 <code>react-grid-layout</code>(12열, <code>rowHeight: 36</code>, <code>margin: [12,12]</code>, <code>compactType: &quot;vertical&quot;</code>).</li>
+<li>이동·리사이즈(<code>onLayoutChange</code>)는 <strong>500ms 디바운스</strong> 후 변경된 위젯들만 <code>PATCH .../stage/widgets/{id}</code>로 저장(<code>persistLayout</code>). 저장 중에는 로컬 상태(<code>localWidgets</code>)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 <code>error</code>로 표시한다.</li>
+<li>전체 교체: <code>PUT .../stage</code> <code>{ widgets: [...] }</code> (현재 UI는 이 경로를 안 쓰고 있으나 API는 열려 있음).</li>
+<li>단건 수정: <code>PATCH</code> — <code>title</code>/<code>props</code>/<code>layout</code> 중 보낸 필드만 갱신.</li>
+<li>삭제: <code>DELETE .../stage/widgets/{id}</code>.</li>
+<li>새로고침해도 SWR 캐시(<code>storeKeys.stage(projectId)</code>)를 통해 서버 상태로 복원.</li>
+<li>빈 Stage 안내: 편집 가능 역할 &quot;대화의 결과 위젯을 여기로 드래그하세요&quot;, viewer &quot;배치된 위젯이 없습니다.&quot;</li>
+<li>저장 상태 표시줄(<code>대기</code> / <code>저장 중…</code> / <code>저장됨</code> / <code>저장 실패</code>)은 전역 슬롯 <code>storeKeys.ui</code>(<code>useStore</code>)에 있다. 편집 불가 역할(<code>readOnly</code>)에는 표시하지 않는다.</li>
+<li>위젯 크기는 <code>minW:2, minH:2</code>로 제한.</li>
+</ul>
+<h2>프로젝트 문서 그래프 보기</h2>
+<p>Stage 헤더의 <strong>위젯 / 그래프</strong> 버튼으로 전환한다. 그래프는 현재 프로젝트의 활성 문서·명시된 문서 링크를 Neo4j에서 읽어 표시한다. 위젯 배치나 화이트리스트를 변경하지 않는다.</p>
+<ul>
+<li>제목·경로 검색, 확대·축소·전체 보기, 배경 드래그 이동을 지원한다.</li>
+<li>노드 선택 시 문서 본문과 연결된 문서를 보여준다. 본문 조각의 겹침을 제거하고 일반 텍스트로 표시한다.</li>
+<li>기본 문서 200개·문서 사이 링크 최대 1,000개, 본문 처음 100,000자까지 표시한다. 초과 시 안내한다.</li>
+<li>문서가 없으면 DB 관리에서 프로젝트 경로 등록 또는 기존 소스 연결 후 적재하도록 안내한다. 조회 실패는 오류로 표시한다.</li>
+<li>Viewer에서도 조회할 수 있다. API는 테넌트·프로젝트 소유자·소속 소스를 검사한다.</li>
+<li>상세 API·기존 데이터 연결·제한은 <a href="features/graph-rag-sources.md">graph-rag-sources.md</a>를 본다.</li>
+</ul>
+<h2>데이터 모델 (서비스 DB)</h2>
+<pre><code>stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
 stage_widgets(
   id, stage_id, source_widget_id?, source_artifact_id?,
   component, title, props jsonb,
-  layout_i, layout_x, layout_y, layout_w, layout_h, updated_at
+  layout_i, layout_x, layout_y, layout_w, layout_h,
+  updated_at
 )</code></pre>
-
-  <div class="note">서버 쪽에서 Stage 쓰기 API는 소유자 검사만 하고 role은 별도로 검사하지 않는다 — <code>readOnly</code>는 프론트 렌더링 제어일 뿐이다(<a href="#viewer">Viewer 문서</a> 참고).</div>
-
-  <div class="page-nav"><a href="#widgets-artifact">← Artifact/위젯 카탈로그</a><a href="#viewer">다음: Viewer 화면 →</a></div>
+<ul>
+<li><code>stages.project_id</code>가 유니크 — 프로젝트당 1행이라는 규칙이 DB 레벨에서도 강제된다.</li>
+<li><code>stage_widgets</code>는 <code>layout_y ASC, layout_x ASC</code> 순으로 조회된다.</li>
+<li><code>props</code>는 <code>jsonb</code>로 저장되며 화이트리스트 검증은 저장소 함수(<code>add_widget</code>/<code>replace_stage_widgets</code>)에서 <code>ALLOWED_COMPONENTS</code>로 수행.</li>
+</ul>
+<h2>API</h2>
+<table>
+<tr><th>Method</th><th>Path</th><th>권한</th></tr>
+<tr><td>GET/PUT</td><td><code>/api/projects/{id}/stage</code></td><td>본인(프로젝트 소유자)</td></tr>
+<tr><td>POST</td><td><code>/api/projects/{id}/stage/widgets</code></td><td>본인</td></tr>
+<tr><td>PATCH/DELETE</td><td><code>/api/projects/{id}/stage/widgets/{widget_id}</code></td><td>본인</td></tr>
+</table>
+<p>viewer도 GET은 호출되지만(읽기 전용 페이지가 Stage를 불러와야 하므로), 쓰기 경로는 프론트에서 버튼 자체를 렌더링하지 않아 도달하지 않는다. 서버 쪽에서 role로 쓰기를 막는 별도 검사는 없다 — <code>StageCanvas</code>의 <code>readOnly</code> prop이 유일한 방어선이라는 점에 주의(§ <a href="features/viewer.md">viewer.md</a>).</p>
+<div class="page-nav"><a href="#widgets-artifact">← Artifact/위젯 카탈로그</a><a href="#viewer">다음: Viewer 화면 →</a></div>
 </section>
 
 <!-- ===================== VIEWER ===================== -->
@@ -587,26 +623,34 @@ stage_widgets(
 
 <!-- ===================== PROGRESS ===================== -->
 <section id="graph-rag-sources">
-  <div class="doc-title">기능</div>
-<h1 class="page">기능: Graph RAG 로컬 문서 경로 등록·적재</h1>
+<div class="doc-title">기능</div>
+<h1 class="page">기능: 프로젝트별 Graph RAG 문서 그래프</h1>
 <table>
 <tr><th>항목</th><th>내용</th></tr>
 <tr><td>문서명</td><td>기능 문서 — Graph RAG 데이터 소스</td></tr>
 <tr><td>기준일</td><td>2026-09-30 (구현 기준)</td></tr>
-<tr><td>관련 문서</td><td><a href="features/admin.md">admin.md</a>, <a href="../README.md">README.md</a>, <a href="progress.md">progress.md</a></td></tr>
-<tr><td>관련 코드</td><td><code>backend/app/graph_source_routes.py</code>, <code>graph_ingestion.py</code>, <code>repositories/graph_sources.py</code>, <code>backend/sql/migrations/005_graph_sources.sql</code>, <code>frontend/src/GraphSources.jsx</code>, <code>docker-compose.yml</code></td></tr>
+<tr><td>관련 문서</td><td><a href="features/stage.md">stage.md</a>, <a href="features/admin.md">admin.md</a>, <a href="../README.md">README.md</a>, <a href="progress.md">progress.md</a></td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/graph_source_routes.py</code>, <code>graph_ingestion.py</code>, <code>project_graph.py</code>, <code>repositories/graph_sources.py</code>, <code>backend/sql/migrations/005_graph_sources.sql</code>, <code>006_graph_source_projects.sql</code>, <code>frontend/src/GraphSources.jsx</code>, <code>ProjectGraph.jsx</code>, <code>docker-compose.yml</code></td></tr>
 </table>
 <h2>범위</h2>
-<p>관리자가 로컬 폴더·파일 경로를 등록하고 <strong>적재</strong> 버튼으로 Neo4j에 문서 본문과 문서 간 명시된 링크를 저장한다. <code>DB 관리</code>와 전체 <code>Admin</code> 패널에 표시된다. 데이터 소스는 테넌트별이며 프로젝트에 종속되지 않는다.</p>
-<p>현재는 Graph RAG용 문서 그래프를 준비하는 단계다. 질문에서 그래프를 검색하는 연결, 임베딩, LLM 개체·관계 추출, 자동 적재·폴더 감시, PDF·이미지 처리는 구현하지 않았다. 채팅은 기존 SQL·예상 질문 검색 경로를 유지한다.</p>
+<p>관리자가 로컬 폴더·파일 경로를 등록하고 <strong>적재</strong> 버튼으로 Neo4j에 문서 본문과 문서 간 명시된 링크를 저장한다. <code>DB 관리</code>와 전체 <code>Admin</code> 패널에 표시된다. 사이드바에서 선택한 프로젝트의 데이터 소스만 등록·적재한다. Neo4j 서버는 하나를 사용하고, 테넌트·프로젝트·소스 식별자로 데이터를 논리적으로 분리한다. 프로젝트별 별도 컨테이너나 데이터베이스를 생성하지 않는다.</p>
+<p>현재는 Graph RAG용 문서 그래프를 준비하는 단계다. 채팅 내부 설정과 질문에서 그래프를 검색하는 연결, 임베딩, LLM 개체·관계 추출, 자동 적재·폴더 감시, PDF·이미지 처리는 구현하지 않았다. 채팅은 기존 SQL·예상 질문 검색 경로를 유지한다.</p>
 <h2>경로 등록</h2>
 <ul>
 <li><code>.env</code>의 <code>GRAPH_RAG_HOST_PATH</code>로 공유할 <strong>호스트 폴더</strong>를 지정한다. 기본값은 <code>./graph-rag-sources</code>다.</li>
 <li>Docker 백엔드에는 <code>/graph-rag-sources</code>로 <strong>읽기 전용</strong> 마운트한다. 공유 폴더 변경 시 백엔드 컨테이너를 재생성한다.</li>
 <li>폼에는 이름과 폴더·파일 경로를 입력한다. 호스트 공유 폴더의 절대 경로, 컨테이너 공유 경로, 공유 폴더 내부 상대 경로를 받는다.</li>
 <li>존재하는 경로만 등록한다. 공유 범위를 벗어난 경로, <code>..</code> 탈출, 숨김 경로, 범위 밖으로 연결되는 심볼릭 링크는 거부한다.</li>
-<li>빈 폴더도 등록할 수 있다. 같은 테넌트의 같은 정규화 경로를 재등록하면 이름만 갱신한다.</li>
+<li>빈 폴더도 등록할 수 있다. 같은 프로젝트의 같은 정규화 경로를 재등록하면 이름만 갱신한다.</li>
 <li>경로 등록은 적재를 실행하지 않는다. 새로고침 후에도 등록 목록이 유지된다.</li>
+</ul>
+<h2>기존 소스 연결</h2>
+<p>마이그레이션 <code>006_graph_source_projects.sql</code>은 기존 소스를 삭제하거나 임의 프로젝트에 배정하지 않는다. <code>project_id=NULL</code>로 보존하고 생성자에게 <strong>프로젝트에 연결되지 않은 기존 소스</strong>로 표시한다.</p>
+<ul>
+<li>사용할 프로젝트를 선택한 뒤 DB 관리에서 <strong>이 프로젝트에 연결</strong>을 누른다. 기존 Neo4j 문서·조각·링크에 프로젝트 범위를 추가하고 서비스 DB에 소속을 저장한다. 문서 ID와 본문을 보존한다.</li>
+<li>같은 경로가 이미 해당 프로젝트에 있으면 409로 거부한다. 연결된 소스를 다른 프로젝트로 옮기는 UI·API는 없다.</li>
+<li>프로젝트가 삭제되면 서비스 DB의 소스는 미연결 상태로 남는다(<code>ON DELETE SET NULL</code>). 그래프 기록은 삭제하지 않고 생성자가 새 프로젝트를 선택해 다시 연결할 수 있다.</li>
+<li>소스가 서로 다른 프로젝트에 따로 등록되면 같은 경로도 서로 다른 소스·문서 ID로 적재된다.</li>
 </ul>
 <h2>수동 적재</h2>
 <p>지원: UTF-8 Markdown(<code>.md</code>)·텍스트(<code>.txt</code>). 폴더는 하위 폴더까지 읽는다.</p>
@@ -623,23 +667,38 @@ stage_widgets(
 <p>상태: <code>registered</code>(등록됨) → <code>processing</code>(적재 중) → <code>completed</code>(적재 완료) 또는 <code>failed</code>(적재 실패).</p>
 <p>적재 요청은 동기 실행하고 화면은 처리 중 상태를 조회한다. 소스별 PostgreSQL 세션 잠금으로 중복 실행을 409로 거부한다. 백엔드가 중단되면 잠금이 풀리므로 버튼으로 다시 실행할 수 있다. Neo4j 반영은 소스 전체를 한 트랜잭션으로 처리한다. 서비스 DB와 Neo4j 사이에는 분산 트랜잭션이 없으므로 결과 상태 저장에 실패한 경우 재실행으로 복구한다.</p>
 <h2>저장 구조</h2>
-<p>경로·상태는 <strong>서비스 PostgreSQL</strong>의 <code>graph_sources</code>에 저장한다. 고객 PostgreSQL 데이터는 읽거나 수정하지 않는다. 모든 API는 로그인한 관리자만 사용하며 현재 테넌트만 조회·적재한다.</p>
-<pre><code>graph_sources(id, tenant_id, name, path, status,
+<p>경로·상태는 <strong>서비스 PostgreSQL</strong>의 <code>graph_sources</code>에 저장한다. 고객 PostgreSQL 데이터는 읽거나 수정하지 않는다. 소스 등록·목록·연결·적재는 관리자이면서 해당 프로젝트 소유자인 사용자만 가능하다. 그래프·문서 조회는 로그인한 프로젝트 소유자에게 허용한다(viewer 포함). API는 프로젝트 소유자·테넌트를 검사한 뒤 서비스 DB에서 소스 ID를 구하고, Neo4j에서도 테넌트·프로젝트·소스·활성 상태를 모두 검사한다.</p>
+<pre><code>graph_sources(id, tenant_id, project_id?, name, path, status,
               document_count, chunk_count, link_count, skipped_count,
               unresolved_link_count, error, created_by, created_at, last_ingested_at)</code></pre>
 <p>Neo4j 구조:</p>
 <pre><code>(GraphSource)-[:HAS_DOCUMENT]-&gt;(GraphDocument)-[:HAS_CHUNK]-&gt;(GraphChunk)
 (GraphChunk)-[:NEXT_CHUNK]-&gt;(GraphChunk)
 (GraphDocument)-[:LINKS_TO]-&gt;(GraphDocument)</code></pre>
-<p>문서·조각 ID는 소스와 경로로 고정하며, 문서·조각 노드에 <code>source_id</code>·<code>tenant_id</code> 범위를 유지한다. 서로 다른 소스의 링크를 합치지 않는다. 적재 시 세 노드 타입에 ID 고유 제약을 만든다.</p>
+<p>문서·조각 ID는 소스와 경로로 고정하며, 소스·문서·조각 노드에 <code>project_id</code>·<code>tenant_id</code>를 저장하고 문서·조각에는 <code>source_id</code>도 저장한다. 문서 링크에도 프로젝트·테넌트 범위를 저장한다. 서로 다른 소스의 링크를 합치지 않는다. 적재 시 세 노드 타입에 ID 고유 제약을 만든다.</p>
 <p>재적재 시 같은 노드를 갱신한다. 이전 조각·문서 링크·이번에 누락된 문서는 <code>active=false</code>로 남기고 삭제하지 않는다. 이후 검색 구현은 문서·본문 조각·문서 링크의 활성 상태를 확인해야 한다.</p>
+<h2>Stage 그래프</h2>
+<ul>
+<li>Stage 헤더에서 <strong>위젯 / 그래프</strong> 보기를 전환한다. 기존 위젯 배치·저장 동작은 유지하며 그래프는 위젯 화이트리스트나 <code>stage_widgets</code>에 추가하지 않는다.</li>
+<li>현재 프로젝트의 활성 문서가 노드, 명시된 문서 링크가 방향 있는 선으로 표시된다. 소스·문서·본문 조각·링크 총개수를 보여준다.</li>
+<li>제목·경로 검색, 확대·축소·전체 보기, 배경 드래그 이동을 지원한다. 노드는 클릭하거나 키보드 Enter/Space로 선택한다.</li>
+<li>선택한 문서의 소스·경로·본문 조각 수·본문을 보여주고 연결된 문서로 이동할 수 있다. 본문은 조각 겹침을 제거한 일반 텍스트로 표시한다(HTML 실행 없음).</li>
+<li>문서 기본 200개(API 상한 500개), 표시된 문서 사이 링크 최대 1,000개를 반환한다. 초과 시 제한 안내를 표시하며 검색은 표시된 문서를 대상으로 한다. 본문은 처음 100,000자까지 보여준다.</li>
+<li>적재·기존 소스 연결 후 그래프 캐시를 갱신한다. Stage의 <strong>새로고침</strong>으로 다시 조회할 수도 있다. 문서가 없거나 조회에 실패하면 안내·오류를 표시한다.</li>
+<li>Viewer에서도 그래프·본문 조회가 가능하다. 프로젝트 소유자 검사는 동일하며 소스 편집은 제공하지 않는다.</li>
+</ul>
 <h2>API</h2>
+<p>아래 경로의 <code>{project_id}</code>는 로그인한 사용자가 소유한 프로젝트여야 한다.</p>
 <table>
 <tr><th>API</th><th>동작</th><th>권한</th></tr>
-<tr><td><code>GET /api/graph-sources</code></td><td>현재 테넌트의 소스 목록, 공유 루트, 지원 확장자</td><td>admin</td></tr>
-<tr><td><code>POST /api/graph-sources</code></td><td><code>{name, path}</code> 등록 또는 같은 경로의 이름 갱신</td><td>admin</td></tr>
-<tr><td><code>POST /api/graph-sources/{id}/ingest</code></td><td>문서를 읽어 Neo4j에 적재하고 결과 반환</td><td>admin</td></tr>
+<tr><td><code>GET /api/projects/{project_id}/graph-sources</code></td><td>해당 프로젝트 소스, 본인이 만든 미연결 소스, 공유 루트, 지원 확장자</td><td>admin + 소유자</td></tr>
+<tr><td><code>POST /api/projects/{project_id}/graph-sources</code></td><td><code>{name, path}</code> 등록 또는 같은 프로젝트·경로의 이름 갱신</td><td>admin + 소유자</td></tr>
+<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/assign</code></td><td>본인이 만든 미연결 소스를 프로젝트에 연결</td><td>admin + 소유자</td></tr>
+<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/ingest</code></td><td>프로젝트 문서를 읽어 Neo4j에 적재하고 결과 반환</td><td>admin + 소유자</td></tr>
+<tr><td><code>GET /api/projects/{project_id}/graph?limit=200</code></td><td>활성 문서 노드·링크·개수·표시 제한 반환</td><td>소유자</td></tr>
+<tr><td><code>GET /api/projects/{project_id}/graph/documents/{document_id}</code></td><td>소속 문서 정보와 본문 조회, 다른 프로젝트 문서는 404</td><td>소유자</td></tr>
 </table>
+<p>이전 테넌트 공통 <code>/api/graph-sources</code> 경로는 제거했다.</p>
 <p>기존 환경에는 <code>python scripts/migrate.py</code>를 적용한다. Docker Compose 백엔드 기동 시 이 마이그레이션을 자동 적용한다. 접속 비밀번호는 <code>.env</code>의 <code>NEO4J_PASSWORD</code>를 사용하고 API 응답·로그에 포함하지 않는다.</p>
 <div class="page-nav"><a href="#admin">← 관리자</a><a href="#progress">다음: 진행 상황 →</a></div>
 </section>
@@ -649,7 +708,7 @@ stage_widgets(
   <h1 class="page">작업 진행 상황</h1>
   <p class="doc-meta">기준일 2026-09-30 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
 
-  <p><span class="badge done">완료 15</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
+  <p><span class="badge done">완료 16</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
 
   <h2>요약</h2>
   <ul>
@@ -657,7 +716,7 @@ stage_widgets(
     <li>2026-09-03 스냅샷 이후 <strong>프로젝트 계층</strong>이 새로 들어왔다 — <code>/c/:id/view</code>는 지금 <code>/p/:projectId/view</code>로 바뀌었다.</li>
     <li>실 LLM 경로도 스냅샷 이후 상당히 진전됐다.</li>
     <li>채팅 메시지 임베딩은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작한다.</li>
-    <li>Graph RAG 준비용 Neo4j 로컬 설치와 문서 경로 등록·수동 적재는 <strong>완료</strong>. 문서 본문과 명시된 문서 링크를 저장하며, 질문에서 검색하는 연동은 다음 단계다.</li>
+    <li>Graph RAG 준비용 Neo4j 로컬 설치와 프로젝트별 문서 경로 등록·수동 적재·Stage 그래프 조회는 <strong>완료</strong>. 문서 본문과 명시된 문서 링크를 저장하며, 질문에서 검색하는 연동은 다음 단계다.</li>
   </ul>
 
   <h2><span class="badge done">완료</span></h2>
@@ -671,7 +730,8 @@ stage_widgets(
     <li>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</li>
     <li>Northwind, SKAX NMS 샘플 DB 시드</li>
     <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
-    <li>로컬 문서 경로 등록·수동 Neo4j 적재 — 관리자 소스 등록·영속 저장·적재 상태, Markdown/텍스트 본문·문서 링크, 읽기 전용 공유, 재적재 중복 방지. 질문 검색 연동은 미구현 — <a href="#graph-rag-sources">상세 문서</a></li>
+    <li>프로젝트별 로컬 문서 경로 등록·수동 Neo4j 적재 — 프로젝트 소유자·테넌트 분리, 기존 소스 명시적 연결, 관리자 소스 등록·영속 저장·적재 상태, Markdown/텍스트 본문·문서 링크, 읽기 전용 공유, 재적재 중복 방지. 질문 검색 연동은 미구현 — <a href="#graph-rag-sources">상세 문서</a></li>
+    <li>Stage 프로젝트 문서 그래프·본문 조회 — 위젯/그래프 전환, 문서 노드·링크, 검색·확대·이동, 본문·연결 문서 조회, Viewer 조회 — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
     <li>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원</li>
     <li><code>llm_usage</code> 사용량 기록 골격</li>

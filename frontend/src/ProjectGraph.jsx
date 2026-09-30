@@ -1,0 +1,96 @@
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { api } from "./api";
+import { storeKeys, useSWR } from "./store";
+import { filterGraph, layoutGraph } from "./graphLayout";
+
+export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
+  const graph = useMemo(() => layoutGraph(nodes, links), [nodes, links]);
+  const center = { x: (Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + Math.max(...graph.nodes.map((n) => n.x), graph.width / 2)) / 2,
+    y: (Math.min(...graph.nodes.map((n) => n.y), graph.height / 2) + Math.max(...graph.nodes.map((n) => n.y), graph.height / 2)) / 2 };
+  const width = Math.max(400, Math.max(...graph.nodes.map((n) => n.x), graph.width / 2) - Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + 160);
+  const height = Math.max(280, Math.max(...graph.nodes.map((n) => n.y), graph.height / 2) - Math.min(...graph.nodes.map((n) => n.y), graph.height / 2) + 120);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const drag = useRef(null);
+  const markerId = useId().replace(/:/g, "");
+  const lookup = new Map(graph.nodes.map((node) => [node.id, node]));
+  const neighbors = new Set([selectedId]);
+  links.forEach((link) => {
+    if (link.source === selectedId) neighbors.add(link.target);
+    if (link.target === selectedId) neighbors.add(link.source);
+  });
+  function startPan(event) {
+    if (event.button !== 0 || event.target.closest("[data-graph-node]")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    drag.current = { x: event.clientX, y: event.clientY, pan, ratio: Math.max(width / rect.width, height / rect.height) };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function movePan(event) {
+    if (!drag.current) return;
+    const start = drag.current;
+    setPan({ x: start.pan.x + (event.clientX - start.x) * start.ratio, y: start.pan.y + (event.clientY - start.y) * start.ratio });
+  }
+  return <div className="graph-diagram-wrap">
+    <div className="graph-zoom">
+      <button type="button" className="ghost" aria-label="그래프 축소" onClick={() => setZoom((z) => Math.max(0.3, z / 1.3))}>−</button>
+      <span className="muted small">{Math.round(zoom * 100)}%</span>
+      <button type="button" className="ghost" aria-label="그래프 확대" onClick={() => setZoom((z) => Math.min(4, z * 1.3))}>+</button>
+      <button type="button" className="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>전체 보기</button>
+    </div>
+    <svg className="graph-diagram" viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`} role="group" aria-label="프로젝트 문서 그래프"
+      onPointerDown={startPan} onPointerMove={movePan} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
+      <defs><marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>
+      <g transform={`translate(${center.x + pan.x} ${center.y + pan.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
+        {links.map((edge) => {
+          const from = lookup.get(edge.source), to = lookup.get(edge.target);
+          if (!from || !to) return null;
+          const selected = edge.source === selectedId || edge.target === selectedId;
+          if (edge.source === edge.target) return <path key={`${edge.source}:${edge.target}`} className={`graph-edge ${selected ? "selected" : ""}`} d={`M ${from.x - 7} ${from.y - 8} c -35 -45 50 -45 15 0`} markerEnd={`url(#${markerId})`} />;
+          const dx = to.x - from.x, dy = to.y - from.y, distance = Math.max(1, Math.hypot(dx, dy));
+          return <line key={`${edge.source}:${edge.target}`} className={`graph-edge ${selected ? "selected" : ""}`} x1={from.x + dx / distance * 13} y1={from.y + dy / distance * 13} x2={to.x - dx / distance * 16} y2={to.y - dy / distance * 16} markerEnd={`url(#${markerId})`} />;
+        })}
+        {graph.nodes.map((node) => <g key={node.id} data-graph-node={node.id} className={`graph-node ${selectedId === node.id ? "selected" : ""} ${selectedId && !neighbors.has(node.id) ? "dimmed" : ""}`}
+          transform={`translate(${node.x} ${node.y})`} role="button" tabIndex={0} aria-label={`문서 ${node.title}`} aria-pressed={selectedId === node.id}
+          onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } }}>
+          <title>{`${node.title}\n${node.path}`}</title><circle r="12" /><text y="29" textAnchor="middle">{node.title.length > 20 ? `${node.title.slice(0, 20)}…` : node.title}</text>
+        </g>)}
+      </g>
+    </svg>
+    <p className="muted small graph-hint">노드: 문서 · 화살표: 문서 링크 · 배경을 드래그해 이동하세요.</p>
+  </div>;
+}
+
+export default function ProjectGraph({ projectId }) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(storeKeys.projectGraph(projectId), () => api.getProjectGraph(projectId));
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const { data: document, error: documentError, isLoading: documentLoading, mutate: refreshDocument } = useSWR(
+    storeKeys.graphDocument(projectId, selectedId), () => api.getGraphDocument(projectId, selectedId)
+  );
+  useEffect(() => { if (selectedId) refreshDocument(); }, [data, selectedId, refreshDocument]);
+  const filtered = useMemo(() => data ? filterGraph(data, query) : { nodes: [], links: [] }, [data, query]);
+  const selectedNode = filtered.nodes.find((node) => node.id === selectedId);
+  useEffect(() => { if (selectedId && !selectedNode) setSelectedId(null); }, [selectedId, selectedNode]);
+  const related = selectedNode ? filtered.links.filter((link) => link.source === selectedId || link.target === selectedId) : [];
+  const neighbors = [...new Set(related.map((link) => link.source === selectedId ? link.target : link.source))];
+  return <section className="project-graph" aria-label="Stage 그래프">
+    <div className="graph-toolbar">
+      <input type="search" aria-label="그래프 문서 검색" placeholder="문서 제목 또는 경로 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
+      <button type="button" className="ghost" disabled={isValidating} onClick={() => mutate()}>{isValidating ? "불러오는 중…" : "새로고침"}</button>
+    </div>
+    {data ? <p className="muted small">소스 {data.totals.source_count}개 · 문서 {data.totals.document_count}개 · 본문 조각 {data.totals.chunk_count}개 · 링크 {data.totals.link_count}개</p> : null}
+    {isLoading ? <p className="muted" role="status">그래프를 불러오고 있습니다…</p> : null}
+    {error ? <p className="admin-status" role="alert">{error.message}</p> : null}
+    {data?.truncated ? <p className="graph-limit small" role="status">전체 중 문서 최대 {data.node_limit}개, 링크 최대 {data.link_limit}개를 표시합니다. 검색은 표시된 문서를 대상으로 합니다.</p> : null}
+    {data && !data.nodes.length ? <div className="graph-empty"><strong>아직 적재된 문서가 없습니다.</strong><p className="muted small">DB 관리에서 이 프로젝트에 경로를 등록하거나 기존 소스를 연결한 뒤 ‘적재’를 실행하세요.</p></div> : null}
+    {data?.nodes.length && !filtered.nodes.length ? <p className="muted small">검색한 문서가 없습니다.</p> : null}
+    {filtered.nodes.length ? <GraphDiagram nodes={filtered.nodes} links={filtered.links} selectedId={selectedId} onSelect={setSelectedId} /> : null}
+    {selectedNode ? <div className="graph-document">
+      <h3>{selectedNode.title}</h3><p className="muted small">{selectedNode.source_name} · 본문 조각 {selectedNode.chunk_count}개</p><p className="graph-source-path small">{selectedNode.path}</p>
+      {neighbors.length ? <div className="graph-neighbors"><span className="muted small">연결된 문서</span>{neighbors.map((id) => <button type="button" className="ghost" key={id} onClick={() => setSelectedId(id)}>{filtered.nodes.find((node) => node.id === id)?.title}</button>)}</div> : null}
+      {documentLoading ? <p role="status" className="muted small">본문을 불러오는 중…</p> : null}
+      {documentError ? <p role="alert" className="admin-status">{documentError.message}</p> : null}
+      {document ? <><pre className="graph-document-content">{document.content}</pre>{document.content_truncated ? <p className="muted small">본문은 처음 100,000자까지 표시합니다.</p> : null}</> : null}
+    </div> : filtered.nodes.length ? <p className="muted small">문서 노드를 선택하면 본문과 연결된 문서를 확인할 수 있습니다.</p> : null}
+  </section>;
+}

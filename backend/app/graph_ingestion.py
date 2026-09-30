@@ -182,8 +182,11 @@ def document_id(source_id: str, path: str) -> str:
 
 def write_graph(tx, source: dict, documents: list[dict]) -> None:
     """Atomically publish a source snapshot. Previous content is retained inactive."""
-    tx.run('MERGE (s:GraphSource {id: $id}) SET s.tenant_id = $tenant, s.name = $name, s.path = $path',
-           id=source['id'], tenant=source['tenant_id'], name=source['name'], path=source['path']).consume()
+    if not source.get('project_id'):
+        raise GraphSourceError('먼저 데이터 소스를 프로젝트에 연결하세요.')
+    tx.run('MERGE (s:GraphSource {id: $id}) SET s.tenant_id = $tenant, s.project_id = $project, '
+           's.name = $name, s.path = $path', id=source['id'], tenant=source['tenant_id'],
+           project=source['project_id'], name=source['name'], path=source['path']).consume()
     tx.run('MATCH (s:GraphSource {id: $id})-[:HAS_DOCUMENT]->(d) SET d.active = false',
            id=source['id']).consume()
     tx.run('MATCH (s:GraphSource {id: $id})-[:HAS_DOCUMENT]->(d)-[:HAS_CHUNK]->(c) SET c.active = false',
@@ -196,10 +199,10 @@ def write_graph(tx, source: dict, documents: list[dict]) -> None:
         MATCH (s:GraphSource {id: $source})
         UNWIND $documents AS row
         MERGE (d:GraphDocument {id: row.id})
-        SET d.source_id = $source, d.tenant_id = $tenant, d.path = row.path,
+        SET d.source_id = $source, d.tenant_id = $tenant, d.project_id = $project, d.path = row.path,
             d.title = row.title, d.content_hash = row.content_hash, d.active = true
         MERGE (s)-[:HAS_DOCUMENT]->(d)
-        ''', source=source['id'], tenant=source['tenant_id'], documents=rows).consume()
+        ''', source=source['id'], tenant=source['tenant_id'], project=source['project_id'], documents=rows).consume()
     chunks = [{**chunk, 'id': f"{document_id(source['id'], doc['path'])}:{chunk['index']}",
                'document_id': document_id(source['id'], doc['path'])}
               for doc in documents for chunk in doc['chunks']]
@@ -207,10 +210,10 @@ def write_graph(tx, source: dict, documents: list[dict]) -> None:
         UNWIND $chunks AS row
         MATCH (d:GraphDocument {id: row.document_id})
         MERGE (c:GraphChunk {id: row.id})
-        SET c.source_id = $source, c.tenant_id = $tenant, c.text = row.text,
+        SET c.source_id = $source, c.tenant_id = $tenant, c.project_id = $project, c.text = row.text,
             c.position = row.index, c.start = row.start, c.end = row.end, c.active = true
         MERGE (d)-[:HAS_CHUNK]->(c)
-        ''', chunks=chunks, source=source['id'], tenant=source['tenant_id']).consume()
+        ''', chunks=chunks, source=source['id'], tenant=source['tenant_id'], project=source['project_id']).consume()
     tx.run('''
         UNWIND $chunks AS row
         MATCH (c:GraphChunk {id: row.id})
@@ -223,8 +226,9 @@ def write_graph(tx, source: dict, documents: list[dict]) -> None:
     tx.run('''
         UNWIND $links AS row
         MATCH (a:GraphDocument {id: row.from}), (b:GraphDocument {id: row.to})
-        MERGE (a)-[r:LINKS_TO]->(b) SET r.active = true
-        ''', links=links).consume()
+        MERGE (a)-[r:LINKS_TO]->(b)
+        SET r.active = true, r.project_id = $project, r.tenant_id = $tenant
+        ''', links=links, project=source['project_id'], tenant=source['tenant_id']).consume()
 
 
 @lru_cache(maxsize=1)
@@ -238,6 +242,8 @@ def graph_driver():
 
 
 def ingest(source: dict) -> dict:
+    if not source.get('project_id'):
+        raise GraphSourceError('먼저 데이터 소스를 프로젝트에 연결하세요.')
     path, _ = resolve_source_path(source['path'])
     documents, counts = read_documents(path)
     try:

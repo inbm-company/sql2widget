@@ -197,7 +197,7 @@
     <section class="kpis">
       <div class="kpi done">
         <div class="label">완료</div>
-        <div class="num">15</div>
+        <div class="num">16</div>
         <div class="sub">앱 기능 · DB 인프라 · 문서</div>
       </div>
       <div class="kpi wip">
@@ -220,7 +220,7 @@
     <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
     <section class="board">
       <div class="col done">
-        <div class="col-head"><span class="dot"></span>완료<span class="count">15</span></div>
+        <div class="col-head"><span class="dot"></span>완료<span class="count">16</span></div>
         <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
         <div class="card"><div class="t">프로젝트·대화 CRUD</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
         <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
@@ -230,7 +230,8 @@
         <div class="card"><div class="t">샘플 DB 구성</div><div class="n">SOC + Global Sales + 서비스 DB, Docker Compose</div></div>
         <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">로컬 일반 스키마 데모용</div></div>
         <div class="card"><div class="t">Graph RAG 준비용 Neo4j 로컬 설치</div><div class="n">Community 2026.09.0 · 독립 Compose 서비스 · 로컬 전용 Browser/Bolt · 인증·영속 볼륨·healthcheck · <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></div></div>
-        <div class="card"><div class="t">로컬 문서 경로 등록·수동 Neo4j 적재</div><div class="n">관리자 소스 등록·영속 저장·적재 상태 · Markdown/텍스트 본문·문서 링크 · 읽기 전용 공유 · 재적재 중복 방지. 질문 검색 연동은 미구현 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
+        <div class="card"><div class="t">프로젝트별 로컬 문서 경로 등록·수동 Neo4j 적재</div><div class="n">프로젝트 소유자·테넌트 분리 · 기존 소스 명시적 연결 · 관리자 소스 등록·영속 저장·적재 상태 · Markdown/텍스트 본문·문서 링크 · 읽기 전용 공유 · 재적재 중복 방지. 질문 검색 연동은 미구현 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
+        <div class="card"><div class="t">Stage 프로젝트 문서 그래프·본문 조회</div><div class="n">위젯/그래프 전환 · 문서 노드·링크 · 검색·확대·이동 · 본문·연결 문서 조회 · Viewer 조회 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
         <div class="card"><div class="t">실 LLM 전용 채팅 에이전트</div><div class="n">OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원</div><div class="n">브라우저 프로필, Model/Key/Base URL/Embedding model · <a href="features/admin.md">admin.md</a></div></div>
         <div class="card"><div class="t">llm_usage 기록 골격</div><div class="n">테이블 적재까지 완료</div></div>
@@ -264,7 +265,7 @@
     <h2>기능 문서 <span class="hint">docs/features/*.md — 구현 기준</span></h2>
     <div class="box">
       <h3><a href="features/graph-rag-sources.md">Graph RAG 데이터 소스</a></h3>
-      <p class="hint">로컬 문서 경로 등록 · 수동 Neo4j 적재 · 문서 링크 그래프</p>
+      <p class="hint">프로젝트별 문서 경로 등록 · 수동 Neo4j 적재 · Stage 그래프·본문 조회</p>
     </div>
     <section class="cols2">
       <div class="box">

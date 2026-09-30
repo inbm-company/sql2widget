@@ -788,7 +788,7 @@ function Workspace({ user, onLogout }) {
         <StageCanvas projectId={activeProjectId} readOnly={isViewer} />
       </section>
 
-      <AdminPanel open={adminOpen} mode={settingsMode} onClose={() => setAdminOpen(false)} />
+      <AdminPanel projectId={activeProjectId} projectTitle={activeProject?.title} open={adminOpen} mode={settingsMode} onClose={() => setAdminOpen(false)} />
     </div>
   );
 }

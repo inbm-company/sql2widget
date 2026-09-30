@@ -175,15 +175,18 @@ export const api = {
       method: "DELETE",
     }),
   listConnections: () => request("/api/database-connections"),
-  listGraphSources: () => request("/api/graph-sources"),
-  registerGraphSource: (payload) => request("/api/graph-sources", {
+  listGraphSources: (projectId) => request(`/api/projects/${projectId}/graph-sources`),
+  registerGraphSource: (projectId, payload) => request(`/api/projects/${projectId}/graph-sources`, {
     method: "POST",
     body: JSON.stringify(payload),
   }),
-  ingestGraphSource: (id) => request(`/api/graph-sources/${id}/ingest`, {
+  ingestGraphSource: (projectId, id) => request(`/api/projects/${projectId}/graph-sources/${id}/ingest`, {
     method: "POST",
     timeoutMs: 300000,
   }),
+  assignGraphSource: (projectId, id) => request(`/api/projects/${projectId}/graph-sources/${id}/assign`, { method: "POST" }),
+  getProjectGraph: (projectId) => request(`/api/projects/${projectId}/graph`),
+  getGraphDocument: (projectId, id) => request(`/api/projects/${projectId}/graph/documents/${id}`),
   createConnection: (payload) =>
     request("/api/database-connections", {
       method: "POST",

@@ -3,9 +3,9 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Stage 배치 |
-| 기준일 | 2026-09-21 (구현 기준) |
-| 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(위젯 카탈로그), [viewer.md](viewer.md)(읽기 전용 표시) |
-| 관련 코드 | `backend/app/repositories/stages.py`, `backend/app/main.py`(`/api/projects/{id}/stage*`), `frontend/src/StageCanvas.jsx` |
+| 기준일 | 2026-09-30 (구현 기준) |
+| 관련 문서 | [graph-rag-sources.md](graph-rag-sources.md)(프로젝트 그래프), [widgets-artifact.md](widgets-artifact.md)(위젯 카탈로그), [viewer.md](viewer.md)(읽기 전용 표시) |
+| 관련 코드 | `backend/app/repositories/stages.py`, `backend/app/main.py`(`/api/projects/{id}/stage*`), `frontend/src/StageCanvas.jsx`, `frontend/src/ProjectGraph.jsx` |
 
 Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다([AGENTS.md](../../AGENTS.md) 제품 규칙 2).
 
@@ -38,6 +38,19 @@ Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위
 - 빈 Stage 안내: 편집 가능 역할 "대화의 결과 위젯을 여기로 드래그하세요", viewer "배치된 위젯이 없습니다."
 - 저장 상태 표시줄(`대기` / `저장 중…` / `저장됨` / `저장 실패`)은 전역 슬롯 `storeKeys.ui`(`useStore`)에 있다. 편집 불가 역할(`readOnly`)에는 표시하지 않는다.
 - 위젯 크기는 `minW:2, minH:2`로 제한.
+
+---
+
+## 프로젝트 문서 그래프 보기
+
+Stage 헤더의 **위젯 / 그래프** 버튼으로 전환한다. 그래프는 현재 프로젝트의 활성 문서·명시된 문서 링크를 Neo4j에서 읽어 표시한다. 위젯 배치나 화이트리스트를 변경하지 않는다.
+
+- 제목·경로 검색, 확대·축소·전체 보기, 배경 드래그 이동을 지원한다.
+- 노드 선택 시 문서 본문과 연결된 문서를 보여준다. 본문 조각의 겹침을 제거하고 일반 텍스트로 표시한다.
+- 기본 문서 200개·문서 사이 링크 최대 1,000개, 본문 처음 100,000자까지 표시한다. 초과 시 안내한다.
+- 문서가 없으면 DB 관리에서 프로젝트 경로 등록 또는 기존 소스 연결 후 적재하도록 안내한다. 조회 실패는 오류로 표시한다.
+- Viewer에서도 조회할 수 있다. API는 테넌트·프로젝트 소유자·소속 소스를 검사한다.
+- 상세 API·기존 데이터 연결·제한은 [graph-rag-sources.md](graph-rag-sources.md)를 본다.
 
 ---
 

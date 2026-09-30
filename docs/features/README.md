@@ -16,7 +16,7 @@
 | [viewer.md](viewer.md) | F-12 | `/p/{id}/view` 읽기 전용 화면 |
 | [admin.md](admin.md) | F-13, F-14 | DB 연결 관리, 테이블 권한, AI 연결 설정 |
 | [similarity-search-design.md](similarity-search-design.md) | — | DB별 예상 질문 유사도 검색, 전체 테이블의 다양한 예상 질문 생성 |
-| [graph-rag-sources.md](graph-rag-sources.md) | — | 로컬 문서 경로 등록, 수동 Neo4j 적재, Obsidian 문서 링크 그래프 |
+| [graph-rag-sources.md](graph-rag-sources.md) | — | 프로젝트별 문서 경로 등록·수동 Neo4j 적재, Stage 그래프·본문 조회 |
 
 F-15(헬스체크)는 별도 문서 없이 [auth.md](auth.md)의 API 표에 포함했다.
 

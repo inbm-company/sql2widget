@@ -1649,3 +1649,33 @@ button {
 .graph-source-list > li { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
 .graph-source-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .graph-source-path { overflow-wrap: anywhere; }
+
+/* Project document graph is a Stage view, separate from saved widgets. */
+.stage-canvas[hidden] { display: none; }
+.stage-tabs { display: flex; gap: 3px; margin-left: auto; }
+.stage-tabs button { border: 0; border-radius: 5px; padding: 5px 10px; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; }
+.stage-tabs button[aria-pressed="true"] { color: var(--accent); background: var(--accent-dim); }
+.stage-tabs + .save-status { margin-left: 12px; }
+.project-graph { flex: 1; min-height: 0; overflow: auto; padding: 14px; background: #fafafa; }
+.graph-toolbar { display: flex; gap: 8px; align-items: center; }
+.graph-toolbar input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; background: var(--surface); }
+.graph-diagram-wrap { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.graph-zoom { display: flex; justify-content: flex-end; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border); }
+.graph-zoom .ghost { padding: 4px 8px; }
+.graph-diagram { display: block; width: 100%; height: 360px; cursor: grab; touch-action: none; }
+.graph-diagram:active { cursor: grabbing; }
+.graph-edge { stroke: #bbc4cd; stroke-width: 1.5; color: #bbc4cd; fill: none; }
+.graph-edge.selected { stroke: var(--accent); color: var(--accent); stroke-width: 2; }
+.graph-node { cursor: pointer; outline: none; }
+.graph-node circle { fill: #e6edf5; stroke: #6484aa; stroke-width: 2; }
+.graph-node text { font-size: 12px; fill: var(--ink); user-select: none; }
+.graph-node.selected circle, .graph-node:focus circle { fill: var(--accent); stroke: var(--accent); stroke-width: 3; }
+.graph-node.dimmed { opacity: 0.4; }
+.graph-hint { padding: 0 12px 8px; margin: 0; }
+.graph-document { margin-top: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.graph-document h3 { margin: 0 0 8px; font-size: 15px; }
+.graph-document-content { font: 12px/1.7 var(--font-mono, monospace); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; }
+.graph-neighbors { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.graph-empty { padding: 32px 12px; text-align: center; }
+.graph-limit { color: var(--accent); }
+.graph-unassigned { margin-top: 16px; border-top: 1px solid var(--border); }

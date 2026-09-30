@@ -4,7 +4,7 @@ import { api, getAiSettings, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
 import GraphSources from "./GraphSources.jsx";
 
-export default function AdminPanel({ open, onClose, mode = "admin" }) {
+export default function AdminPanel({ open, onClose, mode = "admin", projectId, projectTitle }) {
   const showAi = mode !== "db";
   const showDb = mode !== "ai";
   const title = mode === "ai" ? "AI 설정" : mode === "db" ? "DB 관리" : "관리자";
@@ -204,7 +204,7 @@ export default function AdminPanel({ open, onClose, mode = "admin" }) {
         </section> : null}
 
         {showDb ? <>
-        <GraphSources open={open && showDb} />
+        <GraphSources key={projectId || "none"} open={open && showDb} projectId={projectId} projectTitle={projectTitle} />
         <section>
           <h3>DB 연결</h3>
           <ul className="admin-list">

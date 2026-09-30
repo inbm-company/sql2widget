@@ -60,6 +60,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 - 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문.
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
+- 프로젝트별 Graph RAG 문서 경로 등록·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 공통 소스는 미연결 상태로 보존하며 DB 관리에서 프로젝트에 연결한다. 채팅 내부 설정과 질문 검색 연동은 별도 협의 후 진행한다.
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
 - Viewer: 채팅·DnD 없음. `/p/:id/view` 읽기 전용.
 - SOC + Global Sales 샘플 DB (호스트 포트 5433, 5435). 서비스 DB 5434.
@@ -90,6 +91,9 @@ backend/sql/migrations/             서비스 DB
 backend/sql/sample_customer/        SOC 샘플
 backend/sql/stage_global/           Global Sales 샘플
 frontend/src/App.jsx                워크스페이스
+backend/app/graph_source_routes.py  프로젝트 소스·그래프 API
+backend/app/project_graph.py        프로젝트 범위 Neo4j 조회·기존 소스 연결
+frontend/src/ProjectGraph.jsx       문서 그래프·본문 조회
 frontend/src/StageCanvas.jsx        Stage
 frontend/src/widgets/WidgetRenderer.jsx
 frontend/src/store.js               SWR 래퍼
