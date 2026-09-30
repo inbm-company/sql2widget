@@ -14,7 +14,6 @@ export default function AdminPanel({ open, onClose }) {
   const [selectedTables, setSelectedTables] = useState([]);
   const [status, setStatus] = useState("");
   const [seeding, setSeeding] = useState(false);
-  const [commandRole, setCommandRole] = useState("user");
   const [seedResult, setSeedResult] = useState(null);
   const [aiSettings, setAiForm] = useState(() => ({ provider: "gemini", model: "gemini-3.6-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", apiKey: "", ...getAiSettings() }));
   const [form, setForm] = useState({
@@ -79,18 +78,38 @@ export default function AdminPanel({ open, onClose }) {
     }
   }
 
-  async function seedCommands() {
+  async function seedQuestions() {
     if (!selectedId || seeding) return;
     const connectionId = selectedId;
+    let offset = seedResult?.connection_id === connectionId && seedResult.next_offset != null
+      ? seedResult.next_offset : 0;
+    let savedCount = offset ? seedResult.saved_count : 0;
+    let skippedCount = offset ? seedResult.skipped_count : 0;
+    let questions = offset ? seedResult.questions : [];
+    let uncoveredTables = offset ? seedResult.uncovered_tables : [];
     setSeeding(true);
-    setSeedResult(null);
-    setStatus("DB 스키마를 읽고 초기 명령을 생성·검증하고 있습니다…");
+    if (!offset) setSeedResult(null);
+    setStatus("DB 전체 스키마를 살펴보고 예상 질문을 생성·검증하고 있습니다…");
     try {
-      const result = await api.seedCommands(connectionId, commandRole);
-      setSeedResult({ ...result, role: commandRole });
-      setStatus(`초기 명령 ${result.saved_count}개를 유사도 DB에 저장했습니다.`);
+      while (true) {
+        const result = await api.seedQuestions(connectionId, offset);
+        savedCount += result.saved_count;
+        skippedCount += result.skipped_count;
+        questions = [...questions, ...result.questions];
+        uncoveredTables = [...uncoveredTables, ...result.uncovered_tables];
+        const processed = offset + result.processed_tables;
+        setSeedResult({ connection_id: connectionId, questions, saved_count: savedCount,
+          skipped_count: skippedCount, processed_tables: processed,
+          total_tables: result.total_tables, next_offset: result.next_offset,
+          uncovered_tables: uncoveredTables });
+        setStatus(`${processed}/${result.total_tables}개 테이블 확인 · 예상 질문 ${savedCount}개 등록`
+          + (uncoveredTables.length ? ` · 생성하지 못한 테이블 ${uncoveredTables.length}개` : ""));
+        if (result.next_offset == null) break;
+        if (result.next_offset <= offset) throw new Error("예상 질문 생성 진행 위치가 갱신되지 않았습니다.");
+        offset = result.next_offset;
+      }
     } catch (err) {
-      setStatus(err.message);
+      setStatus(`예상 질문 생성이 중단되었습니다: ${err.message} 저장된 질문은 유지됩니다. 다시 누르면 이어서 진행합니다.`);
     } finally {
       setSeeding(false);
     }
@@ -146,7 +165,7 @@ export default function AdminPanel({ open, onClose }) {
             <label>Provider<select value={aiSettings.provider} onChange={(e) => setAiForm((f) => ({ ...f, provider: e.target.value }))}><option value="gemini">Gemini</option><option value="openai">OpenAI 호환</option></select></label>
             <label>Model<input value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder="gemini-3.6-flash" /></label>
             <label>API key<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} placeholder="Gemini API key" autoComplete="off" /></label>
-            <p className="muted small">키는 이 브라우저에만 저장되고 채팅과 명령 유사도 등록·검색에 사용됩니다.</p>
+            <p className="muted small">키는 이 브라우저에만 저장되고 채팅과 예상 질문 생성·검색에 사용됩니다.</p>
             <button type="submit" className="primary">AI 설정 저장</button>
           </form>
         </section>
@@ -159,6 +178,7 @@ export default function AdminPanel({ open, onClose }) {
                 <button
                   type="button"
                   className={c.id === selectedId ? "active" : ""}
+                  disabled={seeding}
                   onClick={() => setSelectedId(c.id)}
                 >
                   {c.name} ({c.host}/{c.database_name})
@@ -174,27 +194,33 @@ export default function AdminPanel({ open, onClose }) {
         </section>
 
         <section>
-          <h3>명령 유사도 DB</h3>
+          <h3>예상 질문 유사도 DB</h3>
           <p className="muted small">
-            선택한 DB의 명령과 SQL·위젯 정보를 준비합니다. 채팅에서는 유사한 명령을 찾아 답변 생성에 참고합니다.
+            선택한 DB의 모든 테이블을 살펴보고 다양한 예상 질문과 SQL·위젯 정보를 준비합니다.
+            채팅에서는 유사한 질문을 찾아 답변 생성에 참고합니다.
           </p>
-          <label>테이블 권한 기준
-            <select value={commandRole} disabled={seeding} onChange={(e) => setCommandRole(e.target.value)}>
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-              <option value="viewer">viewer</option>
-            </select>
-          </label>
-          <button type="button" className="primary" disabled={!selectedId || seeding} onClick={seedCommands}>
-            {seeding ? "초기 명령 준비 중…" : "초기 명령 3개 등록"}
+          <button type="button" className="primary" disabled={!selectedId || seeding} onClick={seedQuestions}>
+            {seeding ? "예상 질문 생성 중…" : seedResult?.connection_id === selectedId && seedResult.next_offset != null
+              ? "이어서 생성" : "예상 질문 생성"}
           </button>
-          <p className="muted small">AI 설정과 해당 역할의 테이블 권한을 먼저 저장하세요. SQL을 읽기 전용으로 검증한 뒤 등록합니다.</p>
-          {seedResult?.connection_id === selectedId && seedResult.role === commandRole ? (
-            <ul>
-              {seedResult.commands.map((item) => (
+          {seeding || seedResult?.connection_id === selectedId ? (
+            <p className="muted small" role="status">
+              {seedResult?.connection_id === selectedId
+                ? `${seedResult.processed_tables}/${seedResult.total_tables}개 테이블 확인 · 질문 ${seedResult.saved_count}개 등록`
+                  + (seedResult.skipped_count ? ` · 검증 실패 ${seedResult.skipped_count}개` : "")
+                : "DB 스키마를 확인하고 있습니다…"}
+            </p>
+          ) : null}
+          <p className="muted small">AI가 DB 스키마를 보고 예상 질문과 SQL·위젯을 만듭니다. 실행 가능한 읽기 전용 SQL만 검증해 등록합니다.</p>
+          {seedResult?.connection_id === selectedId && seedResult.uncovered_tables?.length ? (
+            <p className="muted small">질문을 생성하지 못한 테이블: {seedResult.uncovered_tables.join(", ")}</p>
+          ) : null}
+          {seedResult?.connection_id === selectedId ? (
+            <ul className="question-seed-list">
+              {seedResult.questions.map((item) => (
                 <li key={item.id}>
                   <details>
-                    <summary>{item.command}</summary>
+                    <summary>{item.question}</summary>
                     {item.plan.widgets.map((widget, index) => (
                       <div key={index}>
                         <p>{widget.title} · {widget.component}</p>

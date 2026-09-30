@@ -3,7 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
-from app import config, command_similarity
+from app import config, question_similarity
 from app.agent_service import AgentRunError, run_agent
 from app.auth import (
     create_access_token,
@@ -14,9 +14,8 @@ from app.auth import (
 )
 from app.contracts import (
     ChatRequest,
-    CommandRegisterRequest,
-    CommandSearchRequest,
-    CommandSeedRequest,
+    QuestionSearchRequest,
+    QuestionSeedRequest,
     CreateConversationRequest,
     CreateProjectRequest,
     UpdateProjectRequest,
@@ -268,7 +267,7 @@ def create_database_connection(
     )
 
 
-def _command_llm_settings(request: Request) -> dict:
+def _question_llm_settings(request: Request) -> dict:
     return {
         "provider": request.headers.get("X-LLM-Provider", ""),
         "api_key": request.headers.get("X-LLM-API-Key", ""),
@@ -276,9 +275,9 @@ def _command_llm_settings(request: Request) -> dict:
     }
 
 
-def _command_context(user: dict, connection_id: str, role: str) -> dict:
+def _question_context(user: dict, connection_id: str) -> dict:
     try:
-        return command_similarity.connection_context(user["tenant_id"], connection_id, role)
+        return question_similarity.connection_context(user["tenant_id"], connection_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -287,48 +286,31 @@ def _command_context(user: dict, connection_id: str, role: str) -> dict:
         raise HTTPException(status_code=502, detail="DB 스키마를 읽을 수 없습니다.") from exc
 
 
-@app.post("/api/database-connections/{connection_id}/commands/seed")
-def seed_database_commands(connection_id: str, body: CommandSeedRequest,
+@app.post("/api/database-connections/{connection_id}/questions/seed")
+def seed_database_questions(connection_id: str, body: QuestionSeedRequest,
                            request: Request, user=Depends(get_current_user)):
     require_admin(user)
-    context = _command_context(user, connection_id, body.role)
+    context = _question_context(user, connection_id)
     try:
-        commands = command_similarity.seed_commands(
+        batch = question_similarity.seed_question_batch(
             tenant_id=user["tenant_id"], user_id=user["id"], connection_id=connection_id,
-            context=context, llm_settings=_command_llm_settings(request), count=body.count,
+            context=context, llm_settings=_question_llm_settings(request), offset=body.offset,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except command_similarity.CommandCatalogError as exc:
+    except question_similarity.QuestionCatalogError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return {"connection_id": connection_id, "saved_count": len(commands), "commands": commands}
+    return {"connection_id": connection_id, **batch}
 
 
-@app.post("/api/database-connections/{connection_id}/commands")
-def register_database_command(connection_id: str, body: CommandRegisterRequest,
-                              request: Request, user=Depends(get_current_user)):
-    require_admin(user)
-    context = _command_context(user, connection_id, body.role)
-    try:
-        commands = command_similarity.register_commands(
-            [body], tenant_id=user["tenant_id"], connection_id=connection_id,
-            context=context, llm_settings=_command_llm_settings(request),
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except command_similarity.CommandCatalogError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return commands[0]
-
-
-@app.post("/api/database-connections/{connection_id}/commands/search")
-def search_database_commands(connection_id: str, body: CommandSearchRequest,
+@app.post("/api/database-connections/{connection_id}/questions/search")
+def search_database_questions(connection_id: str, body: QuestionSearchRequest,
                             request: Request, user=Depends(get_current_user)):
-    context = _command_context(user, connection_id, user["role"])
-    result = command_similarity.search_commands(
-        body.command, tenant_id=user["tenant_id"], connection_id=connection_id,
-        schema_text=context["schema_text"], allowed_tables=context["allowed_tables"],
-        llm_settings=_command_llm_settings(request), limit=body.limit,
+    context = _question_context(user, connection_id)
+    allowed = conn_repo.allowed_tables_for_role(user["tenant_id"], connection_id, user["role"])
+    result = question_similarity.search_questions(
+        body.question, tenant_id=user["tenant_id"], connection_id=connection_id,
+        allowed_tables=allowed, llm_settings=_question_llm_settings(request), limit=body.limit,
         min_similarity=body.min_similarity,
     )
     if result["status"] == "unavailable":

@@ -25,7 +25,7 @@
 | 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`viewer` 역할 구분 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
 | 채팅(에이전트) | 자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환 | [chat.md](docs/features/chat.md) |
-| 명령 유사도 DB | 사용자 명령을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 초기 등록 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
+| 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
 | Artifact/위젯 표시 | 채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시 | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 자동 저장·새로고침 후 복원 | [stage.md](docs/features/stage.md) |
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |

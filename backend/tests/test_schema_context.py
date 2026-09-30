@@ -35,7 +35,7 @@ def test_format_schema_context_includes_columns_and_relationships():
 
 def test_run_agent_passes_selected_connection_schema_to_llm(monkeypatch):
     calls = []
-    monkeypatch.setattr(agent_service.command_similarity, "search_commands",
+    monkeypatch.setattr(agent_service.question_similarity, "search_questions",
                         lambda *args, **kwargs: {"status": "no_match", "matches": []})
     monkeypatch.setattr(
         agent_service,

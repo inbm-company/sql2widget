@@ -185,6 +185,9 @@ def catalog_tables_for_connection(row: dict) -> set[str]:
                 WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
                   AND table_type IN ('BASE TABLE', 'VIEW')
                   AND table_name NOT IN ('schema_migrations')
+                  AND has_table_privilege(
+                      quote_ident(table_schema) || '.' || quote_ident(table_name), 'SELECT'
+                  )
                 ORDER BY table_name
             """)
             return {item["table_name"] for item in cur.fetchall()}

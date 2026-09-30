@@ -413,8 +413,8 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
     <li>읽기 전용 커넥션, <code>statement_timeout</code> 기본 10초, 결과 최대 1000행.</li>
   </ul>
 
-  <h3>명령 유사도 DB <span class="badge done">완료</span></h3>
-  <p>사용자 명령을 임베딩해 같은 고객·DB·스키마·모델의 유사 명령을 찾고, 검색된 명령과 SQL·위젯 계획을 LLM의 답변 생성에 전달한다. 결과는 <code>meta.command_retrieval</code>에 포함한다. 관리자 화면에서 초기 명령을 생성·검증·등록한다. <a href="features/similarity-search-design.md">상세 문서</a>.</p>
+  <h3>예상 질문 유사도 DB <span class="badge done">완료</span></h3>
+  <p>AI가 선택한 DB의 전체 테이블에서 다양한 예상 질문과 SQL·위젯을 생성하고, 코드는 실행 가능한 읽기 전용 SQL만 검증해 저장한다. 유사 질문의 계획을 LLM 답변 생성에 전달하며 결과는 <code>meta.question_retrieval</code>에 포함한다. 생성 개수는 고정하지 않으며 역할별로 생성하지 않는다. <a href="features/similarity-search-design.md">상세 문서</a>.</p>
 
   <h3>채팅 메시지 임베딩 <span class="badge wip">진행중</span></h3>
   <p>메시지를 보내면 임베딩(Gemini <code>gemini-embedding-001</code> 또는 OpenAI <code>text-embedding-3-small</code>)을 만들어 <code>chat_vector</code> DB(pgvector)에 저장하고, 코사인 유사도로 과거 메시지 상위 5개를 <code>related_messages</code>로 반환한다. 응답의 <code>embedding_provider</code> 필드로 실제 어떤 provider가 쓰였는지(<code>"gemini"</code>/<code>"openai"</code>/<code>"mock"</code>) 항상 명확히 알 수 있다.</p>
@@ -599,7 +599,7 @@ stage_widgets(
     <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
     <li>Admin 브라우저 AI 연결 설정</li>
     <li><code>llm_usage</code> 사용량 기록 골격</li>
-    <li>DB별 명령 유사도 검색 → 검색 결과를 참조해 답변 생성, 관리자 초기 명령 등록 — <a href="features/similarity-search-design.md">명령 유사도 DB</a></li>
+    <li>DB별 예상 질문 유사도 검색 → 검색 결과를 참조해 답변 생성, 전체 테이블 질문 생성 — <a href="features/similarity-search-design.md">예상 질문 유사도 DB</a></li>
     <li>문서 체계 정비 — AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, dashboard.html, kanban.html</li>
   </ul>
 

@@ -35,7 +35,7 @@
 | Admin 브라우저 AI 연결 설정(Provider/Model/API key, localStorage) | [admin.md](features/admin.md) |
 | `llm_usage` 사용량 기록 골격(테이블 적재) | [admin.md](features/admin.md) 데이터 모델 |
 | 문서 체계 정비 — `AGENTS.md`/`CLAUDE.md`, `docs/01-folder-structure.md`, `docs/features/*.md`, 본 문서, `docs/dashboard.html`, `docs/kanban.html` | 이번 문서화 작업 1~5번 전체 완료 |
-| DB별 명령 유사도 DB — 명령 검색 → 검색 결과 참조 답변 생성, 관리자 초기 등록 | [similarity-search-design.md](features/similarity-search-design.md) |
+| DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성 | [similarity-search-design.md](features/similarity-search-design.md) |
 
 ## 3. 진행중
 

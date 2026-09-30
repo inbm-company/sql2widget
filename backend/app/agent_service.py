@@ -6,7 +6,7 @@ import secrets
 from typing import Any
 
 from app.agent import sanitize_artifact
-from app import command_similarity
+from app import question_similarity
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.llm import effective_provider, plan_with_llm
@@ -309,15 +309,15 @@ def run_agent(
 
     retrieval = {"status": "no_connection", "matches": []}
     if used_conn and allowed:
-        retrieval = command_similarity.search_commands(
+        retrieval = question_similarity.search_questions(
             message, tenant_id=tenant_id, connection_id=used_conn,
-            schema_text=schema_text, allowed_tables=allowed, llm_settings=runtime_llm,
+            allowed_tables=allowed, llm_settings=runtime_llm,
             user_role=user_role, embedding_result=embedding_result,
         )
-    meta["command_retrieval"] = retrieval
+    meta["question_retrieval"] = retrieval
     # The current schema is already supplied separately. Keep references compact.
     references = [
-        {"command": item["command"], "plan": item["plan"], "similarity": item["similarity"]}
+        {"question": item["question"], "plan": item["plan"], "similarity": item["similarity"]}
         for item in retrieval["matches"]
     ]
 
@@ -331,7 +331,7 @@ def run_agent(
         runtime_api_key=runtime_llm.get("api_key"),
         runtime_model=runtime_llm.get("model"),
         runtime_base_url=runtime_llm.get("base_url"),
-        matched_commands=references,
+        matched_questions=references,
     )
     plan = llm_result.get("plan")
     if not plan:
@@ -359,7 +359,7 @@ def run_agent(
             runtime_api_key=runtime_llm.get("api_key"),
             runtime_model=runtime_llm.get("model"),
             runtime_base_url=runtime_llm.get("base_url"),
-            matched_commands=references,
+            matched_questions=references,
         )
         plan2 = repair.get("plan")
         if not plan2:

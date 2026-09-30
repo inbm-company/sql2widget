@@ -1423,6 +1423,12 @@ button {
   font-size: 12px;
 }
 
+.question-seed-list {
+  max-height: 300px;
+  overflow: auto;
+  padding-left: 20px;
+}
+
 .small {
   font-size: 11px;
 }

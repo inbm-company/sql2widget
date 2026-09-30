@@ -15,7 +15,7 @@
 | [stage.md](stage.md) | F-10, F-11 | Stage에 위젯 추가, 배치·자동 저장 |
 | [viewer.md](viewer.md) | F-12 | `/p/{id}/view` 읽기 전용 화면 |
 | [admin.md](admin.md) | F-13, F-14 | DB 연결 관리, 테이블 권한, AI 연결 설정 |
-| [similarity-search-design.md](similarity-search-design.md) | — | DB별 명령 유사도 검색, 검색 결과 참조 답변 생성, 초기 등록 |
+| [similarity-search-design.md](similarity-search-design.md) | — | DB별 예상 질문 유사도 검색, 전체 테이블의 다양한 예상 질문 생성 |
 
 F-15(헬스체크)는 별도 문서 없이 [auth.md](auth.md)의 API 표에 포함했다.
 

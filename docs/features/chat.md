@@ -33,7 +33,7 @@
 
 1. **연결/권한 해석** — `connection_id`가 있으면 해당 연결과, 사용자 역할(`user_role`)에 대한 `table_permissions`를 조회. 권한 행이 비어 있으면 SOC(또는 `dbconn_global`이면 Global) 기본 테이블 집합으로 폴백.
 2. **스키마 텍스트 구성** — 선택된 연결의 허용 테이블만으로 스키마 텍스트를 만든다(`_schema_text_for_connection`).
-3. **명령 유사도 검색·LLM 호출** — 명령을 임베딩해 선택한 DB의 `command_catalog`에서 유사한 명령을 검색한다. 명령·SQL·위젯 계획을 `matched_commands`로 LLM에 전달하고, 응답의 `meta.command_retrieval`에 상태·유사도·DB 정보·실행 계획을 포함한다. [명령 유사도 상세](similarity-search-design.md). `plan_with_llm()`의 플랜이 비면(키 없음/호출 실패/파싱 실패 등 사유 무관) **바로 `AgentRunError`를 던져 `/api/chat`이 HTTP 502 + 실제 에러 메시지를 그대로 반환**한다.
+3. **예상 질문 유사도 검색·LLM 호출** — 질문을 임베딩해 선택한 DB의 `question_catalog`에서 유사한 예상 질문을 검색한다. 현재 사용자가 접근 가능한 테이블의 SQL만 `matched_questions`로 LLM에 전달하고, 응답의 `meta.question_retrieval`에 상태·유사도·DB 정보·실행 계획을 포함한다. [예상 질문 유사도 상세](similarity-search-design.md). `plan_with_llm()`의 플랜이 비면(키 없음/호출 실패/파싱 실패 등 사유 무관) **바로 `AgentRunError`를 던져 `/api/chat`이 HTTP 502 + 실제 에러 메시지를 그대로 반환**한다.
 4. **SQL 실행** — 플랜이 있으면 `_materialize_plan()`으로 각 위젯의 `sql`을 읽기 전용 실행 → 결과를 컴포넌트별 props로 변환(`rows_to_props`).
 5. **1회 복구 재시도** — SQL/JSON 실행이 실패하면 실패 사유를 `repair_hint`로 넣어 LLM에 재요청. 그것도 실패하면 (Mock 폴백 없이) `AgentRunError`를 던진다.
 6. **문서 근거 보강** — 질문 또는 위젯 제목에 "공격"/"attack"이 있으면 `DocumentProvider.search()`로 관련 문서를 찾아 `MarkdownBlock`(해결 방안) + `SourceList`(출처) 위젯을 추가. 출처가 없으면 근거 없는 해결 방안을 지어내지 않는다.

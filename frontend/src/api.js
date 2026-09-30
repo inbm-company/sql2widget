@@ -75,7 +75,7 @@ async function request(path, options = {}, { retry = true } = {}) {
   };
   const token = getAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (path === "/api/chat" || /^\/api\/database-connections\/[^/]+\/commands(?:\/|$)/.test(path)) {
+  if (path === "/api/chat" || /^\/api\/database-connections\/[^/]+\/questions(?:\/|$)/.test(path)) {
     const ai = getAiSettings();
     if (ai.apiKey) headers["X-LLM-API-Key"] = ai.apiKey;
     if (ai.provider) headers["X-LLM-Provider"] = ai.provider;
@@ -199,11 +199,11 @@ export const api = {
     }),
   testConnection: (id) =>
     request(`/api/database-connections/${id}/test`, { method: "POST" }),
-  seedCommands: (id, role) =>
-    request(`/api/database-connections/${id}/commands/seed`, {
+  seedQuestions: (id, offset = 0) =>
+    request(`/api/database-connections/${id}/questions/seed`, {
       method: "POST",
       timeoutMs: 300000,
-      body: JSON.stringify({ role, count: 3 }),
+      body: JSON.stringify({ offset }),
     }),
   listTables: (id) => request(`/api/database-connections/${id}/tables`),
   getTablePermissions: (connectionId) =>

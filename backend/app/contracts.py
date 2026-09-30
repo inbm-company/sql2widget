@@ -52,10 +52,6 @@ class QuestionIn(BaseModel):
     plan: QuestionPlanIn
 
 
-class QuestionRegisterRequest(QuestionIn):
-    pass
-
-
 class QuestionSeedRequest(BaseModel):
     offset: int = Field(default=0, ge=0)
 

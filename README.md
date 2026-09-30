@@ -81,6 +81,6 @@ docker compose exec backend python scripts/smoke_eval.py
 docker compose exec backend python scripts/smoke_stage.py
 ```
 
-## 명령 유사도 DB
+## 예상 질문 유사도 DB
 
-사용자 명령 → 선택한 DB의 유사 명령 검색 → 검색된 명령의 SQL·위젯 정보를 참조해 답변을 생성합니다. 관리자에서 AI 설정·역할별 테이블 권한을 저장한 뒤 **명령 유사도 DB → 초기 명령 3개 등록**으로 시작합니다. 기존 실행 환경에는 `docker compose exec backend python scripts/migrate_chat_vector.py`를 적용합니다. [저장 구조·등록 및 검색 API](docs/features/similarity-search-design.md).
+사용자 질문 → 선택한 DB의 유사 예상 질문 검색 → 연결된 SQL·위젯 정보를 참고해 답변을 생성합니다. 관리자에서 AI 설정 후 DB를 선택해 **예상 질문 생성**을 누르면 모든 테이블을 순회하며 질문을 생성합니다. 역할 선택이나 고정 생성 개수는 없습니다. 기존 실행 환경에는 `docker compose exec backend python scripts/migrate_chat_vector.py`를 적용합니다. [생성 절차·저장 구조·API](docs/features/similarity-search-design.md).

@@ -223,11 +223,14 @@ def embed_texts(
             base_url, "/embeddings", api_key=api_key,
             payload={"model": model, "input": texts, "dimensions": dim}, timeout=60.0,
         )
-        ordered = sorted(data["data"], key=lambda item: item["index"])
-        if [item["index"] for item in ordered] != list(range(len(texts))):
+        # Gemini's OpenAI-compatible endpoint can omit index on the first item.
+        # Its response order is the input order; honor explicit indexes when present.
+        ordered = sorted(enumerate(data["data"]),
+                         key=lambda pair: pair[1].get("index", pair[0]))
+        if [item.get("index", position) for position, item in ordered] != list(range(len(texts))):
             raise ValueError("Embedding response did not cover every question")
         vectors = []
-        for item in ordered:
+        for _, item in ordered:
             values = item["embedding"][:dim]
             vectors.append(_l2_normalize(values) if len(values) != 3072 else values)
         return {"embeddings": vectors, "provider": provider, "model": model, "error": None}
