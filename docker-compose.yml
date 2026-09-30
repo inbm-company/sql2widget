@@ -99,6 +99,27 @@ services:
       timeout: 5s
       retries: 20
 
+  # Graph RAG 준비용 독립 그래프 DB. 데이터 적재·백엔드 연동은 다음 단계.
+  neo4j:
+    image: neo4j:2026.09.0
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env before starting Neo4j}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1;' > /dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
@@ -166,4 +187,6 @@ volumes:
   pg_northwind_data:
   pg_skax_nms_data:
   pg_chat_vector_data:
+  neo4j_data:
+  neo4j_logs:
   frontend_node_modules:

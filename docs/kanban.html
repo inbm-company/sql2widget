@@ -180,7 +180,7 @@
         <h1>문서 &amp; 진행 상황 대시보드</h1>
       </div>
       <div class="meta">
-        <strong>2026년 9월 21일 기준</strong>
+        <strong>2026년 9월 30일 기준</strong>
         <a href="progress.md">docs/progress.md</a> ·
         <a href="features/README.md">docs/features/</a> 데이터
       </div>
@@ -197,8 +197,8 @@
     <section class="kpis">
       <div class="kpi done">
         <div class="label">완료</div>
-        <div class="num">13</div>
-        <div class="sub">핵심 기능 7종 + 인프라·문서 5종</div>
+        <div class="num">14</div>
+        <div class="sub">앱 기능 · DB 인프라 · 문서</div>
       </div>
       <div class="kpi wip">
         <div class="label">진행중</div>
@@ -220,15 +220,16 @@
     <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
     <section class="board">
       <div class="col done">
-        <div class="col-head"><span class="dot"></span>완료<span class="count">13</span></div>
+        <div class="col-head"><span class="dot"></span>완료<span class="count">14</span></div>
         <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
         <div class="card"><div class="t">프로젝트·대화 CRUD</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
         <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
-        <div class="card"><div class="t">Stage 드래그·이동·리사이즈·자동 저장</div><div class="n"><a href="features/stage.md">stage.md</a></div></div>
+        <div class="card"><div class="t">Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</div><div class="n"><a href="features/stage.md">stage.md</a></div></div>
         <div class="card"><div class="t">Viewer 읽기 전용 화면</div><div class="n"><span class="mono">/p/:id/view</span> · <a href="features/viewer.md">viewer.md</a></div></div>
-        <div class="card"><div class="t">Admin — DB 연결·테이블 권한</div><div class="n"><a href="features/admin.md">admin.md</a></div></div>
+        <div class="card"><div class="t">Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한</div><div class="n"><a href="features/admin.md">admin.md</a></div></div>
         <div class="card"><div class="t">샘플 DB 구성</div><div class="n">SOC + Global Sales + 서비스 DB, Docker Compose</div></div>
         <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">로컬 일반 스키마 데모용</div></div>
+        <div class="card"><div class="t">Graph RAG 준비용 Neo4j 로컬 설치</div><div class="n">Community 2026.09.0 · 독립 Compose 서비스 · 로컬 전용 Browser/Bolt · 인증·영속 볼륨·healthcheck. 데이터 적재·백엔드 연동은 미구현 · <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></div></div>
         <div class="card"><div class="t">실 LLM 전용 채팅 에이전트</div><div class="n">OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">Admin AI 연결 설정</div><div class="n">브라우저 localStorage, Provider/Model/Key · <a href="features/admin.md">admin.md</a></div></div>
         <div class="card"><div class="t">llm_usage 기록 골격</div><div class="n">테이블 적재까지 완료</div></div>

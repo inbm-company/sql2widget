@@ -76,4 +76,5 @@ export const storeKeys = {
   conversation: (id) => (id ? `api:/conversations/${id}` : null),
   stage: (projectId) => (projectId ? `api:/stage/${projectId}` : null),
   connections: "api:/database-connections",
+  questions: (connectionId) => (connectionId ? `api:/database-connections/${connectionId}/questions` : null),
 };

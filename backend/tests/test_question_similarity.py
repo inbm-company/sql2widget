@@ -250,7 +250,9 @@ def client():
 def test_non_admin_cannot_seed(client, monkeypatch):
     monkeypatch.setattr(service, "connection_context", lambda *args: pytest.fail("Read before authorization"))
     assert client.post("/api/database-connections/db/questions/seed", json={}).status_code == 403
-    assert client.post("/api/database-connections/db/questions", json=question_item().model_dump()).status_code == 404
+    # No manual-register route exists at this path anymore; only GET (listing) is defined,
+    # so POST correctly reports 405 rather than 404.
+    assert client.post("/api/database-connections/db/questions", json=question_item().model_dump()).status_code == 405
 
 
 def test_search_api_does_not_take_role_selection(client, monkeypatch, context):
@@ -266,4 +268,37 @@ def test_search_api_does_not_take_role_selection(client, monkeypatch, context):
 def test_other_tenant_connection_is_not_found(client, monkeypatch):
     monkeypatch.setattr(service.connections, "get_connection", lambda *args: None)
     response = client.post("/api/database-connections/other-db/questions/search", json={"question": "주문 수"})
+    assert response.status_code == 404
+
+
+@pytest.fixture
+def admin_client():
+    main.app.dependency_overrides[main.get_current_user] = lambda: {"id": "u", "tenant_id": "t", "role": "admin"}
+    with TestClient(main.app) as client:
+        yield client
+    main.app.dependency_overrides.clear()
+
+
+def test_non_admin_cannot_list_questions(client):
+    assert client.get("/api/database-connections/db-a/questions").status_code == 403
+
+
+def test_admin_lists_previously_saved_questions(admin_client, monkeypatch):
+    monkeypatch.setattr(main.conn_repo, "get_connection", lambda *args: {"id": "db-a"})
+    saved = [{"id": "qst_1", "question": "주문 건수를 보여줘"}]
+    calls = []
+    monkeypatch.setattr(
+        main.question_catalog, "list_questions",
+        lambda **kwargs: (calls.append(kwargs) or (1, saved)),
+    )
+    response = admin_client.get("/api/database-connections/db-a/questions")
+    assert response.status_code == 200
+    body = response.json()
+    assert body == {"connection_id": "db-a", "total": 1, "questions": saved}
+    assert calls == [{"tenant_id": "t", "connection_id": "db-a", "limit": 200, "offset": 0}]
+
+
+def test_list_questions_unknown_connection_is_not_found(admin_client, monkeypatch):
+    monkeypatch.setattr(main.conn_repo, "get_connection", lambda *args: None)
+    response = admin_client.get("/api/database-connections/missing/questions")
     assert response.status_code == 404

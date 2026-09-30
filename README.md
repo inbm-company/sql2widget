@@ -8,6 +8,12 @@
 
 ```powershell
 Copy-Item .env.example .env
+```
+
+`.env`의 `NEO4J_PASSWORD`에 임의의 비밀번호(최소 8자)를 설정한 뒤 실행한다.
+기존 `.env`가 있으면 복사로 덮어쓰지 않고 이 항목만 추가한다.
+
+```powershell
 docker compose up --build
 ```
 
@@ -84,3 +90,33 @@ docker compose exec backend python scripts/smoke_stage.py
 ## 예상 질문 유사도 DB
 
 사용자 질문 → 선택한 DB의 유사 예상 질문 검색 → 연결된 SQL·위젯 정보를 참고해 답변을 생성합니다. 관리자에서 AI 설정 후 DB를 선택해 **예상 질문 생성**을 누르면 모든 테이블을 순회하며 질문을 생성합니다. 역할 선택이나 고정 생성 개수는 없습니다. 기존 실행 환경에는 `docker compose exec backend python scripts/migrate_chat_vector.py`를 적용합니다. [생성 절차·저장 구조·API](docs/features/similarity-search-design.md).
+
+## Neo4j 로컬 설치 (Graph RAG 준비)
+
+Neo4j Community `2026.09.0`을 독립 서비스로 실행한다. 이번 단계는 설치·인증·영속 저장·접속 확인까지이며, 데이터 소스 지정, 데이터 적재, 그래프 모델링, Graph RAG 검색 및 백엔드 연동은 아직 구현하지 않았다. Python 드라이버와 추가 플러그인도 설치하지 않는다.
+
+`.env`에 `NEO4J_PASSWORD`를 설정한 뒤 기존 앱을 재시작하지 않고 Neo4j만 기동할 수 있다.
+
+```sh
+docker compose config --quiet
+docker compose up -d --no-deps --wait --wait-timeout 300 neo4j
+docker compose ps neo4j
+```
+
+- Neo4j Browser: http://127.0.0.1:7474/browser/
+- 호스트 Bolt 주소: `bolt://127.0.0.1:7687`
+- 같은 Compose 네트워크에서의 Bolt 주소: `bolt://neo4j:7687`
+- 사용자 이름: `neo4j`, 비밀번호: 로컬 `.env`의 `NEO4J_PASSWORD`
+- 두 호스트 포트는 `127.0.0.1`에만 바인딩한다.
+- 데이터는 `neo4j_data` → `/data`, 로그는 `neo4j_logs` → `/logs` named volume에 보관한다.
+- 로컬 메모리 설정: 초기 heap 256 MiB, 최대 heap 512 MiB, page cache 256 MiB. 실제 데이터 적재 규모에 따라 다음 단계에서 조정한다.
+
+인증된 Bolt 연결은 노드 생성 없이 다음 명령으로 확인한다. Compose healthcheck도 같은 방식으로 `RETURN 1`을 실행한다.
+
+```sh
+docker compose exec -T neo4j sh -c 'cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "RETURN 1 AS connected;"'
+```
+
+`docker compose restart neo4j` 또는 컨테이너 재생성 시 named volume은 유지된다. `docker compose down -v`는 Neo4j를 포함한 모든 Compose DB 볼륨을 삭제하므로 데이터를 보존해야 할 때는 사용하지 않는다. 초기 비밀번호는 빈 데이터 볼륨에서만 적용된다. 기존 볼륨의 비밀번호는 `.env` 값 변경만으로 바뀌지 않는다.
+
+설치 기준: [Neo4j 공식 Docker 문서](https://neo4j.com/docs/operations-manual/current/docker/introduction/), [Docker 환경변수 설정](https://neo4j.com/docs/operations-manual/current/docker/configuration/).

@@ -439,9 +439,22 @@ function Workspace({ user, onLogout }) {
   const [pendingMessage, setPendingMessage] = useState("");
   const [chatError, setChatError] = useState("");
   const [adminOpen, setAdminOpen] = useState(false);
+  const [settingsMode, setSettingsMode] = useState("admin");
   const [stageOpen, setStageOpen] = useState(true);
   const [connectionId, setConnectionId] = useState("");
   const messagesRef = useRef(null);
+  const workspaceRef = useRef(null);
+  const [chatShare, setChatShare] = useState(1 / 2.1);
+  const resizeStart = useRef(null);
+
+  function resizeChat(clientX) {
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    const sidebar = workspace.querySelector(".sidebar").getBoundingClientRect();
+    const available = workspace.getBoundingClientRect().right - sidebar.right - 8;
+    if (available < 660) return;
+    setChatShare(Math.max(320, Math.min(available - 340, clientX - sidebar.right)) / available);
+  }
 
   const { data: projects, mutate: mutateProjects } = useSWR(
     storeKeys.projects,
@@ -537,7 +550,7 @@ function Workspace({ user, onLogout }) {
         : SOC_SAMPLE_QUESTIONS;
 
   return (
-    <div className={`workspace ${stageOpen ? "" : "stage-collapsed"}`}>
+    <div ref={workspaceRef} style={{ "--chat-share": `${chatShare}fr`, "--stage-share": `${1 - chatShare}fr` }} className={`workspace ${stageOpen && canEdit ? "" : "stage-collapsed"}`}>
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="brand">agent4any</div>
@@ -598,9 +611,17 @@ function Workspace({ user, onLogout }) {
           </label>
           <div className="sidebar-links">
             {user.role === "admin" ? (
-              <button type="button" className="link-btn" onClick={() => setAdminOpen(true)}>
+              <>
+              <button type="button" className="link-btn" onClick={() => { setSettingsMode("admin"); setAdminOpen(true); }}>
                 Admin
               </button>
+              <button type="button" className="link-btn" onClick={() => { setSettingsMode("ai"); setAdminOpen(true); }}>
+                AI 설정
+              </button>
+              <button type="button" className="link-btn" onClick={() => { setSettingsMode("db"); setAdminOpen(true); }}>
+                DB 관리
+              </button>
+              </>
             ) : null}
             {activeProjectId ? (
               <Link to={`/p/${activeProjectId}/view`} className="link-btn">
@@ -729,11 +750,45 @@ function Workspace({ user, onLogout }) {
         )}
       </main>
 
+      {stageOpen && canEdit ? (
+        <div
+          className="pane-resizer"
+          role="separator"
+          aria-label="채팅과 Stage 너비 조절"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(chatShare * 100)}
+          tabIndex={0}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            resizeStart.current = e.clientX;
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (resizeStart.current !== null) resizeChat(e.clientX);
+          }}
+          onPointerUp={(e) => {
+            resizeStart.current = null;
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
+          onLostPointerCapture={() => { resizeStart.current = null; }}
+          onPointerCancel={() => { resizeStart.current = null; }}
+          onDoubleClick={() => setChatShare(1 / 2.1)}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+            e.preventDefault();
+            const chat = workspaceRef.current.querySelector(".chat-pane").getBoundingClientRect();
+            resizeChat(chat.right + (e.key === "ArrowRight" ? 24 : -24));
+          }}
+        />
+      ) : null}
       <section className={`stage-pane ${stageOpen && canEdit ? "" : "is-hidden"}`}>
         <StageCanvas projectId={activeProjectId} readOnly={isViewer} />
       </section>
 
-      <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+      <AdminPanel open={adminOpen} mode={settingsMode} onClose={() => setAdminOpen(false)} />
     </div>
   );
 }

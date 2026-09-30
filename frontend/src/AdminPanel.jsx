@@ -3,12 +3,19 @@ import { createPortal } from "react-dom";
 import { api, getAiSettings, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
 
-export default function AdminPanel({ open, onClose }) {
+export default function AdminPanel({ open, onClose, mode = "admin" }) {
+  const showAi = mode !== "db";
+  const showDb = mode !== "ai";
+  const title = mode === "ai" ? "AI 설정" : mode === "db" ? "DB 관리" : "관리자";
   const { data: connections, mutate } = useSWR(
-    open ? storeKeys.connections : null,
+    open && showDb ? storeKeys.connections : null,
     () => api.listConnections()
   );
   const [selectedId, setSelectedId] = useState("");
+  const { data: savedQuestions, mutate: mutateQuestions } = useSWR(
+    open && showDb && selectedId ? storeKeys.questions(selectedId) : null,
+    () => api.listQuestions(selectedId)
+  );
   const [tables, setTables] = useState([]);
   const [perms, setPerms] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
@@ -26,13 +33,17 @@ export default function AdminPanel({ open, onClose }) {
   });
 
   useEffect(() => {
+    if (open) setStatus("");
+  }, [open, mode]);
+
+  useEffect(() => {
     if (!selectedId && connections?.length) {
       setSelectedId(connections[0].id);
     }
   }, [connections, selectedId]);
 
   useEffect(() => {
-    if (!open || !selectedId) return undefined;
+    if (!open || !showDb || !selectedId) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -53,7 +64,7 @@ export default function AdminPanel({ open, onClose }) {
     return () => {
       cancelled = true;
     };
-  }, [open, selectedId]);
+  }, [open, showDb, selectedId]);
 
   async function createConn(e) {
     e.preventDefault();
@@ -112,6 +123,7 @@ export default function AdminPanel({ open, onClose }) {
       setStatus(`예상 질문 생성이 중단되었습니다: ${err.message} 저장된 질문은 유지됩니다. 다시 누르면 이어서 진행합니다.`);
     } finally {
       setSeeding(false);
+      mutateQuestions();
     }
   }
 
@@ -150,16 +162,16 @@ export default function AdminPanel({ open, onClose }) {
   if (!open) return null;
 
   return createPortal(
-    <div className="admin-drawer" role="dialog" aria-modal="true">
+    <div className="admin-drawer" role="dialog" aria-modal="true" aria-label={title}>
       <div className="admin-panel">
         <header>
-          <h2>관리자</h2>
+          <h2>{title}</h2>
           <button type="button" className="ghost" onClick={onClose}>
             닫기
           </button>
         </header>
 
-        <section>
+        {showAi ? <section>
           <h3>AI 연결</h3>
           <form className="admin-form" onSubmit={saveAiSettings}>
             <label>Provider<select value={aiSettings.provider} onChange={(e) => setAiForm((f) => ({ ...f, provider: e.target.value }))}><option value="gemini">Gemini</option><option value="openai">OpenAI 호환</option></select></label>
@@ -168,8 +180,9 @@ export default function AdminPanel({ open, onClose }) {
             <p className="muted small">키는 이 브라우저에만 저장되고 채팅과 예상 질문 생성·검색에 사용됩니다.</p>
             <button type="submit" className="primary">AI 설정 저장</button>
           </form>
-        </section>
+        </section> : null}
 
+        {showDb ? <>
         <section>
           <h3>DB 연결</h3>
           <ul className="admin-list">
@@ -215,9 +228,16 @@ export default function AdminPanel({ open, onClose }) {
           {seedResult?.connection_id === selectedId && seedResult.uncovered_tables?.length ? (
             <p className="muted small">질문을 생성하지 못한 테이블: {seedResult.uncovered_tables.join(", ")}</p>
           ) : null}
-          {seedResult?.connection_id === selectedId ? (
+          {savedQuestions ? (
+            <p className="muted small">
+              저장된 예상 질문 총 {savedQuestions.total}개
+              {savedQuestions.total > savedQuestions.questions.length
+                ? ` (최근 ${savedQuestions.questions.length}개 표시)` : ""}
+            </p>
+          ) : null}
+          {savedQuestions?.questions?.length ? (
             <ul className="question-seed-list">
-              {seedResult.questions.map((item) => (
+              {savedQuestions.questions.map((item) => (
                 <li key={item.id}>
                   <details>
                     <summary>{item.question}</summary>
@@ -283,6 +303,7 @@ export default function AdminPanel({ open, onClose }) {
           </p>
         </section>
 
+        </> : null}
         {status ? <p className="admin-status">{status}</p> : null}
       </div>
     </div>,

@@ -35,6 +35,7 @@ from app.repositories import connections as conn_repo
 from app.repositories import conversations as conv_repo
 from app.repositories import message_embeddings as embed_repo
 from app.repositories import projects as project_repo
+from app.repositories import question_catalog
 from app.repositories import stages as stage_repo
 
 app = FastAPI(title="agent4any", version="0.1.0")
@@ -301,6 +302,18 @@ def seed_database_questions(connection_id: str, body: QuestionSeedRequest,
     except question_similarity.QuestionCatalogError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     return {"connection_id": connection_id, **batch}
+
+
+@app.get("/api/database-connections/{connection_id}/questions")
+def list_database_questions(connection_id: str, user=Depends(get_current_user),
+                            limit: int = 200, offset: int = 0):
+    require_admin(user)
+    if not conn_repo.get_connection(connection_id, user["tenant_id"]):
+        raise HTTPException(status_code=404, detail="Database connection not found")
+    total, questions = question_catalog.list_questions(
+        tenant_id=user["tenant_id"], connection_id=connection_id, limit=limit, offset=offset,
+    )
+    return {"connection_id": connection_id, "total": total, "questions": questions}
 
 
 @app.post("/api/database-connections/{connection_id}/questions/search")

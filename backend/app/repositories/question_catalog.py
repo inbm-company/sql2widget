@@ -38,6 +38,29 @@ def upsert_questions(*, tenant_id, connection_id, schema_hash, database_info, en
     return saved
 
 
+def list_questions(*, tenant_id, connection_id, limit=200, offset=0):
+    """Return previously saved questions for the admin screen, newest first."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COUNT(*) AS total FROM question_catalog "
+                "WHERE tenant_id = %s AND connection_id = %s",
+                (tenant_id, connection_id),
+            )
+            total = cur.fetchone()["total"]
+            cur.execute(
+                """
+                SELECT id, question, plan, database_info, embedding_model, created_at
+                FROM question_catalog
+                WHERE tenant_id = %s AND connection_id = %s
+                ORDER BY created_at DESC, id
+                LIMIT %s OFFSET %s
+                """,
+                (tenant_id, connection_id, limit, offset),
+            )
+            return total, cur.fetchall()
+
+
 def search_questions(*, tenant_id, connection_id, schema_hash, embedding_model,
                      embedding, limit=5, min_similarity=0.75, offset=0):
     with get_conn() as conn:

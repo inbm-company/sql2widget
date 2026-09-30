@@ -27,6 +27,7 @@ Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위
 
 ## F-11 Stage 배치 / 저장
 
+- 데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.
 - 프로젝트당 Stage 1행. `GET .../stage` 호출 시 없으면 생성(`get_or_create_stage`).
 - 레이아웃 엔진은 `react-grid-layout`(12열, `rowHeight: 36`, `margin: [12,12]`, `compactType: "vertical"`).
 - 이동·리사이즈(`onLayoutChange`)는 **500ms 디바운스** 후 변경된 위젯들만 `PATCH .../stage/widgets/{id}`로 저장(`persistLayout`). 저장 중에는 로컬 상태(`localWidgets`)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 `error`로 표시한다.

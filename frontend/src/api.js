@@ -205,6 +205,7 @@ export const api = {
       timeoutMs: 300000,
       body: JSON.stringify({ offset }),
     }),
+  listQuestions: (id) => request(`/api/database-connections/${id}/questions`),
   listTables: (id) => request(`/api/database-connections/${id}/tables`),
   getTablePermissions: (connectionId) =>
     request(`/api/table-permissions?connection_id=${encodeURIComponent(connectionId)}`),

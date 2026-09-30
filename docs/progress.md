@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 작업 진행 상황 |
-| 기준일 | 2026-09-22 |
+| 기준일 | 2026-09-30 |
 | 관련 문서 | [AGENTS.md](../AGENTS.md), [docs/features/](features/README.md), [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
 
 상태 라벨은 4종 고정: `완료` / `진행중` / `예정` / `보류`. 이 문서는 `docs/현황.html`(2026-09-03 스냅샷)을 대체한다 — 이전 스냅샷 수치는 6절에 남겨둔다.
@@ -16,6 +16,7 @@
 - 2026-09-03 스냅샷 이후 **프로젝트 계층**(대화 여러 개를 프로젝트 하나로 묶고, Stage를 프로젝트당 1개로)이 새로 들어왔다 — 당시 문서의 `/c/:id/view`는 지금 `/p/:projectId/view`로 바뀌었다.
 - 실 LLM 경로(OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도)도 스냅샷 이후 상당히 진전됐다.
 - 채팅 메시지 임베딩(pgvector 유사도 검색)은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작하고 프론트는 아직 안 붙었다.
+- Graph RAG 준비용 Neo4j 로컬 설치는 **완료**. 독립 서비스·인증·영속 볼륨·접속 확인까지이며, 데이터 적재와 Graph RAG 연동은 다음 단계에서 논의한다.
 
 ---
 
@@ -26,11 +27,12 @@
 | 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer) | [auth.md](features/auth.md) |
 | 프로젝트·대화 CRUD | [projects-conversations.md](features/projects-conversations.md) |
 | Artifact 위젯 렌더 + SQL 미리보기 | [widgets-artifact.md](features/widgets-artifact.md) |
-| Stage 드래그·이동·리사이즈·자동 저장·복원 | [stage.md](features/stage.md) |
+| Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 | [stage.md](features/stage.md) |
 | Viewer 읽기 전용 화면(`/p/:id/view`) | [viewer.md](features/viewer.md) |
-| Admin — DB 연결 등록/테스트, 역할별 테이블 권한 | [admin.md](features/admin.md) |
+| Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한 | [admin.md](features/admin.md) |
 | SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성 | `docker-compose.yml` |
 | 로컬 일반 스키마 데모용 Northwind, SKAX NMS 샘플 DB 시드 | `backend/scripts/seed_northwind_recent.py`, `seed_skax_nms.py` |
+| Graph RAG 준비용 Neo4j 로컬 설치 | Community `2026.09.0`, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck. 데이터 적재·백엔드 연동은 미구현. [설치 방법](../README.md#neo4j-로컬-설치-graph-rag-준비) |
 | 실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제) | [chat.md](features/chat.md) |
 | Admin 브라우저 AI 연결 설정(Provider/Model/API key, localStorage) | [admin.md](features/admin.md) |
 | `llm_usage` 사용량 기록 골격(테이블 적재) | [admin.md](features/admin.md) 데이터 모델 |

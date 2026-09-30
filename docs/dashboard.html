@@ -486,6 +486,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
 
   <h2>F-11 Stage 배치 / 저장</h2>
   <ul>
+    <li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li>
     <li>프로젝트당 Stage 1행, 없으면 GET 시 생성.</li>
     <li><code>react-grid-layout</code>(12열, rowHeight 36, compactType vertical).</li>
     <li>이동·리사이즈는 <strong>500ms 디바운스</strong> 후 변경된 위젯만 PATCH 저장.</li>
@@ -538,6 +539,7 @@ stage_widgets(
 <section id="admin">
   <div class="doc-title">기능</div>
   <h1 class="page">관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
+  <p>사이드바 하단에는 기존 Admin 버튼과 별도로 AI 설정, DB 관리 버튼이 있다. Admin은 기존 전체 설정을 유지한다. AI 설정 패널은 Provider·Model·API key 설정만, DB 관리 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
   <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>connections.py</code>, <code>crypto.py</code>, <code>AdminPanel.jsx</code></p>
 
   <h2>F-13 DB 연결 관리</h2>
@@ -574,9 +576,9 @@ stage_widgets(
 <section id="progress">
   <div class="doc-title">운영</div>
   <h1 class="page">작업 진행 상황</h1>
-  <p class="doc-meta">기준일 2026-09-21 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
+  <p class="doc-meta">기준일 2026-09-30 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
 
-  <p><span class="badge done">완료 13</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
+  <p><span class="badge done">완료 14</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
 
   <h2>요약</h2>
   <ul>
@@ -584,6 +586,7 @@ stage_widgets(
     <li>2026-09-03 스냅샷 이후 <strong>프로젝트 계층</strong>이 새로 들어왔다 — <code>/c/:id/view</code>는 지금 <code>/p/:projectId/view</code>로 바뀌었다.</li>
     <li>실 LLM 경로도 스냅샷 이후 상당히 진전됐다.</li>
     <li>채팅 메시지 임베딩은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작한다.</li>
+    <li>Graph RAG 준비용 Neo4j 로컬 설치는 <strong>완료</strong>. 독립 서비스·인증·영속 볼륨·접속 확인까지이며, 데이터 적재와 Graph RAG 연동은 다음 단계에서 논의한다.</li>
   </ul>
 
   <h2><span class="badge done">완료</span></h2>
@@ -591,11 +594,12 @@ stage_widgets(
     <li>로그인/세션, JWT access+refresh, 역할 분리 — <a href="#auth">auth</a></li>
     <li>프로젝트·대화 CRUD — <a href="#projects-conversations">projects-conversations</a></li>
     <li>Artifact 위젯 렌더 + SQL 미리보기 — <a href="#widgets-artifact">widgets-artifact</a></li>
-    <li>Stage 드래그·이동·리사이즈·자동 저장·복원 — <a href="#stage">stage</a></li>
+    <li>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 — <a href="#stage">stage</a></li>
     <li>Viewer 읽기 전용 화면 — <a href="#viewer">viewer</a></li>
-    <li>Admin — DB 연결 등록/테스트, 역할별 테이블 권한 — <a href="#admin">admin</a></li>
+    <li>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한 — <a href="#admin">admin</a></li>
     <li>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</li>
     <li>Northwind, SKAX NMS 샘플 DB 시드</li>
+    <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck. 데이터 적재·백엔드 연동은 미구현 — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
     <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
     <li>Admin 브라우저 AI 연결 설정</li>
     <li><code>llm_usage</code> 사용량 기록 골격</li>
