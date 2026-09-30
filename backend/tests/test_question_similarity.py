@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import agent_service, llm, main, question_similarity as service
+from app.providers import transport
 from app.contracts import QuestionIn
 
 
@@ -195,7 +196,7 @@ def test_empty_ai_output_does_not_create_questions(monkeypatch, context):
 
 def test_gemini_batch_embeddings_allow_missing_first_index(monkeypatch):
     monkeypatch.setattr(llm.config, "CHAT_EMBEDDING_DIM", 3)
-    monkeypatch.setattr(llm, "_post_openai_compatible", lambda *args, **kwargs:
+    monkeypatch.setattr(transport, "post_json", lambda *args, **kwargs:
         {"data": [{"embedding": [1, 0, 0]}, {"index": 1, "embedding": [0, 1, 0]}]})
     result = llm.embed_texts(["질문 하나", "질문 둘"],
                             runtime_provider="gemini", runtime_api_key="test-only")
@@ -228,7 +229,7 @@ def test_agent_passes_question_references_to_initial_and_repair_plans(monkeypatc
 def test_llm_receives_question_references_as_data(monkeypatch):
     calls = []
     monkeypatch.setattr(llm, "log_usage", lambda **kwargs: None)
-    monkeypatch.setattr(llm, "_post_openai_compatible", lambda *args, **kwargs:
+    monkeypatch.setattr(transport, "post_json", lambda *args, **kwargs:
         calls.append(kwargs) or {"choices": [{"message": {"content": '{"widgets": []}'}}]})
     references = [{**question_item().model_dump(), "similarity": 0.98}]
     llm.plan_with_llm("최근 주문 수", schema_text="orders(id)", tenant_id="t", user_id="u",

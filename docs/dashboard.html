@@ -175,6 +175,7 @@
         <a href="#stage" data-id="stage">Stage <span class="fcode">F-10,11</span></a>
         <a href="#viewer" data-id="viewer">Viewer 화면 <span class="fcode">F-12</span></a>
         <a href="#admin" data-id="admin">관리자 <span class="fcode">F-13,14</span></a>
+        <a href="#graph-rag-sources" data-id="graph-rag-sources">Graph RAG 데이터 소스</a>
 
         <div class="group-label">운영</div>
         <a href="#progress" data-id="progress">진행 상황</a>
@@ -365,7 +366,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
 <section id="chat">
   <div class="doc-title">기능</div>
   <h1 class="page">채팅 (에이전트)</h1>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>agent_service.py</code>, <code>agent.py</code>, <code>llm.py</code>, <code>query.py</code>, <code>documents.py</code>, <code>message_embeddings.py</code></p>
+  <p class="doc-meta">기준일 2026-09-30 (구현 기준) · 코드: <code>agent_service.py</code>, <code>agent.py</code>, <code>llm.py</code>, <code>query.py</code>, <code>documents.py</code>, <code>message_embeddings.py</code></p>
   <p>이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.</p>
 
   <h2>F-07 고객 DB 선택</h2>
@@ -397,12 +398,14 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
   <h3>LLM 프로바이더</h3>
   <table>
     <tbody>
-      <tr><th>지원</th><td>OpenAI-compatible, Gemini(OpenAI 호환 엔드포인트로 매핑, 기본 모델 <code>gemini-3.6-flash</code>) — 둘 다 <code>llm._post_openai_compatible()</code> 하나를 공유</td></tr>
-      <tr><th>런타임 오버라이드</th><td>브라우저 Admin "AI 연결" 설정이 요청 헤더로 전달되면 서버 <code>.env</code>보다 우선</td></tr>
-      <tr><th>실패 시</th><td>키가 없거나 호출이 실패하면 <strong>HTTP 502 + 실제 에러 메시지를 그대로 노출</strong>. 조용한 폴백 없음</td></tr>
+      <tr><th>지원</th><td>OpenAI 호환, Gemini(기존 Google OpenAI 호환 API 유지), 로컬 OpenAI 호환 서버. <code>providers/openai.py</code>, <code>gemini.py</code>, <code>local.py</code>가 요청·응답을 담당하고 <code>providers/transport.py</code>가 HTTP 전송을 공유한다. 공통 프롬프트는 <code>prompts.py</code>, 공통 진입점·사용량 기록은 <code>llm.py</code>에 있다.</td></tr>
+      <tr><th>런타임 오버라이드</th><td>브라우저 AI 설정이 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달되면 서버 환경변수보다 우선</td></tr>
+      <tr><th>실패 시</th><td>클라우드 키가 없거나 호출이 실패하면 <strong>HTTP 502 + 실제 에러 메시지를 그대로 노출</strong>. 조용한 폴백 없음</td></tr>
       <tr><th>스키마 컨텍스트</th><td>선택 연결의 허용 테이블에 한해 컬럼·PK/FK를 프롬프트에 전달. <strong>실제 데이터 행·비밀번호는 전달 안 함</strong></td></tr>
     </tbody>
   </table>
+
+  <p>로컬 모델은 API 키가 선택 사항이며 채팅 모델 이름과 Base URL이 필요하다. 임베딩 모델이 없거나 차원이 <code>CHAT_EMBEDDING_DIM</code>과 다르면 유사도 검색을 생략하고 실모델 채팅은 계속한다. 예상 질문 생성·저장은 유효한 임베딩 모델이 필요하다. 다른 Provider의 서버 키를 가져와 사용하지 않는다.</p>
 
   <h3>SQL 규칙</h3>
   <ul>
@@ -539,10 +542,11 @@ stage_widgets(
 <section id="admin">
   <div class="doc-title">기능</div>
   <h1 class="page">관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
-  <p>사이드바 하단에는 기존 Admin 버튼과 별도로 AI 설정, DB 관리 버튼이 있다. Admin은 기존 전체 설정을 유지한다. AI 설정 패널은 Provider·Model·API key 설정만, DB 관리 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>connections.py</code>, <code>crypto.py</code>, <code>AdminPanel.jsx</code></p>
+  <p>사이드바 하단에는 기존 Admin 버튼과 별도로 AI 설정, DB 관리 버튼이 있다. Admin은 기존 전체 설정을 유지한다. AI 설정 패널은 Provider별 AI 연결 설정만, DB 관리 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
+  <p class="doc-meta">기준일 2026-09-30 (구현 기준) · 코드: <code>connections.py</code>, <code>crypto.py</code>, <code>AdminPanel.jsx</code></p>
 
   <h2>F-13 DB 연결 관리</h2>
+  <p>DB 관리와 전체 Admin 패널에는 <strong>Graph RAG 데이터 소스</strong>도 표시된다. 로컬 폴더·파일 경로를 등록하고 별도의 <strong>적재</strong> 버튼으로 문서 본문과 명시된 문서 링크를 Neo4j에 저장한다. <a href="#graph-rag-sources">지원 범위·API·접근 제한</a>.</p>
   <table>
     <thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead>
     <tbody>
@@ -559,26 +563,93 @@ stage_widgets(
   <p><code>PUT /api/table-permissions</code> <code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체를 delete-then-insert로 교체한다. 현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능.</p>
 
   <h2>AI 연결 설정 (브라우저 로컬)</h2>
+  <p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 localStorage(<code>agent4any_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local } }</code> 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, AI 설정 저장을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
   <table>
-    <thead><tr><th>필드</th><th>기본값</th></tr></thead>
+    <thead><tr><th>필드</th><th>동작</th></tr></thead>
     <tbody>
-      <tr><td>Provider</td><td><code>gemini</code></td></tr>
-      <tr><td>Model</td><td><code>gemini-3.6-flash</code></td></tr>
-      <tr><td>API key</td><td>비어 있음, 이 브라우저에만 저장</td></tr>
+      <tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
+      <tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 설치된 모델 이름 직접 입력</td></tr>
+      <tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
+      <tr><td>API key</td><td>비밀번호 입력란, 로컬은 선택 사항</td></tr>
+      <tr><td>Embedding model</td><td>로컬에서 선택 입력. 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
     </tbody>
   </table>
-  <p>저장한 값은 <code>/api/chat</code> 요청 헤더로만 전달되며 서버 DB에는 저장되지 않는다. 레거시 <code>gemini-2.5-flash</code> 값은 자동으로 <code>gemini-3.6-flash</code>로 마이그레이션된다.</p>
+  <ul>
+    <li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달되며 서버 환경변수보다 우선한다.</li>
+    <li>URL은 백엔드에서 접근하는 주소다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
+    <li>로컬 임베딩 벡터 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
+    <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
+    <li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
+  </ul>
 
-  <div class="page-nav"><a href="#viewer">← Viewer 화면</a><a href="#progress">다음: 진행 상황 →</a></div>
+  <div class="page-nav"><a href="#viewer">← Viewer 화면</a><a href="#graph-rag-sources">다음: Graph RAG 데이터 소스 →</a></div>
 </section>
 
 <!-- ===================== PROGRESS ===================== -->
+<section id="graph-rag-sources">
+  <div class="doc-title">기능</div>
+<h1 class="page">기능: Graph RAG 로컬 문서 경로 등록·적재</h1>
+<table>
+<tr><th>항목</th><th>내용</th></tr>
+<tr><td>문서명</td><td>기능 문서 — Graph RAG 데이터 소스</td></tr>
+<tr><td>기준일</td><td>2026-09-30 (구현 기준)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/admin.md">admin.md</a>, <a href="../README.md">README.md</a>, <a href="progress.md">progress.md</a></td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/graph_source_routes.py</code>, <code>graph_ingestion.py</code>, <code>repositories/graph_sources.py</code>, <code>backend/sql/migrations/005_graph_sources.sql</code>, <code>frontend/src/GraphSources.jsx</code>, <code>docker-compose.yml</code></td></tr>
+</table>
+<h2>범위</h2>
+<p>관리자가 로컬 폴더·파일 경로를 등록하고 <strong>적재</strong> 버튼으로 Neo4j에 문서 본문과 문서 간 명시된 링크를 저장한다. <code>DB 관리</code>와 전체 <code>Admin</code> 패널에 표시된다. 데이터 소스는 테넌트별이며 프로젝트에 종속되지 않는다.</p>
+<p>현재는 Graph RAG용 문서 그래프를 준비하는 단계다. 질문에서 그래프를 검색하는 연결, 임베딩, LLM 개체·관계 추출, 자동 적재·폴더 감시, PDF·이미지 처리는 구현하지 않았다. 채팅은 기존 SQL·예상 질문 검색 경로를 유지한다.</p>
+<h2>경로 등록</h2>
+<ul>
+<li><code>.env</code>의 <code>GRAPH_RAG_HOST_PATH</code>로 공유할 <strong>호스트 폴더</strong>를 지정한다. 기본값은 <code>./graph-rag-sources</code>다.</li>
+<li>Docker 백엔드에는 <code>/graph-rag-sources</code>로 <strong>읽기 전용</strong> 마운트한다. 공유 폴더 변경 시 백엔드 컨테이너를 재생성한다.</li>
+<li>폼에는 이름과 폴더·파일 경로를 입력한다. 호스트 공유 폴더의 절대 경로, 컨테이너 공유 경로, 공유 폴더 내부 상대 경로를 받는다.</li>
+<li>존재하는 경로만 등록한다. 공유 범위를 벗어난 경로, <code>..</code> 탈출, 숨김 경로, 범위 밖으로 연결되는 심볼릭 링크는 거부한다.</li>
+<li>빈 폴더도 등록할 수 있다. 같은 테넌트의 같은 정규화 경로를 재등록하면 이름만 갱신한다.</li>
+<li>경로 등록은 적재를 실행하지 않는다. 새로고침 후에도 등록 목록이 유지된다.</li>
+</ul>
+<h2>수동 적재</h2>
+<p>지원: UTF-8 Markdown(<code>.md</code>)·텍스트(<code>.txt</code>). 폴더는 하위 폴더까지 읽는다.</p>
+<ul>
+<li>숨김 파일·폴더(<code>.obsidian</code>, <code>.git</code> 등)와 심볼릭 링크 폴더는 탐색하지 않는다.</li>
+<li>이미지·PDF 등 미지원 파일과 빈 문서는 제외 개수를 표시한다.</li>
+<li>적재할 문서가 없거나, 파일을 읽을 수 없거나, UTF-8이 아니면 실패로 표시한다. 에러를 완료로 표시하지 않는다.</li>
+<li>제한: 문서당 2 MiB, 한 번에 1,000개 문서·20 MiB. 초과하면 작은 하위 폴더를 지정한다.</li>
+<li>본문은 4,000자 단위로 나누고 인접 조각은 400자를 겹친다. 원문 내 시작·끝 위치를 보관한다.</li>
+<li>Markdown의 Obsidian <code>[[문서]]</code>, <code>[[문서#제목|표시명]]</code>, 일반 상대 링크를 실제 적재 문서에 연결한다. 코드 예제·외부 URL·이미지 링크는 문서 관계를 만들지 않는다.</li>
+<li>같은 파일명의 후보가 여러 개이거나 대상이 없는 링크는 임의로 연결하지 않고 미해결 링크 개수를 표시한다. 파일명·상대 경로로 해석하며 Obsidian frontmatter 별칭은 해석하지 않는다.</li>
+<li>결과에 문서·본문 조각·문서 링크·제외 파일·미해결 링크 수, 마지막 성공 시각을 표시한다. 실패해도 직전 성공 결과는 유지한다.</li>
+</ul>
+<p>상태: <code>registered</code>(등록됨) → <code>processing</code>(적재 중) → <code>completed</code>(적재 완료) 또는 <code>failed</code>(적재 실패).</p>
+<p>적재 요청은 동기 실행하고 화면은 처리 중 상태를 조회한다. 소스별 PostgreSQL 세션 잠금으로 중복 실행을 409로 거부한다. 백엔드가 중단되면 잠금이 풀리므로 버튼으로 다시 실행할 수 있다. Neo4j 반영은 소스 전체를 한 트랜잭션으로 처리한다. 서비스 DB와 Neo4j 사이에는 분산 트랜잭션이 없으므로 결과 상태 저장에 실패한 경우 재실행으로 복구한다.</p>
+<h2>저장 구조</h2>
+<p>경로·상태는 <strong>서비스 PostgreSQL</strong>의 <code>graph_sources</code>에 저장한다. 고객 PostgreSQL 데이터는 읽거나 수정하지 않는다. 모든 API는 로그인한 관리자만 사용하며 현재 테넌트만 조회·적재한다.</p>
+<pre><code>graph_sources(id, tenant_id, name, path, status,
+              document_count, chunk_count, link_count, skipped_count,
+              unresolved_link_count, error, created_by, created_at, last_ingested_at)</code></pre>
+<p>Neo4j 구조:</p>
+<pre><code>(GraphSource)-[:HAS_DOCUMENT]-&gt;(GraphDocument)-[:HAS_CHUNK]-&gt;(GraphChunk)
+(GraphChunk)-[:NEXT_CHUNK]-&gt;(GraphChunk)
+(GraphDocument)-[:LINKS_TO]-&gt;(GraphDocument)</code></pre>
+<p>문서·조각 ID는 소스와 경로로 고정하며, 문서·조각 노드에 <code>source_id</code>·<code>tenant_id</code> 범위를 유지한다. 서로 다른 소스의 링크를 합치지 않는다. 적재 시 세 노드 타입에 ID 고유 제약을 만든다.</p>
+<p>재적재 시 같은 노드를 갱신한다. 이전 조각·문서 링크·이번에 누락된 문서는 <code>active=false</code>로 남기고 삭제하지 않는다. 이후 검색 구현은 문서·본문 조각·문서 링크의 활성 상태를 확인해야 한다.</p>
+<h2>API</h2>
+<table>
+<tr><th>API</th><th>동작</th><th>권한</th></tr>
+<tr><td><code>GET /api/graph-sources</code></td><td>현재 테넌트의 소스 목록, 공유 루트, 지원 확장자</td><td>admin</td></tr>
+<tr><td><code>POST /api/graph-sources</code></td><td><code>{name, path}</code> 등록 또는 같은 경로의 이름 갱신</td><td>admin</td></tr>
+<tr><td><code>POST /api/graph-sources/{id}/ingest</code></td><td>문서를 읽어 Neo4j에 적재하고 결과 반환</td><td>admin</td></tr>
+</table>
+<p>기존 환경에는 <code>python scripts/migrate.py</code>를 적용한다. Docker Compose 백엔드 기동 시 이 마이그레이션을 자동 적용한다. 접속 비밀번호는 <code>.env</code>의 <code>NEO4J_PASSWORD</code>를 사용하고 API 응답·로그에 포함하지 않는다.</p>
+<div class="page-nav"><a href="#admin">← 관리자</a><a href="#progress">다음: 진행 상황 →</a></div>
+</section>
+
 <section id="progress">
   <div class="doc-title">운영</div>
   <h1 class="page">작업 진행 상황</h1>
   <p class="doc-meta">기준일 2026-09-30 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
 
-  <p><span class="badge done">완료 14</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
+  <p><span class="badge done">완료 15</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
 
   <h2>요약</h2>
   <ul>
@@ -586,7 +657,7 @@ stage_widgets(
     <li>2026-09-03 스냅샷 이후 <strong>프로젝트 계층</strong>이 새로 들어왔다 — <code>/c/:id/view</code>는 지금 <code>/p/:projectId/view</code>로 바뀌었다.</li>
     <li>실 LLM 경로도 스냅샷 이후 상당히 진전됐다.</li>
     <li>채팅 메시지 임베딩은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작한다.</li>
-    <li>Graph RAG 준비용 Neo4j 로컬 설치는 <strong>완료</strong>. 독립 서비스·인증·영속 볼륨·접속 확인까지이며, 데이터 적재와 Graph RAG 연동은 다음 단계에서 논의한다.</li>
+    <li>Graph RAG 준비용 Neo4j 로컬 설치와 문서 경로 등록·수동 적재는 <strong>완료</strong>. 문서 본문과 명시된 문서 링크를 저장하며, 질문에서 검색하는 연동은 다음 단계다.</li>
   </ul>
 
   <h2><span class="badge done">완료</span></h2>
@@ -599,9 +670,10 @@ stage_widgets(
     <li>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한 — <a href="#admin">admin</a></li>
     <li>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</li>
     <li>Northwind, SKAX NMS 샘플 DB 시드</li>
-    <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck. 데이터 적재·백엔드 연동은 미구현 — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
+    <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
+    <li>로컬 문서 경로 등록·수동 Neo4j 적재 — 관리자 소스 등록·영속 저장·적재 상태, Markdown/텍스트 본문·문서 링크, 읽기 전용 공유, 재적재 중복 방지. 질문 검색 연동은 미구현 — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
-    <li>Admin 브라우저 AI 연결 설정</li>
+    <li>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원</li>
     <li><code>llm_usage</code> 사용량 기록 골격</li>
     <li>DB별 예상 질문 유사도 검색 → 검색 결과를 참조해 답변 생성, 전체 테이블 질문 생성 — <a href="features/similarity-search-design.md">예상 질문 유사도 DB</a></li>
     <li>문서 체계 정비 — AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, dashboard.html, kanban.html</li>

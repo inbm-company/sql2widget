@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { api, getAiSettings, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
+import GraphSources from "./GraphSources.jsx";
 
 export default function AdminPanel({ open, onClose, mode = "admin" }) {
   const showAi = mode !== "db";
@@ -22,7 +23,14 @@ export default function AdminPanel({ open, onClose, mode = "admin" }) {
   const [status, setStatus] = useState("");
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState(null);
-  const [aiSettings, setAiForm] = useState(() => ({ provider: "gemini", model: "gemini-3.6-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", apiKey: "", ...getAiSettings() }));
+  const [aiSettings, setAiForm] = useState(() => getAiSettings(getAiSettings().provider || "gemini"));
+  const [aiDrafts, setAiDrafts] = useState({});
+
+  function switchProvider(provider) {
+    setAiDrafts((drafts) => ({ ...drafts, [aiSettings.provider]: aiSettings }));
+    setAiForm(aiDrafts[provider] || getAiSettings(provider));
+  }
+
   const [form, setForm] = useState({
     name: "",
     host: "db-customer",
@@ -174,15 +182,29 @@ export default function AdminPanel({ open, onClose, mode = "admin" }) {
         {showAi ? <section>
           <h3>AI 연결</h3>
           <form className="admin-form" onSubmit={saveAiSettings}>
-            <label>Provider<select value={aiSettings.provider} onChange={(e) => setAiForm((f) => ({ ...f, provider: e.target.value }))}><option value="gemini">Gemini</option><option value="openai">OpenAI 호환</option></select></label>
-            <label>Model<input value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder="gemini-3.6-flash" /></label>
-            <label>API key<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} placeholder="Gemini API key" autoComplete="off" /></label>
-            <p className="muted small">키는 이 브라우저에만 저장되고 채팅과 예상 질문 생성·검색에 사용됩니다.</p>
+            <label>Provider
+              <select value={aiSettings.provider} onChange={(e) => switchProvider(e.target.value)}>
+                <option value="gemini">Gemini</option>
+                <option value="openai">OpenAI 호환</option>
+                <option value="local">로컬 모델 (OpenAI 호환)</option>
+              </select>
+            </label>
+            <label>Model<input required value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder={aiSettings.provider === "local" ? "로컬 서버에 설치된 모델 이름" : "모델 이름"} /></label>
+            {aiSettings.provider !== "gemini" ? (
+              <label>Base URL<input required type="url" value={aiSettings.baseUrl} onChange={(e) => setAiForm((f) => ({ ...f, baseUrl: e.target.value }))} /></label>
+            ) : null}
+            <label>API key{aiSettings.provider === "local" ? " (선택)" : ""}<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} autoComplete="off" /></label>
+            {aiSettings.provider === "local" ? <>
+              <label>Embedding model (선택)<input value={aiSettings.embeddingModel} onChange={(e) => setAiForm((f) => ({ ...f, embeddingModel: e.target.value }))} placeholder="예상 질문 생성·검색에 사용할 임베딩 모델" /></label>
+              <p className="muted small">Base URL은 백엔드에서 접근할 주소입니다. Docker에서 호스트 서버에 연결할 때는 host.docker.internal을 사용하세요. 임베딩 모델이 없으면 채팅만 사용할 수 있습니다.</p>
+            </> : null}
+            <p className="muted small">설정은 Provider별로 이 브라우저에 저장됩니다. 저장한 Provider를 채팅과 예상 질문 생성·검색에 사용합니다.</p>
             <button type="submit" className="primary">AI 설정 저장</button>
           </form>
         </section> : null}
 
         {showDb ? <>
+        <GraphSources open={open && showDb} />
         <section>
           <h3>DB 연결</h3>
           <ul className="admin-list">

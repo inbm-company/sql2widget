@@ -75,9 +75,25 @@ LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
 ```
 
-키가 없거나 요청이 실패하면 추측해서 대신 답하지 않고 에러를 그대로 화면에 표시한다(HTTP 502). 사용량은 `llm_usage` 테이블에 기록.
+클라우드 키가 없거나 요청이 실패하면 추측해서 대신 답하지 않고 에러를 그대로 화면에 표시한다(HTTP 502). 사용량은 `llm_usage` 테이블에 기록.
 
 브라우저 Admin의 Gemini 기본 모델은 `gemini-3.6-flash`다. 이전 `gemini-2.5-flash` 설정은 신규 Gemini API 사용자에게 제공되지 않아 앱이 자동으로 `3.6`으로 마이그레이션한다.
+
+AI 설정 패널은 Gemini / OpenAI 호환 / 로컬 모델을 지원하며 Provider별로 모델·API 키·URL을 따로 저장한다. 백엔드 요청 처리는 `backend/app/providers/`, 공통 프롬프트는 `backend/app/prompts.py`에 있다.
+
+로컬 모델은 별도로 실행한 **OpenAI 호환 API 서버**에 연결한다. AI 설정에서 로컬 모델을 선택하고 Base URL과 서버에 설치된 채팅 모델 이름을 입력한 뒤 저장한다. API 키는 선택 사항이다. Docker Desktop 백엔드에서 호스트의 Ollama 서버에 연결하는 URL 예시는 `http://host.docker.internal:11434/v1`; 백엔드를 직접 실행하면 `http://localhost:11434/v1`을 사용한다. 다른 서버의 포트는 직접 지정한다. 모델 설치나 서버 실행을 앱이 대신하지 않는다. [Ollama 호환 API](https://docs.ollama.com/api/openai-compatibility).
+
+서버 환경변수로 설정할 수도 있다:
+
+```env
+LLM_PROVIDER=local
+LLM_BASE_URL=http://host.docker.internal:11434/v1
+LLM_MODEL=설치된-채팅-모델-이름
+LLM_API_KEY=
+LLM_EMBEDDING_MODEL=설치된-임베딩-모델-이름
+```
+
+`LLM_EMBEDDING_MODEL` 또는 로컬 패널의 Embedding model은 선택 사항이다. 비워 두면 유사도 검색 없이 채팅을 사용할 수 있다. 예상 질문 생성·저장에는 임베딩 모델이 필요하며 벡터 차원은 기존 `CHAT_EMBEDDING_DIM`(기본 1536)과 일치해야 한다. 설정 변경을 위해 기존 벡터 DB 차원을 임의로 바꾸지 않는다.
 
 ## Smoke
 
@@ -93,7 +109,7 @@ docker compose exec backend python scripts/smoke_stage.py
 
 ## Neo4j 로컬 설치 (Graph RAG 준비)
 
-Neo4j Community `2026.09.0`을 독립 서비스로 실행한다. 이번 단계는 설치·인증·영속 저장·접속 확인까지이며, 데이터 소스 지정, 데이터 적재, 그래프 모델링, Graph RAG 검색 및 백엔드 연동은 아직 구현하지 않았다. Python 드라이버와 추가 플러그인도 설치하지 않는다.
+Neo4j Community `2026.09.0`을 독립 서비스로 실행한다. 설치·인증·영속 저장에 더해 아래의 로컬 문서 등록·적재 기능이 동작한다. 질문에서 그래프를 검색하는 연동과 LLM 개체·관계 추출은 아직 구현하지 않았다. 연결에는 공식 Python 드라이버 `neo4j==6.3.1`을 사용하며, 추가 Neo4j 플러그인은 설치하지 않는다.
 
 `.env`에 `NEO4J_PASSWORD`를 설정한 뒤 기존 앱을 재시작하지 않고 Neo4j만 기동할 수 있다.
 
@@ -120,3 +136,19 @@ docker compose exec -T neo4j sh -c 'cypher-shell -a bolt://localhost:7687 -u neo
 `docker compose restart neo4j` 또는 컨테이너 재생성 시 named volume은 유지된다. `docker compose down -v`는 Neo4j를 포함한 모든 Compose DB 볼륨을 삭제하므로 데이터를 보존해야 할 때는 사용하지 않는다. 초기 비밀번호는 빈 데이터 볼륨에서만 적용된다. 기존 볼륨의 비밀번호는 `.env` 값 변경만으로 바뀌지 않는다.
 
 설치 기준: [Neo4j 공식 Docker 문서](https://neo4j.com/docs/operations-manual/current/docker/introduction/), [Docker 환경변수 설정](https://neo4j.com/docs/operations-manual/current/docker/configuration/).
+
+## 로컬 문서 경로 등록·적재
+
+`.env`의 `GRAPH_RAG_HOST_PATH`에 공유할 로컬 **폴더** 경로를 설정한다. 기본값은 저장소의 `./graph-rag-sources`다. 경로에 공백이 있으면 환경변수 값을 따옴표로 감싼다. 백엔드에는 이 폴더가 `/graph-rag-sources`로 읽기 전용 공유된다. 폴더 변경 시 백엔드 컨테이너를 재생성해야 한다.
+
+```sh
+docker compose up -d --no-deps --build backend
+```
+
+앱의 **DB 관리 → Graph RAG 데이터 소스**에서 이름과 폴더·파일 경로를 등록한다. 공유한 호스트 폴더의 절대 경로 또는 그 안의 상대 경로를 사용할 수 있다. 경로 등록만으로는 적재하지 않으며, 목록의 **적재** 버튼을 눌러 실행한다. 경로·상태·마지막 적재 결과는 테넌트별로 서비스 DB에 저장해 새로고침 후에도 유지한다.
+
+현재 대상은 UTF-8 `.md`·`.txt`다. 숨김 파일·폴더와 심볼릭 링크 폴더는 제외하고, 이미지·PDF 등 미지원 파일과 빈 문서는 제외 개수를 표시한다. 빈 폴더, 읽을 수 없는 파일, 범위 밖 경로는 에러로 표시한다. 문서당 2 MiB, 한 번에 1,000개·20 MiB까지 지원한다.
+
+Neo4j에는 문서·본문 조각(4,000자, 겹침 400자)과 Obsidian `[[문서]]`·Markdown 상대 링크를 저장한다. 실제 적재된 문서 사이의 명시된 링크만 관계로 만든다. 재적재 시 기존 노드를 갱신하고 이전 본문 조각·링크·누락 문서는 `active=false`로 유지한다. 원본 문서와 기존 그래프 기록을 삭제하지 않는다.
+
+[기능·API·저장 구조](docs/features/graph-rag-sources.md) · [공식 Python 드라이버 연결](https://neo4j.com/docs/python-manual/current/connect/)

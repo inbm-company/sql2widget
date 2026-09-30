@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 채팅/에이전트 |
-| 기준일 | 2026-09-21 (구현 기준) |
+| 기준일 | 2026-09-30 (구현 기준) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(Artifact 표시), [admin.md](admin.md)(연결·권한·AI 설정) |
 | 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
 
@@ -43,10 +43,12 @@
 
 | 항목 | 내용 |
 |------|------|
-| 지원 | OpenAI-compatible(`LLM_BASE_URL` + `LLM_MODEL`), Gemini(OpenAI 호환 엔드포인트 `https://generativelanguage.googleapis.com/v1beta/openai`로 매핑, 기본 모델 `gemini-3.6-flash`) — 둘 다 `llm._post_openai_compatible()`이라는 같은 HTTP 호출 헬퍼를 공유(`Authorization: Bearer <key>`) |
-| 런타임 오버라이드 | 브라우저 Admin의 "AI 연결" 설정(§ [admin.md](admin.md))이 요청 헤더(`X-LLM-Provider`, `X-LLM-API-Key`, `X-LLM-Model`)로 전달되면 서버 `.env` 설정보다 우선 |
-| 실패 시 | 키가 없거나 호출이 실패하면 **HTTP 502 + 실제 에러 메시지를 그대로 노출**한다. 조용한 폴백 없음. |
+| 지원 | OpenAI 호환, Gemini(기존 Google OpenAI 호환 API 유지), 로컬 OpenAI 호환 서버. `providers/openai.py`, `gemini.py`, `local.py`가 요청·응답을 담당하고 `providers/transport.py`가 HTTP 전송을 공유한다. 프롬프트는 `prompts.py`, 공통 진입점·사용량 기록은 `llm.py`에 있다. |
+| 런타임 오버라이드 | 브라우저 Admin의 "AI 연결" 설정(§ [admin.md](admin.md))이 요청 헤더(`X-LLM-Provider`, `X-LLM-API-Key`, `X-LLM-Model`, `X-LLM-Base-URL`, `X-LLM-Embedding-Model`)로 전달되면 서버 `.env` 설정보다 우선 |
+| 실패 시 | 클라우드 키가 없거나 호출이 실패하면 **HTTP 502 + 실제 에러 메시지를 그대로 노출**한다. 조용한 폴백 없음. |
 | 스키마 컨텍스트 | 선택한 연결의 역할별 허용 테이블에 한해 테이블·컬럼·타입·PK/FK 관계를 프롬프트에 전달(`connections.schema_context_for_connection`). **실제 데이터 행과 연결 비밀번호는 전달하지 않는다.** |
+
+로컬 모델은 API 키가 선택 사항이며 채팅 모델 이름과 Base URL이 필요하다. 임베딩 모델이 없거나 차원이 `CHAT_EMBEDDING_DIM`과 다르면 유사도 검색을 생략하고 실모델 채팅은 계속한다. 예상 질문 생성·저장은 유효한 임베딩 모델이 필요하다. 다른 Provider의 서버 키를 가져와 사용하지 않는다.
 
 ### SQL 규칙 (`backend/app/query.py`)
 
@@ -59,7 +61,7 @@
 
 ### 채팅 메시지 임베딩 (진행중 — 백엔드만 동작)
 
-- 메시지를 보내면 `llm.embed_text()`로 사용자 메시지를 임베딩(Gemini `gemini-embedding-001` 또는 OpenAI `text-embedding-3-small`, `CHAT_EMBEDDING_DIM` 차원). 채팅 완성과 같은 `_post_openai_compatible()` 헬퍼·인증 방식을 공유한다.
+- 메시지를 보내면 `llm.embed_text()`로 사용자 메시지를 임베딩(Gemini `gemini-embedding-001`, OpenAI `text-embedding-3-small`, 로컬은 지정한 임베딩 모델). `CHAT_EMBEDDING_DIM` 차원을 사용하며 Provider 어댑터와 공통 HTTP 전송을 거친다. 로컬에서는 키가 선택 사항이다.
 - 키가 없거나 provider가 인식 불가면 조용히 건너뛴다(`embedding_provider: "mock"`, `embedding_error: null`) — 이건 "에러를 숨기는 폴백"이 아니라 임베딩이 선택 기능이라 응답 자체는 그대로 내려가는 것. 실제로 호출했는데 실패한 경우에만 `embedding_error`에 원인이 채워진다.
 - 응답의 `embedding_provider` 필드로 실제 어떤 provider가 쓰였는지(`"gemini"`/`"openai"`/`"mock"`) 항상 명확히 알 수 있다 — DB를 직접 조회하지 않고도 mock인지 실제 호출인지 구분 가능(2026-09-22 추가).
 - 임베딩이 만들어지면 별도 `chat_vector` DB(pgvector)에 저장하고, 코사인 유사도로 같은 테넌트의 과거 메시지 상위 5개를 찾아 `related_messages`로 응답에 포함한다. assistant 응답도 같은 방식으로 임베딩·저장된다.

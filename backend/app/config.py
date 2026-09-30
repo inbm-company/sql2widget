@@ -37,8 +37,9 @@ CHAT_VECTOR_DATABASE_URL = env(
 CHAT_EMBEDDING_DIM = int(env("CHAT_EMBEDDING_DIM", "1536"))
 LLM_PROVIDER = env("LLM_PROVIDER", "mock")
 LLM_API_KEY = env("LLM_API_KEY", "")
-LLM_BASE_URL = env("LLM_BASE_URL", "https://api.openai.com/v1")
-LLM_MODEL = env("LLM_MODEL", "gpt-4o-mini")
+LLM_BASE_URL = env("LLM_BASE_URL", "http://host.docker.internal:11434/v1" if LLM_PROVIDER == "local" else "https://api.openai.com/v1")
+LLM_MODEL = env("LLM_MODEL", "" if LLM_PROVIDER == "local" else "gpt-4o-mini")
+LLM_EMBEDDING_MODEL = env("LLM_EMBEDDING_MODEL", "")
 CORS_ORIGINS = [
     o.strip()
     for o in env(

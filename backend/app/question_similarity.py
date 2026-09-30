@@ -54,6 +54,8 @@ def _embedding(question: str, settings: dict, result: dict | None = None) -> dic
     result = result if result is not None else llm.embed_text(
         question, runtime_provider=settings.get("provider"),
         runtime_api_key=settings.get("api_key"),
+        runtime_base_url=settings.get("base_url"),
+        runtime_embedding_model=settings.get("embedding_model"),
     )
     return _check_embedding(result.get("embedding"), result)
 
@@ -112,6 +114,8 @@ def _prepared_entries(items: list[QuestionIn], *, context: dict,
         [item.question for item in items],
         runtime_provider=settings.get("provider"),
         runtime_api_key=settings.get("api_key"),
+        runtime_base_url=settings.get("base_url"),
+        runtime_embedding_model=settings.get("embedding_model"),
     )
     vectors = result.get("embeddings")
     if vectors is None or len(vectors) != len(items):
@@ -171,6 +175,7 @@ def _generate_candidates(*, message: str, schema_text: str, tenant_id: str,
         runtime_provider=llm_settings.get("provider"),
         runtime_api_key=llm_settings.get("api_key"),
         runtime_model=llm_settings.get("model"),
+        runtime_base_url=llm_settings.get("base_url"),
     )
     try:
         candidates = result["plan"]["questions"]

@@ -60,7 +60,9 @@ backend/
 | `query.py` | 고객 DB용 읽기 전용 SQL 검증·실행. `SELECT`/`WITH` 외 차단, 허용 테이블 검사, 결과 JSON 직렬화 |
 | `agent.py` | Mock 에이전트 — 키워드 매칭으로 SOC/Global 샘플 질문에 고정 Artifact 반환 |
 | `agent_service.py` | Mock/실LLM 경로를 조율하는 오케스트레이터. `run_agent()`가 `main.py`의 `/api/chat`에서 호출됨 |
-| `llm.py` | 실 LLM 클라이언트 (OpenAI-compatible + Gemini). 스키마를 프롬프트에 넣어 SELECT 플랜 JSON을 받아옴, 임베딩(`embed_text`) 포함 |
+| `llm.py` | 공통 AI 진입점 (`plan_with_llm`, `embed_text`, `embed_texts`), 오류·사용량 기록 |
+| `prompts.py` | SQL·위젯 계획 및 예상 질문 생성 공통 프롬프트 |
+| `providers/` | `__init__.py`: Provider 선택·설정, `openai.py`: OpenAI 호환 요청·응답, `gemini.py`: Gemini 설정, `local.py`: 로컬 요청·임베딩 차원 검사, `transport.py`: 공통 HTTP 전송 |
 | `documents.py` | `DocumentProvider` 프로토콜 + Mock 구현. 해결 방안 텍스트에 쓰이는 문서 출처 검색 |
 
 ### 2.2 `backend/app/repositories/` — 순수 SQL 저장소 (ORM 없음)
@@ -131,7 +133,8 @@ frontend/
 | `widgets/WidgetRenderer.jsx` | 위젯 컴포넌트 렌더러. `component` 이름별로 Recharts 차트/표/KPI 등을 그림 |
 | `sqlHelpers.js` | 어떤 컴포넌트가 SQL 보기를 지원하는지(`canShowSql`), 위젯에서 실행 SQL을 뽑는 로직(`resolveWidgetSql`) |
 | `store.js` | 상태관리 3원칙의 구현부. `useStore`(SWR 캐시 기반 전역 슬롯), `storeKeys`(SWR 키 레지스트리) |
-| `api.js` | 백엔드 API 클라이언트. 토큰 저장/갱신(`localStorage`), AI 설정 저장, 401 시 refresh 재시도 |
+| `api.js` | 백엔드 API 클라이언트. 토큰 저장/갱신(`localStorage`), AI 설정 헤더 전달, 401 시 refresh 재시도 |
+| `aiSettings.js` | Provider별 브라우저 AI 설정 저장·복원, 기존 설정 호환 |
 | `constants.js` | 데이터셋별 샘플 질문 목록 (SOC/Global/Northwind) |
 | `styles.css` | 전역 스타일. 토큰은 `DESIGN.md` 기준 |
 

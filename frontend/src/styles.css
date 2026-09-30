@@ -1644,3 +1644,8 @@ button {
 .stage-canvas--orion .stage-empty {
   color: rgba(184, 207, 245, 0.55);
 }
+/* Graph RAG source registration follows the existing admin controls. */
+.graph-source-list { list-style: none; padding: 0; margin: 16px 0 0; }
+.graph-source-list > li { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+.graph-source-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.graph-source-path { overflow-wrap: anywhere; }

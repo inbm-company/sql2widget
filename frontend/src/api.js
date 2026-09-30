@@ -2,27 +2,8 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 const TOKEN_KEY = "agent4any_access";
 const REFRESH_KEY = "agent4any_refresh";
-const AI_SETTINGS_KEY = "agent4any_ai_settings";
-const RETIRED_GEMINI_MODEL = "gemini-2.5-flash";
-const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
-
-export function getAiSettings() {
-  try {
-    const settings = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || "{}");
-    if (settings.provider === "gemini" && settings.model === RETIRED_GEMINI_MODEL) {
-      const migrated = { ...settings, model: DEFAULT_GEMINI_MODEL };
-      localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(migrated));
-      return migrated;
-    }
-    return settings;
-  } catch {
-    return {};
-  }
-}
-
-export function setAiSettings(settings) {
-  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
-}
+export { getAiSettings, setAiSettings } from "./aiSettings";
+import { getAiSettings } from "./aiSettings";
 
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -80,6 +61,8 @@ async function request(path, options = {}, { retry = true } = {}) {
     if (ai.apiKey) headers["X-LLM-API-Key"] = ai.apiKey;
     if (ai.provider) headers["X-LLM-Provider"] = ai.provider;
     if (ai.model) headers["X-LLM-Model"] = ai.model;
+    if (ai.baseUrl) headers["X-LLM-Base-URL"] = ai.baseUrl;
+    if (ai.provider) headers["X-LLM-Embedding-Model"] = ai.embeddingModel || "";
   }
 
   const controller = new AbortController();
@@ -192,6 +175,15 @@ export const api = {
       method: "DELETE",
     }),
   listConnections: () => request("/api/database-connections"),
+  listGraphSources: () => request("/api/graph-sources"),
+  registerGraphSource: (payload) => request("/api/graph-sources", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }),
+  ingestGraphSource: (id) => request(`/api/graph-sources/${id}/ingest`, {
+    method: "POST",
+    timeoutMs: 300000,
+  }),
   createConnection: (payload) =>
     request("/api/database-connections", {
       method: "POST",

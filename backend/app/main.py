@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +33,8 @@ from app.contracts import (
 from app.db import fetch_one
 from app.llm import effective_provider, embed_text
 from app.query import execute_readonly
+from app.graph_source_routes import router as graph_source_router
+from app.graph_ingestion import close_graph_driver
 from app.repositories import connections as conn_repo
 from app.repositories import conversations as conv_repo
 from app.repositories import message_embeddings as embed_repo
@@ -38,7 +42,17 @@ from app.repositories import projects as project_repo
 from app.repositories import question_catalog
 from app.repositories import stages as stage_repo
 
-app = FastAPI(title="agent4any", version="0.1.0")
+
+@asynccontextmanager
+async def graph_connection_lifespan(_app):
+    try:
+        yield
+    finally:
+        close_graph_driver()
+
+
+app = FastAPI(title="agent4any", version="0.1.0", lifespan=graph_connection_lifespan)
+app.include_router(graph_source_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -178,6 +192,8 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         "provider": request.headers.get("X-LLM-Provider", ""),
         "api_key": request.headers.get("X-LLM-API-Key", ""),
         "model": request.headers.get("X-LLM-Model", ""),
+        "base_url": request.headers.get("X-LLM-Base-URL", ""),
+        "embedding_model": request.headers.get("X-LLM-Embedding-Model"),
     }
 
     related_messages: list[dict] = []
@@ -186,6 +202,8 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         body.message,
         runtime_provider=llm_settings["provider"] or None,
         runtime_api_key=llm_settings["api_key"] or None,
+        runtime_base_url=llm_settings["base_url"] or None,
+        runtime_embedding_model=llm_settings["embedding_model"],
     )
     if embed_result["embedding"]:
         related_messages = embed_repo.search_similar(
@@ -223,6 +241,8 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         summary,
         runtime_provider=llm_settings["provider"] or None,
         runtime_api_key=llm_settings["api_key"] or None,
+        runtime_base_url=llm_settings["base_url"] or None,
+        runtime_embedding_model=llm_settings["embedding_model"],
     )
     if assistant_embed["embedding"]:
         embed_repo.upsert_embedding(
@@ -273,6 +293,8 @@ def _question_llm_settings(request: Request) -> dict:
         "provider": request.headers.get("X-LLM-Provider", ""),
         "api_key": request.headers.get("X-LLM-API-Key", ""),
         "model": request.headers.get("X-LLM-Model", ""),
+        "base_url": request.headers.get("X-LLM-Base-URL", ""),
+        "embedding_model": request.headers.get("X-LLM-Embedding-Model"),
     }
 
 

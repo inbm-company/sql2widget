@@ -1,4 +1,7 @@
 .env
+# 로컬 Graph RAG 원본 문서를 커밋하지 않는다.
+graph-rag-sources/*
+!graph-rag-sources/.gitkeep
 .claude/
 .codex/
 .cursor/
