@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply chat vector DB SQL migrations (pgvector extension + message_embeddings)."""
+"""Apply chat vector DB SQL migrations (pgvector, message embeddings, command catalog)."""
 
 from pathlib import Path
 

@@ -3,7 +3,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
-from app import config
+from app import config, command_similarity
 from app.agent_service import AgentRunError, run_agent
 from app.auth import (
     create_access_token,
@@ -14,6 +14,9 @@ from app.auth import (
 )
 from app.contracts import (
     ChatRequest,
+    CommandRegisterRequest,
+    CommandSearchRequest,
+    CommandSeedRequest,
     CreateConversationRequest,
     CreateProjectRequest,
     UpdateProjectRequest,
@@ -27,10 +30,11 @@ from app.contracts import (
     TablePermissionPut,
 )
 from app.db import fetch_one
-from app.llm import effective_provider
+from app.llm import effective_provider, embed_text
 from app.query import execute_readonly
 from app.repositories import connections as conn_repo
 from app.repositories import conversations as conv_repo
+from app.repositories import message_embeddings as embed_repo
 from app.repositories import projects as project_repo
 from app.repositories import stages as stage_repo
 
@@ -170,6 +174,34 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     user_msg = conv_repo.add_message(body.conversation_id, "user", body.message, None)
     conv_repo.touch_title_from_message(body.conversation_id, body.message)
 
+    llm_settings = {
+        "provider": request.headers.get("X-LLM-Provider", ""),
+        "api_key": request.headers.get("X-LLM-API-Key", ""),
+        "model": request.headers.get("X-LLM-Model", ""),
+    }
+
+    related_messages: list[dict] = []
+    embedding_error: str | None = None
+    embed_result = embed_text(
+        body.message,
+        runtime_provider=llm_settings["provider"] or None,
+        runtime_api_key=llm_settings["api_key"] or None,
+    )
+    if embed_result["embedding"]:
+        related_messages = embed_repo.search_similar(
+            user["tenant_id"], embed_result["embedding"], limit=5
+        )
+        embed_repo.upsert_embedding(
+            tenant_id=user["tenant_id"],
+            conversation_id=body.conversation_id,
+            message_id=user_msg["id"],
+            role="user",
+            content=body.message,
+            embedding=embed_result["embedding"],
+        )
+    elif embed_result["error"]:
+        embedding_error = embed_result["error"]
+
     try:
         summary, artifact, meta = run_agent(
             body.message,
@@ -178,22 +210,38 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
             user_role=user["role"],
             conversation_id=body.conversation_id,
             connection_id=body.connection_id,
-            llm_settings={
-                "provider": request.headers.get("X-LLM-Provider", ""),
-                "api_key": request.headers.get("X-LLM-API-Key", ""),
-                "model": request.headers.get("X-LLM-Model", ""),
-            },
+            llm_settings=llm_settings,
+            embedding_result=embed_result,
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     assistant_msg = conv_repo.add_message(
         body.conversation_id, "assistant", summary, artifact
     )
+
+    assistant_embed = embed_text(
+        summary,
+        runtime_provider=llm_settings["provider"] or None,
+        runtime_api_key=llm_settings["api_key"] or None,
+    )
+    if assistant_embed["embedding"]:
+        embed_repo.upsert_embedding(
+            tenant_id=user["tenant_id"],
+            conversation_id=body.conversation_id,
+            message_id=assistant_msg["id"],
+            role="assistant",
+            content=summary,
+            embedding=assistant_embed["embedding"],
+        )
+
     return {
         "user_message": user_msg,
         "assistant_message": assistant_msg,
         "artifact": artifact,
         "meta": meta,
+        "related_messages": related_messages,
+        "embedding_provider": embed_result["provider"],
+        "embedding_error": embedding_error,
     }
 
 
@@ -218,6 +266,74 @@ def create_database_connection(
         created_by=user["id"],
         sslmode=body.sslmode,
     )
+
+
+def _command_llm_settings(request: Request) -> dict:
+    return {
+        "provider": request.headers.get("X-LLM-Provider", ""),
+        "api_key": request.headers.get("X-LLM-API-Key", ""),
+        "model": request.headers.get("X-LLM-Model", ""),
+    }
+
+
+def _command_context(user: dict, connection_id: str, role: str) -> dict:
+    try:
+        return command_similarity.connection_context(user["tenant_id"], connection_id, role)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="DB 스키마를 읽을 수 없습니다.") from exc
+
+
+@app.post("/api/database-connections/{connection_id}/commands/seed")
+def seed_database_commands(connection_id: str, body: CommandSeedRequest,
+                           request: Request, user=Depends(get_current_user)):
+    require_admin(user)
+    context = _command_context(user, connection_id, body.role)
+    try:
+        commands = command_similarity.seed_commands(
+            tenant_id=user["tenant_id"], user_id=user["id"], connection_id=connection_id,
+            context=context, llm_settings=_command_llm_settings(request), count=body.count,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except command_similarity.CommandCatalogError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {"connection_id": connection_id, "saved_count": len(commands), "commands": commands}
+
+
+@app.post("/api/database-connections/{connection_id}/commands")
+def register_database_command(connection_id: str, body: CommandRegisterRequest,
+                              request: Request, user=Depends(get_current_user)):
+    require_admin(user)
+    context = _command_context(user, connection_id, body.role)
+    try:
+        commands = command_similarity.register_commands(
+            [body], tenant_id=user["tenant_id"], connection_id=connection_id,
+            context=context, llm_settings=_command_llm_settings(request),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except command_similarity.CommandCatalogError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return commands[0]
+
+
+@app.post("/api/database-connections/{connection_id}/commands/search")
+def search_database_commands(connection_id: str, body: CommandSearchRequest,
+                            request: Request, user=Depends(get_current_user)):
+    context = _command_context(user, connection_id, user["role"])
+    result = command_similarity.search_commands(
+        body.command, tenant_id=user["tenant_id"], connection_id=connection_id,
+        schema_text=context["schema_text"], allowed_tables=context["allowed_tables"],
+        llm_settings=_command_llm_settings(request), limit=body.limit,
+        min_similarity=body.min_similarity,
+    )
+    if result["status"] == "unavailable":
+        raise HTTPException(status_code=502, detail=result["error"])
+    return result
 
 
 @app.post("/api/database-connections/{connection_id}/test")

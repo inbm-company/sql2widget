@@ -9,8 +9,9 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 미완료 작업 중 우선순위가 가장 높은 항목부터 계속 구현해줘.
 ```
 
-현황 한 장: `docs/현황.html` (2026-09-03 스냅샷).  
-기능 명세: `docs/기능명세서.md` (구현 기준).  
+문서 지도·공통 규칙: `AGENTS.md` / `CLAUDE.md`.  
+현황: `docs/progress.md` (완료/진행중/예정/보류).  
+기능 명세: `docs/features/` (구현 기준, 기능별 파일 분리).  
 제품 규칙: `PRODUCT.md`. 시각: `DESIGN.md`.
 
 ---
@@ -47,8 +48,8 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 - 스테이지는 프로젝트마다 1개. 레이아웃은 `react-grid-layout`.
 - 고객 DB는 읽기 전용 `SELECT`만.
 - 위젯 이름은 서버 화이트리스트. 모르는 키/차트 타입은 버린다.
-- LLM 기본은 Mock. 실모델은 OpenAI-compatible. 키 없거나 실패하면 Mock 폴백.
-- 외부 문서는 `DocumentProvider`. 현재는 Mock.
+- 채팅은 항상 실 LLM 호출(OpenAI-compatible/Gemini). 키 없거나 실패하면 추측 없이 에러 반환(2026-09-22, Mock 키워드 매칭 폴백 완전 삭제).
+- 외부 문서는 `DocumentProvider`. 현재 구현은 Mock(문서 검색만 — 채팅 응답 자체는 Mock 아님).
 - 감사 로그에는 행위만 남긴다. 사용자 데이터 수정 쿼리 없음.
 
 ---
@@ -56,7 +57,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 ## 3. 지금 동작하는 것
 
 - 로그인 JWT (access + refresh). admin / viewer.
-- 대화 CRUD, Mock 채팅 Artifact, 샘플 질문.
+- 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문.
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
@@ -78,8 +79,8 @@ viewer@example.com / demo-password
 ```text
 backend/app/main.py                 FastAPI
 backend/app/auth.py                 JWT
-backend/app/agent.py                Mock 매칭
-backend/app/agent_service.py        LLM/Mock 실행 경로
+backend/app/agent.py                위젯 화이트리스트 검증(sanitize_artifact)
+backend/app/agent_service.py        LLM 실행 경로 (에러 시 예외로 502)
 backend/app/llm.py                  실모델 클라이언트
 backend/app/query.py                SQL 검증, 읽기 전용 실행
 backend/app/contracts.py            위젯 계약
@@ -93,8 +94,9 @@ frontend/src/StageCanvas.jsx        Stage
 frontend/src/widgets/WidgetRenderer.jsx
 frontend/src/store.js               SWR 래퍼
 docker-compose.yml                  로컬 스택
-docs/기능명세서.md
-docs/현황.html
+AGENTS.md / CLAUDE.md               문서 지도·공통 규칙
+docs/features/                      기능별 명세
+docs/progress.md                    작업 진행 상황
 PRODUCT.md
 DESIGN.md
 ```
@@ -167,7 +169,7 @@ GET  /api/health
 2. 제품 결정 — Orion 포스터 템플릿을 넣을지. 현재 규칙: 핀보드만.
 3. Circle 게이지 조합 카탈로그 (ring × size × companion).
 4. Viewer에 남은 다크 Orion 자리표시 정리.
-5. P2 실 LLM + Mock 폴백 hardening.
+5. ~~P2 실 LLM + Mock 폴백 hardening.~~ 완료(2026-09-22) — Mock 폴백은 hardening 대신 완전 삭제, 항상 실 LLM 호출 + 실패 시 에러 반환으로 정리됨.
 6. 실 RAG, 운영 배포 (HTTPS, 백업, 강한 `APP_SECRET`, 데모 계정 제거).
 
 ---

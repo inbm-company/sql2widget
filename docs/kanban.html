@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>agent4any · 문서 대시보드</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <style>
+    :root {
+      --blue: #0066cc;
+      --blue-dim: rgba(0, 102, 204, 0.1);
+      --ink: #1e1e1e;
+      --mute: #717171;
+      --line: #e8e8e8;
+      --paper: #fafafa;
+      --card: #ffffff;
+      --done: #1a7f4b;
+      --done-dim: rgba(26, 127, 75, 0.1);
+      --wip: #0066cc;
+      --wip-dim: rgba(0, 102, 204, 0.1);
+      --plan: #b45309;
+      --plan-dim: rgba(180, 83, 9, 0.1);
+      --hold: #717171;
+      --hold-dim: rgba(113, 113, 113, 0.12);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 1px 1px, #ebebeb 1px, transparent 0) 0 0 / 22px 22px,
+        var(--paper);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+    header.top {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      gap: 24px; margin-bottom: 28px; padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--blue); font-weight: 600; margin: 0 0 6px;
+    }
+    h1 { font-size: 28px; font-weight: 650; letter-spacing: -0.03em; margin: 0; }
+    .meta { text-align: right; color: var(--mute); font-size: 13px; }
+    .meta strong { display: block; color: var(--ink); font-size: 15px; font-weight: 600; }
+    .meta a { color: var(--blue); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+
+    .thesis {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+    .thesis p { margin: 0; font-size: 15.5px; max-width: 74ch; }
+    .thesis em { font-style: normal; color: var(--blue); font-weight: 600; }
+
+    .kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 28px;
+    }
+    .kpi {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 16px 18px; min-height: 92px; border-top: 3px solid var(--line-c, var(--line));
+    }
+    .kpi.done { border-top-color: var(--done); }
+    .kpi.wip { border-top-color: var(--wip); }
+    .kpi.plan { border-top-color: var(--plan); }
+    .kpi.hold { border-top-color: var(--hold); }
+    .kpi .label { font-size: 11px; color: var(--mute); letter-spacing: 0.04em; text-transform: uppercase; }
+    .kpi .num {
+      font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+      font-size: 30px; font-weight: 600; letter-spacing: -0.04em; margin-top: 6px;
+    }
+    .kpi .sub { font-size: 12px; color: var(--mute); margin-top: 4px; }
+
+    h2 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--mute); margin: 32px 0 12px;
+      display: flex; align-items: baseline; justify-content: space-between;
+    }
+    h2 span.hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; color: var(--mute); }
+
+    .board {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .col {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px; min-height: 120px;
+    }
+    .col-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+      font-size: 13px; font-weight: 600;
+    }
+    .col-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .col-head .count {
+      margin-left: auto; font-family: ui-monospace, monospace; font-size: 12px;
+      color: var(--mute); font-weight: 400;
+    }
+    .col.done .dot { background: var(--done); }
+    .col.wip .dot { background: var(--wip); }
+    .col.plan .dot { background: var(--plan); }
+    .col.hold .dot { background: var(--hold); }
+
+    .card {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+      margin-bottom: 8px; background: #fff; font-size: 12.5px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card .t { font-weight: 600; margin-bottom: 4px; }
+    .card .n { color: var(--mute); font-size: 11.5px; line-height: 1.5; }
+    .card .n a { color: var(--blue); text-decoration: none; }
+    .card .n a:hover { text-decoration: underline; }
+    .pri {
+      display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 1px 6px; border-radius: 999px; margin-bottom: 6px;
+    }
+    .pri.high { color: #c2410c; background: rgba(194,65,12,0.1); }
+    .pri.med { color: var(--blue); background: var(--blue-dim); }
+    .pri.low { color: var(--mute); background: rgba(113,113,113,0.12); }
+
+    .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .box {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .box h3 { margin: 0 0 12px; font-size: 15px; }
+    .flist { display: flex; flex-direction: column; gap: 10px; }
+    .frow {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .frow:last-child { border-bottom: none; padding-bottom: 0; }
+    .frow a { color: var(--ink); font-weight: 600; text-decoration: none; }
+    .frow a:hover { color: var(--blue); }
+    .frow .desc { color: var(--mute); font-size: 12.5px; margin-top: 2px; }
+    .frow .fcode {
+      font-family: ui-monospace, monospace; font-size: 11px; color: var(--mute);
+      white-space: nowrap;
+    }
+
+    .mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+
+    footer {
+      margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
+      color: var(--mute); font-size: 12px;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 960px) {
+      .board { grid-template-columns: 1fr 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .cols2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .board { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      header.top, .meta { display: block; text-align: left; }
+      .meta { margin-top: 12px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <p class="kicker">agent4any · sql2widget</p>
+        <h1>문서 &amp; 진행 상황 대시보드</h1>
+      </div>
+      <div class="meta">
+        <strong>2026년 9월 21일 기준</strong>
+        <a href="progress.md">docs/progress.md</a> ·
+        <a href="features/README.md">docs/features/</a> 데이터
+      </div>
+    </header>
+
+    <section class="thesis">
+      <p>
+        질문은 위젯이 되고, 위젯은 프로젝트마다 하나인 Stage에 핀된다.
+        로컬 데모 골격은 <em>완료</em>, 실 LLM·채팅 임베딩·운영 배포는 <em>진행중</em>이다.
+        남은 결정은 유사도 하니스, Circle 카탈로그, 그리고 대시보드 템플릿을 넣을지다.
+      </p>
+    </section>
+
+    <section class="kpis">
+      <div class="kpi done">
+        <div class="label">완료</div>
+        <div class="num">13</div>
+        <div class="sub">핵심 기능 7종 + 인프라·문서 5종</div>
+      </div>
+      <div class="kpi wip">
+        <div class="label">진행중</div>
+        <div class="num">3</div>
+        <div class="sub">채팅 임베딩·LLM 하드닝·배포 검증</div>
+      </div>
+      <div class="kpi plan">
+        <div class="label">예정</div>
+        <div class="num">6</div>
+        <div class="sub">HIGH 1 · MED 1 · LOW 2 · 미지정 2</div>
+      </div>
+      <div class="kpi hold">
+        <div class="label">보류</div>
+        <div class="num">1</div>
+        <div class="sub">대시보드 템플릿 도입 여부</div>
+      </div>
+    </section>
+
+    <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
+    <section class="board">
+      <div class="col done">
+        <div class="col-head"><span class="dot"></span>완료<span class="count">13</span></div>
+        <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
+        <div class="card"><div class="t">프로젝트·대화 CRUD</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
+        <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
+        <div class="card"><div class="t">Stage 드래그·이동·리사이즈·자동 저장</div><div class="n"><a href="features/stage.md">stage.md</a></div></div>
+        <div class="card"><div class="t">Viewer 읽기 전용 화면</div><div class="n"><span class="mono">/p/:id/view</span> · <a href="features/viewer.md">viewer.md</a></div></div>
+        <div class="card"><div class="t">Admin — DB 연결·테이블 권한</div><div class="n"><a href="features/admin.md">admin.md</a></div></div>
+        <div class="card"><div class="t">샘플 DB 구성</div><div class="n">SOC + Global Sales + 서비스 DB, Docker Compose</div></div>
+        <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">로컬 일반 스키마 데모용</div></div>
+        <div class="card"><div class="t">실 LLM 전용 채팅 에이전트</div><div class="n">OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 · <a href="features/chat.md">chat.md</a></div></div>
+        <div class="card"><div class="t">Admin AI 연결 설정</div><div class="n">브라우저 localStorage, Provider/Model/Key · <a href="features/admin.md">admin.md</a></div></div>
+        <div class="card"><div class="t">llm_usage 기록 골격</div><div class="n">테이블 적재까지 완료</div></div>
+        <div class="card"><div class="t">DB별 명령 유사도 DB</div><div class="n">명령 검색 → 검색 결과 참조 답변 생성 · 관리자 초기 등록 · <a href="features/similarity-search-design.md">상세 문서</a></div></div>
+        <div class="card"><div class="t">문서 체계 정비</div><div class="n">AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, 본 대시보드</div></div>
+      </div>
+
+      <div class="col wip">
+        <div class="col-head"><span class="dot"></span>진행중<span class="count">3</span></div>
+        <div class="card"><div class="t">채팅 메시지 임베딩</div><div class="n">pgvector 저장·검색 완료, <b>프론트 미표시</b> · <a href="features/chat.md">chat.md</a></div></div>
+        <div class="card"><div class="t">실 LLM 경로 하드닝</div><div class="n">재시도 1회 한정, 레이트리밋·서킷브레이커 없음</div></div>
+        <div class="card"><div class="t">운영 배포 파이프라인</div><div class="n">Compose·Actions는 있음, VPS 실배포 검증 미완</div></div>
+      </div>
+
+      <div class="col plan">
+        <div class="col-head"><span class="dot"></span>예정<span class="count">6</span></div>
+        <div class="card"><span class="pri high">HIGH</span><div class="t">질문 유사도 테스트 하니스</div><div class="n">비슷한 질문 → 같은 furniture 검증, 미착수</div></div>
+        <div class="card"><span class="pri med">MED</span><div class="t">Circle 게이지 조합 카탈로그</div><div class="n">ring × size × companion, 카탈로그에 아직 없음</div></div>
+        <div class="card"><span class="pri low">LOW</span><div class="t">Viewer 다크 Orion 자리표시 정리</div><div class="n"><span class="mono">variant="orion"</span> · <a href="features/viewer.md">viewer.md</a></div></div>
+        <div class="card"><span class="pri low">LOW</span><div class="t">실 RAG 고도화</div><div class="n">DocumentProvider는 Mock 고정 문서만</div></div>
+        <div class="card"><div class="t">LLM 사용량 조회 UI</div><div class="n">기록만 되고 화면에 안 보임</div></div>
+        <div class="card"><div class="t">Stage 서버측 role 검사</div><div class="n">현재 소유자 검사만, readOnly는 프론트 전용 · <a href="features/stage.md">stage.md</a></div></div>
+      </div>
+
+      <div class="col hold">
+        <div class="col-head"><span class="dot"></span>보류<span class="count">1</span></div>
+        <div class="card"><div class="t">완성 Orion 대시보드 템플릿 도입 여부</div><div class="n">현재 기본 규칙: 핀보드만, 템플릿 없음. 바꾸려면 합의 필요</div></div>
+      </div>
+    </section>
+
+    <h2>기능 문서 <span class="hint">docs/features/*.md — 구현 기준</span></h2>
+    <section class="cols2">
+      <div class="box">
+        <h3>핵심 흐름</h3>
+        <div class="flist">
+          <div class="frow">
+            <div><a href="features/auth.md">로그인/세션</a><div class="desc">JWT, 역할별 권한 매트릭스</div></div>
+            <div class="fcode">F-01, F-02</div>
+          </div>
+          <div class="frow">
+            <div><a href="features/projects-conversations.md">프로젝트 · 대화</a><div class="desc">목록/생성/이름변경/삭제</div></div>
+            <div class="fcode">F-03~F-06</div>
+          </div>
+          <div class="frow">
+            <div><a href="features/chat.md">채팅(에이전트)</a><div class="desc">DB 선택, 채팅(실 LLM 전용), SQL 규칙, 메시지 임베딩</div></div>
+            <div class="fcode">F-07, F-08</div>
+          </div>
+          <div class="frow">
+            <div><a href="features/widgets-artifact.md">Artifact / 위젯 카탈로그</a><div class="desc">표시, 12개 허용 컴포넌트</div></div>
+            <div class="fcode">F-09</div>
+          </div>
+        </div>
+      </div>
+      <div class="box">
+        <h3>배치 · 관리</h3>
+        <div class="flist">
+          <div class="frow">
+            <div><a href="features/stage.md">Stage</a><div class="desc">위젯 추가, 배치·자동 저장</div></div>
+            <div class="fcode">F-10, F-11</div>
+          </div>
+          <div class="frow">
+            <div><a href="features/viewer.md">Viewer 화면</a><div class="desc"><span class="mono">/p/{id}/view</span> 읽기 전용</div></div>
+            <div class="fcode">F-12</div>
+          </div>
+          <div class="frow">
+            <div><a href="features/admin.md">관리자</a><div class="desc">DB 연결, 테이블 권한, AI 설정</div></div>
+            <div class="fcode">F-13, F-14</div>
+          </div>
+          <div class="frow">
+            <div><a href="01-folder-structure.md">폴더 구조 문서</a><div class="desc">전체 파일 단위 설명</div></div>
+            <div class="fcode">구조</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      기준 문서: <a href="../AGENTS.md">AGENTS.md</a> · <a href="progress.md">docs/progress.md</a> · <a href="features/README.md">docs/features/</a>.
+      이 페이지는 정적 스냅샷이다 — 실제 상태가 바뀌면 <span class="mono">docs/progress.md</span>를 먼저 갱신하고 이 페이지를 다시 만든다.
+      숫자·카드는 추정 없이 위 두 문서의 내용을 그대로 옮겼다.
+    </footer>
+  </div>
+</body>
+</html>

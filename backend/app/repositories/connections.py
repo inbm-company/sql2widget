@@ -174,6 +174,22 @@ def allowed_tables_for_role(tenant_id: str, connection_id: str, role: str) -> se
     return {r["table_name"] for r in rows}
 
 
+def catalog_tables_for_connection(row: dict) -> set[str]:
+    """Discover all queryable customer tables for role-independent question setup."""
+    with psycopg.connect(connection_url(row), row_factory=dict_row) as conn:
+        conn.read_only = True
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT DISTINCT table_name
+                FROM information_schema.tables
+                WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+                  AND table_type IN ('BASE TABLE', 'VIEW')
+                  AND table_name NOT IN ('schema_migrations')
+                ORDER BY table_name
+            """)
+            return {item["table_name"] for item in cur.fetchall()}
+
+
 def schema_metadata(row: dict, allowed_tables: set[str]) -> dict:
     """Read only permitted PostgreSQL schema metadata; never inspect row values."""
     names = sorted({name.lower() for name in allowed_tables})

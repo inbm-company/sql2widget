@@ -13,6 +13,9 @@ export default function AdminPanel({ open, onClose }) {
   const [perms, setPerms] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
   const [status, setStatus] = useState("");
+  const [seeding, setSeeding] = useState(false);
+  const [commandRole, setCommandRole] = useState("user");
+  const [seedResult, setSeedResult] = useState(null);
   const [aiSettings, setAiForm] = useState(() => ({ provider: "gemini", model: "gemini-3.6-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", apiKey: "", ...getAiSettings() }));
   const [form, setForm] = useState({
     name: "",
@@ -76,6 +79,23 @@ export default function AdminPanel({ open, onClose }) {
     }
   }
 
+  async function seedCommands() {
+    if (!selectedId || seeding) return;
+    const connectionId = selectedId;
+    setSeeding(true);
+    setSeedResult(null);
+    setStatus("DB 스키마를 읽고 초기 명령을 생성·검증하고 있습니다…");
+    try {
+      const result = await api.seedCommands(connectionId, commandRole);
+      setSeedResult({ ...result, role: commandRole });
+      setStatus(`초기 명령 ${result.saved_count}개를 유사도 DB에 저장했습니다.`);
+    } catch (err) {
+      setStatus(err.message);
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   async function savePerms() {
     if (!selectedId) return;
     setStatus("권한 저장 중…");
@@ -126,7 +146,7 @@ export default function AdminPanel({ open, onClose }) {
             <label>Provider<select value={aiSettings.provider} onChange={(e) => setAiForm((f) => ({ ...f, provider: e.target.value }))}><option value="gemini">Gemini</option><option value="openai">OpenAI 호환</option></select></label>
             <label>Model<input value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder="gemini-3.6-flash" /></label>
             <label>API key<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} placeholder="Gemini API key" autoComplete="off" /></label>
-            <p className="muted small">키는 이 브라우저에만 저장되고 채팅 요청에만 사용됩니다.</p>
+            <p className="muted small">키는 이 브라우저에만 저장되고 채팅과 명령 유사도 등록·검색에 사용됩니다.</p>
             <button type="submit" className="primary">AI 설정 저장</button>
           </form>
         </section>
@@ -151,6 +171,41 @@ export default function AdminPanel({ open, onClose }) {
               연결 테스트
             </button>
           </div>
+        </section>
+
+        <section>
+          <h3>명령 유사도 DB</h3>
+          <p className="muted small">
+            선택한 DB의 명령과 SQL·위젯 정보를 준비합니다. 채팅에서는 유사한 명령을 찾아 답변 생성에 참고합니다.
+          </p>
+          <label>테이블 권한 기준
+            <select value={commandRole} disabled={seeding} onChange={(e) => setCommandRole(e.target.value)}>
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+              <option value="viewer">viewer</option>
+            </select>
+          </label>
+          <button type="button" className="primary" disabled={!selectedId || seeding} onClick={seedCommands}>
+            {seeding ? "초기 명령 준비 중…" : "초기 명령 3개 등록"}
+          </button>
+          <p className="muted small">AI 설정과 해당 역할의 테이블 권한을 먼저 저장하세요. SQL을 읽기 전용으로 검증한 뒤 등록합니다.</p>
+          {seedResult?.connection_id === selectedId && seedResult.role === commandRole ? (
+            <ul>
+              {seedResult.commands.map((item) => (
+                <li key={item.id}>
+                  <details>
+                    <summary>{item.command}</summary>
+                    {item.plan.widgets.map((widget, index) => (
+                      <div key={index}>
+                        <p>{widget.title} · {widget.component}</p>
+                        <pre className="sql-panel">{widget.sql}</pre>
+                      </div>
+                    ))}
+                  </details>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
 
         <section>

@@ -30,7 +30,7 @@ The agent proposes candidate widgets from a closed catalog. The user composes th
 - Local evaluation is Docker Compose: Vite frontend on port 5173, FastAPI on port 8010.
 - Login demos: `admin@example.com` / `demo-password`, and `viewer@example.com`.
 - Two customer connections: `dbconn_demo` (SOC) and `dbconn_global` (Global Sales).
-- LLM is Mock only for this MVP. Real LLM, RAG, and production deploy are out of scope (P2+).
+- Chat always calls a real LLM (OpenAI-compatible or Gemini). No key or a failed call returns a clear error — the agent never guesses an answer.
 - Planning source: `docs/PLAN.md`.
 
 ## Capabilities and Constraints
