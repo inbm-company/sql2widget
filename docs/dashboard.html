@@ -200,7 +200,7 @@
       <tr><td><a href="#projects-conversations">프로젝트·대화</a></td><td>프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제</td></tr>
       <tr><td><a href="#chat">채팅(에이전트)</a></td><td>자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환</td></tr>
             <tr><td><a href="#chat">채팅 의도 라우팅</a></td><td>질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환</td></tr>
-      <tr><td><a href="#widgets-artifact">Artifact/위젯 표시</a></td><td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시</td></tr>
+      <tr><td><a href="#widgets-artifact">Artifact/위젯 표시</a></td><td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·그래프 조회/전달 수·모델 사용 보고와 원문 근거 확인(대화에 저장)</td></tr>
       <tr><td><a href="#stage">Stage 배치</a></td><td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, 자동 저장·새로고침 후 복원</td></tr>
       <tr><td><a href="#graph-rag-sources">프로젝트 문서 그래프</a></td><td>프로젝트별 문서 업로드 → Neo4j 수동 적재 → Stage에서 문서 그래프·본문 조회. 채팅에서 "문서에서 …" 질문에 엔티티·근거로 답변(knowledge_qa)</td></tr>
       <tr><td><a href="#viewer">Viewer 전용 화면</a></td><td><code>/p/{projectId}/view</code> — 채팅·편집 없이 Stage만 읽기 전용으로 표시</td></tr>
@@ -424,7 +424,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
   <table>
     <tbody>
       <tr><th>입력</th><td><code>conversation_id</code>, <code>message</code>, <code>connection_id</code>(선택)</td></tr>
-      <tr><th>처리</th><td>user 메시지 저장 → 제목 갱신 → 에이전트 실행 → assistant 메시지 + artifact 저장</td></tr>
+      <tr><th>처리</th><td>user 메시지 저장 → 제목 갱신 → 에이전트 실행 → assistant 메시지 + artifact + 표시용 meta 저장</td></tr>
       <tr><th>출력</th><td><code>user_message</code>, <code>assistant_message</code>, <code>artifact</code>, <code>meta</code>, <code>related_messages</code>, <code>embedding_provider</code>, <code>embedding_error</code></td></tr>
       <tr><th>타임아웃</th><td>150초 — 실 LLM 응답 + SQL 재시도(1회) 여유</td></tr>
     </tbody>
@@ -454,7 +454,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
   <h3>문서 그래프로 답하기 (knowledge_qa)</h3>
   <p>"문서에서 …"처럼 문서에 적힌 내용을 묻는 질문은 프로젝트의 <strong>추출된 엔티티</strong>로 답한다. SQL은 실행하지 않는다.</p>
   <ol>
-    <li><strong>읽기</strong> — 고정 Cypher(<code>project_graph.project_entities</code>, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500)·관계·원문 근거를 읽는다. LLM이 Cypher를 쓰지 않는다.</li>
+    <li><strong>읽기</strong> — 고정 Cypher(<code>project_graph.project_entities</code>, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500, 타입별로 공평하게 나눈 표본)·관계·원문 근거를 읽고, 타입별 정확한 개수는 별도 집계로 함께 읽는다. LLM이 Cypher를 쓰지 않는다.</li>
     <li><strong>좁히기</strong> — 엔티티가 40개를 넘으면 채팅 LLM이 "타입·이름·설명" 목록에서 관련 이름을 고르고(최대 15), 코드가 직접 이웃을 모은다(최대 40). 40개 이하면 고르는 호출 없이 전부 쓴다.</li>
     <li><strong>답하기</strong> — 채팅 LLM이 타입별 개수·엔티티·근거 문장·관계(<code>facts</code>)만으로 답한다. 문서에 없으면 없다고 답하고, 근거로 쓴 엔티티 이름(<code>used</code>)을 함께 받는다.</li>
     <li><strong>위젯</strong> — 코드가 만든다: <code>MarkdownBlock</code>, 근거 <code>DataTable</code>(타입·이름·설명·문서 소스), 관계 <code>DataTable</code>, 제목 단위 <code>SourceList</code>.</li>
@@ -499,6 +499,17 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
     <li><strong>사용량 기록</strong> — 실 LLM 호출마다 <code>llm_usage</code>에 provider/model/토큰/성공여부 기록.</li>
   </ol>
 
+  <h3>채팅 처리 내역 (새로고침 후 유지)</h3>
+  <p>답변 위의 <strong>처리 내역</strong>을 펼치면 선택 경로·분류 방식(Jev / 채팅 LLM 폴백 / 사용자 선택)·분류 확신·답변 모델을 확인한다. 그래프 사용 여부는 실행 결과로 표시하며, 그래프 구성은 문서 질문 답변과 구분한다.</p>
+  <ul>
+    <li><code>assistant_message.meta</code>와 대화 조회의 <code>messages[].meta</code>에 표시용 처리 내역을 저장한다(<code>messages.meta</code>, 마이그레이션 <code>010_message_meta.sql</code>). 기존 최상위 <code>meta</code> 응답은 유지한다.</li>
+    <li>문서 질문의 <code>knowledge</code>에는 <code>status</code>, 그래프 전체 <code>entities_total</code>/<code>relations_total</code>, 실제 읽은 <code>entities_read</code>/<code>relations_read</code>, <code>truncated</code>, 답변 모델에 전달한 <code>entities_in_prompt</code>/<code>relations_in_prompt</code>와 <code>prompt_entities</code>를 기록한다. 500개 한도 조회는 전체 개수와 구분한다.</li>
+    <li><code>used_entities</code>는 모델이 사용했다고 보고한 엔티티의 ID·타입·이름·문서 소스·원문 근거다. <code>used_relations</code>는 보고된 엔티티 사이의 관계다. 실제 조회·전달 사실과 모델의 사용 보고를 구분하며, 정확성은 원문과 대조한다. 모델이 보고하지 않으면 빈 목록으로 표시한다.</li>
+    <li>SQL의 <code>schema_link</code>는 그래프 기반 테이블 선택·실패/미사용 사유·전체 스키마 복구 재시도·대응되는 테이블 설명 수와 선택한 설명을 표시한다. <code>question_retrieval</code>은 검색 상태·참고 질문 수·질문/유사도를 표시한다.</li>
+    <li><code>graph_build</code>에는 응답 당시 소스·스키마/추출 상태·엔티티/관계 수를 기록한다. 백그라운드 진행 상태는 기존 그래프 카드에서 갱신하며, 처리 내역은 응답 당시 기록이다.</li>
+    <li>표시용 기록은 허용된 필드만 저장하며 API 키·요청 헤더·원시 오류·유사 질문 SQL 계획을 포함하지 않는다. 서버 로그·감사 로그에 문서 본문을 추가하지 않는다. 최종 HTTP 502 오류는 기존 오류 화면을 유지한다.</li>
+    <li>기존 답변은 <code>meta=null</code>로 <strong>기록 없음</strong>을 표시한다. 과거 사용 여부를 추정하거나 재계산하지 않는다.</li>
+  </ul>
   <h3>LLM 프로바이더</h3>
   <table>
     <tbody>
@@ -709,15 +720,16 @@ stage_widgets(
     <thead><tr><th>필드</th><th>동작</th></tr></thead>
     <tbody>
       <tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
-      <tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 설치된 모델 이름 직접 입력</td></tr>
+      <tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
       <tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
       <tr><td>API key</td><td>비밀번호 입력란, 로컬은 선택 사항</td></tr>
-      <tr><td>Embedding model</td><td>로컬에서 선택 입력. 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
+      <tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
     </tbody>
   </table>
   <ul>
     <li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달되며 서버 환경변수보다 우선한다.</li>
     <li>URL은 백엔드에서 접근하는 주소다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
+    <li>로컬 Provider는 패널을 열 때와 모델 목록 새로고침 클릭 시 <code>POST /api/ai/local-models</code>(관리자 전용, body <code>{base_url, api_key}</code>)를 호출한다. 백엔드가 <code>{base_url}/models</code>(OpenAI 호환, 타임아웃 5초)를 조회해 <code>{models: [id…]}</code>를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.</li>
     <li>로컬 임베딩 벡터 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
     <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
     <li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
@@ -804,6 +816,15 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
 <li><strong>검증 결과(2026-10-01, 서버 기본 AI 설정, Northwind 스키마 문서 1개)</strong>: 제안은 <code>Database</code>·<code>Table</code>·<code>Column</code> 3타입과 <code>CONTAINS_TABLE</code>·<code>HAS_COLUMN</code>·<code>REFERENCES_TABLE</code>·<code>REFERENCES_COLUMN</code> 4관계였고, 추출은 조각 4개에서 <code>Table</code> 16개 전부와 FK 관계 13개 전부(문서 ERD와 일치)를 뽑았다. 한계: 같은 타입·이름은 문서 전체에서 한 노드로 합쳐지므로 <code>customer_id</code>처럼 여러 테이블에 있는 <code>Column</code>이 하나로 섞인다(<code>Column</code>이 55개뿐인 이유 중 하나). 컬럼은 노드가 아니라 <code>Table</code> 속성으로 두는 편이 맞을 수 있다.</li>
 <li><strong>아직 없는 것</strong>: 스키마 직접 편집 화면(채팅 지시문 또는 <code>PUT .../schema</code> API로만 수정).</li>
 </ul>
+<h2>엔티티 조회와 표본</h2>
+<p>엔티티가 <code>limit</code>(기본 500)보다 많으면 일부만 돌려준다. 예전에는 타입 이름 순으로 잘라서 <code>Column</code>이 앞이라 500개가 전부 컬럼이 되었고, 관계는 0개가 됐다(Table 170·Column 1,038 소스).</p>
+<ul>
+  <li><strong>타입별 공평 할당</strong>: 개수가 적은 타입부터 전부 담고 남는 자리를 가장 큰 타입이 가져간다. 타입 안에서는 연결이 많은 엔티티가 먼저다. 1,216개 소스·limit 500: Table 170(전부)·Schema 3·View 4·Database 1·Column 322, 관계 1,845개 중 1,193개.</li>
+  <li><strong>정확한 전체 값</strong>: <code>total</code>·<code>type_counts</code>·<code>relation_total</code>은 표본이 아니라 별도 집계다. 화면 범례와 문서 질문의 "몇 개" 답이 이 값을 쓴다.</li>
+  <li><strong>화면</strong>: 잘리면 "엔티티 1216개 중 500개 표시 · 관계 1845개 중 1193개 표시"로 보여 준다. 범례의 타입별 개수는 전체 기준이다.</li>
+  <li>표본에서 빠진 엔티티(주로 컬럼)는 이름 검색에 걸리지 않는다. 타입 필터는 아직 없다.</li>
+</ul>
+
 <h2>엔티티 추출 속도</h2>
 <p>조각당 LLM 호출 1회이고 출력이 길어(엔티티·관계마다 원문 근거 복사) 한 호출이 11~60초 걸린다. 이전에는 호출 제한 시간 60초에 자주 걸렸다(로그 12.5분 중 약 7분이 타임아웃 대기). 52조각에 약 50분으로 추정됐다.</p>
 <table>
@@ -855,7 +876,7 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
 <tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/extract</code></td><td>승인된 스키마로 엔티티 추출 작업 시작(<code>X-LLM-*</code> 헤더 필요). 스키마 미승인·미적재는 400, 이미 추출 중이면 409. 응답은 <code>extract_status=running</code>인 소스</td><td>admin + 소유자</td></tr>
 <tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/extract/cancel</code></td><td>실행 중인 추출을 취소(대기 중 조각은 보내지 않음). 실행 중이 아니면 409</td><td>admin + 소유자</td></tr>
 <tr><td><code>GET /api/projects/{project_id}/graph-sources/{id}/entities?limit=500</code></td><td>활성 엔티티(<code>id</code>, <code>type</code>, <code>name</code>, <code>properties</code>)와 관계(<code>source</code>, <code>type</code>, <code>target</code>, <code>evidence</code>) 반환</td><td>admin + 소유자</td></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph/entities?limit=500</code></td><td>프로젝트 모든 소스의 활성 엔티티(<code>type</code>, <code>name</code>, <code>properties</code>, <code>evidence</code>)와 관계 반환. Stage ‘엔티티’ 보기가 사용</td><td>소유자</td></tr>
+<tr><td><code>GET /api/projects/{project_id}/graph/entities?limit=500</code></td><td>프로젝트 모든 소스의 활성 엔티티(<code>type</code>, <code>name</code>, <code>properties</code>, <code>evidence</code>)와 관계 반환. Stage ‘엔티티’ 보기가 사용. 엔티티가 <code>limit</code>를 넘으면 타입별로 공평하게 나눈 표본을 주고, 전체 기준의 <code>total</code>·<code>type_counts</code>·<code>relation_total</code>과 <code>truncated</code>를 함께 준다</td><td>소유자</td></tr>
 <tr><td><code>GET /api/projects/{project_id}/graph?limit=200</code></td><td>활성 문서 노드·링크·개수·표시 제한 반환</td><td>소유자</td></tr>
 <tr><td><code>GET /api/projects/{project_id}/graph/documents/{document_id}</code></td><td>소속 문서 정보와 본문 조회, 다른 프로젝트 문서는 404</td><td>소유자</td></tr>
 </table>
@@ -869,7 +890,7 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
   <h1 class="page">작업 진행 상황</h1>
   <p class="doc-meta">기준일 2026-10-01 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
 
-  <p><span class="badge done">완료 20</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
+  <p><span class="badge done">완료 21</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
 
   <h2>요약</h2>
   <ul>
@@ -894,7 +915,7 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
     <li>프로젝트별 문서 업로드·수동 Neo4j 적재 — 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 knowledge_qa로 완료 — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>Stage 프로젝트 문서 그래프·본문 조회 — 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회 — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
-    <li>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원</li>
+    <li>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select)</li>
     <li><code>llm_usage</code> 사용량 기록 골격</li>
     <li>DB별 예상 질문 유사도 검색 → 검색 결과를 참조해 답변 생성, 전체 테이블 질문 생성 — <a href="features/similarity-search-design.md">예상 질문 유사도 DB</a></li>
     <li>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지. 단위 테스트와 실제 Jev 호출(2026-10-01)로 확인, 임계값 0.5는 검증 전 — <a href="#chat">chat</a></li>
@@ -902,6 +923,7 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
     <li>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도. Northwind 확인, 100개 이상 DB 미검증 — <a href="#chat">chat</a></li>
     <li>문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기. Northwind 1개 브라우저 검증, 다른 문서 유형 미검증. 추출은 4개 동시·호출 180초(52조각 11.3분, 이전 약 50분 추정) — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>문서 체계 정비 — AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, dashboard.html, kanban.html</li>
+    <li>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, 그래프 전체/조회/모델 전달 수, 모델이 보고한 사용 엔티티와 원문 근거, SQL 테이블 선택·유사 질문 참조. 새로고침 후 유지, 과거 답변은 기록 없음 — <a href="#chat">chat</a></li>
   </ul>
 
   <h2><span class="badge wip">진행중</span></h2>

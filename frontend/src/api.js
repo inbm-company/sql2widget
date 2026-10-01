@@ -202,6 +202,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  listLocalModels: (baseUrl, apiKey) =>
+    request("/api/ai/local-models", {
+      method: "POST",
+      body: JSON.stringify({ base_url: baseUrl, api_key: apiKey || "" }),
+    }),
   testConnection: (id) =>
     request(`/api/database-connections/${id}/test`, { method: "POST" }),
   seedQuestions: (id, offset = 0) =>

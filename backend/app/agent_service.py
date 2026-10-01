@@ -370,6 +370,8 @@ def run_agent(
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
     meta["route"] = "clarify" if decision["clarify"] else decision["route"]
+    if decision["clarify"]:
+        meta["route_candidate"] = decision["route"]
     meta["route_source"] = decision["source"]
     for key in ("confidence", "jev_error"):
         if decision.get(key) is not None:
@@ -467,6 +469,7 @@ def run_agent(
                 plan2, db_url=db_url, allowed_tables=allowed, message=message
             )
             meta["provider"] = repair.get("provider")
+            meta["model"] = repair.get("model")
             meta["retried"] = True
             return summary, artifact, meta
         except Exception as second_exc:  # noqa: BLE001

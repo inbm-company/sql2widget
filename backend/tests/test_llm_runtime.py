@@ -217,7 +217,7 @@ def test_local_settings_reach_chat_and_question_api(monkeypatch):
     headers = {"X-LLM-Provider": "local", "X-LLM-Model": "local-chat",
                "X-LLM-Base-URL": "http://local:11434/v1", "X-LLM-Embedding-Model": "local-embed"}
     monkeypatch.setattr(main.conv_repo, "get_conversation", lambda *args: {"id": "test"})
-    monkeypatch.setattr(main.conv_repo, "add_message", lambda *args: {"id": f"test-{args[1]}"})
+    monkeypatch.setattr(main.conv_repo, "add_message", lambda *args, **kwargs: {"id": f"test-{args[1]}"})
     monkeypatch.setattr(main.conv_repo, "touch_title_from_message", lambda *args: None)
     def embed(*args, **kwargs):
         captured.append(("embed", kwargs))

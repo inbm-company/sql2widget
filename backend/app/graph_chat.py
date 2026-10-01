@@ -17,6 +17,11 @@ def _reply(summary: str, meta: dict, *, source: dict | None = None, choices: lis
     artifact: dict[str, Any] = {'type': 'graph_flow' if source else 'choices', 'widgets': [],
                                 'choices': choices or []}
     if source:
+        meta['graph_build'] = {
+            'source_name': source['name'], 'schema_status': source['schema_status'],
+            'extract_status': source.get('extract_status'),
+            'entity_count': source.get('entity_count', 0), 'relation_count': source.get('relation_count', 0),
+        }
         artifact['graph'] = {
             'source_id': source['id'], 'source_name': source['name'],
             'schema_status': source['schema_status'], 'schema': source['schema_draft'],

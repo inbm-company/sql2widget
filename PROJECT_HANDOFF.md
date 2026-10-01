@@ -56,6 +56,8 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 
 ## 3. 지금 동작하는 것
 
+- 채팅 답변의 **처리 내역**에서 선택 경로·분류 방식과 그래프 전체/조회/전달 수, 모델이 보고한 근거 엔티티·원문을 확인한다. 표시용 `meta`는 `messages.meta`에 저장되어 새로고침 후 유지한다(`chat_trace.py`, `ChatTrace.jsx`, 마이그레이션 `010_message_meta.sql`). 과거 답변은 기록 없음이며, 조회 사실과 모델의 사용 보고를 구분한다.
+
 - 로그인 JWT (access + refresh). admin / viewer.
 - 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문. 프로젝트 삭제(연관 대화·Stage 정리, 문서 소스는 미연결로 보존).
 - 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로(예상 질문 유사도는 경로 결정에 쓰지 않고 `data_query`의 SQL 계획에만 쓴다) `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 프로젝트 문서의 엔티티·관계·근거로 답한다(`graph_answer.py`, `meta.knowledge`). Jev 상태의 `has_document_graph`로 문서 기반 질문과 DB 구조 질문(`schema_qa`)을 가른다. 허용 테이블이 `SCHEMA_LINK_MIN_TABLES`(기본 20)를 넘는 DB는 `data_query`에서 유사 질문이 쓴 테이블, 없으면 프로젝트 문서 그래프의 `Table` 설명에서 채팅 LLM이 고른 테이블만 스키마로 전달하고(`schema_linking.py`, `meta.schema_link`), 실패 시 복구 재시도는 전체 스키마로 한다. 운영 `compose.production.yml`은 `TYPESAFE_API_KEY`만 넘기며(비면 LLM 폴백), 나머지 `TYPESAFE_*`·`ROUTE_MIN_CONFIDENCE`는 코드 기본값을 쓴다. 상세: `docs/features/chat.md`.

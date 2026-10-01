@@ -69,14 +69,19 @@ def link_from_graph(message: str, allowed_tables: set[str], *, tenant_id: str, p
     except GraphSourceError as exc:
         return _full("graph_unavailable", total, str(exc))
     catalog = [{"name": name, "description": documented.get(name, "")} for name in sorted(permitted)]
+    documented_count = sum(bool(item["description"]) for item in catalog)
     if not any(item["description"] for item in catalog):
-        return _full("no_documented_tables", total)
+        return {**_full("no_documented_tables", total), "documented_tables": documented_count}
     result = json_with_llm(TABLE_PICK_HINT, {"question": message, "tables": catalog}, **llm_context)
     picked = (result.get("result") or {}).get("tables")
     chosen = {name.lower() for name in picked if isinstance(name, str)} & permitted if isinstance(picked, list) else set()
     if not chosen:
-        return _full("no_tables_picked", total, result.get("error"))
-    return {"source": "graph", "tables": chosen, "total": total}
+        return {**_full("no_tables_picked", total, result.get("error")),
+                "documented_tables": documented_count}
+    return {"source": "graph", "tables": chosen, "total": total,
+            "documented_tables": documented_count,
+            "selected_descriptions": [{"name": name, "description": documented.get(name, "")}
+                                      for name in sorted(chosen)]}
 
 
 def link_schema(message: str, matches: list[dict[str, Any]], allowed_tables: set[str], *, tenant_id: str,

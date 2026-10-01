@@ -19,6 +19,7 @@ import { canShowSql, resolveWidgetSql } from "./sqlHelpers.js";
 import { storeKeys, useSWR } from "./store";
 import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
 import GraphFlowCard from "./GraphFlowCard.jsx";
+import ChatTrace from "./ChatTrace.jsx";
 
 function LoginForm({ onSuccess }) {
   const [email, setEmail] = useState("admin@example.com");
@@ -172,13 +173,14 @@ function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = 
   );
 }
 
-function AssistantAnswer({ content, artifact, projectId, onAdded, onChoose, readOnly = false }) {
+function AssistantAnswer({ content, artifact, meta, projectId, onAdded, onChoose, readOnly = false }) {
   const [view, setView] = useState("widget");
   const hasArtifact = Boolean(artifact?.widgets?.length || artifact?.artifact_id);
 
   return (
     <div className="assistant-block">
       {content ? <div className="msg-content">{content}</div> : null}
+      <ChatTrace meta={meta} />
 
       {artifact?.type === "graph_flow" && artifact.graph ? (
         <GraphFlowCard graph={artifact.graph} projectId={projectId} />
@@ -775,6 +777,7 @@ function Workspace({ user, onLogout }) {
                     <AssistantAnswer
                       content={m.content}
                       artifact={m.artifact}
+                      meta={m.meta}
                       projectId={activeProjectId}
                       onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
                       onChoose={(choice) => sendMessage(choice.message, choice.route, choice.action || null)}

@@ -8,6 +8,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class LocalModelsRequest(BaseModel):
+    base_url: str
+    api_key: str = ""
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 

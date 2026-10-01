@@ -82,7 +82,7 @@ def get_conversation(conversation_id: str, tenant_id: str, user_id: str) -> dict
         return None
     messages = fetch_all(
         """
-        SELECT id, role, content, artifact, created_at
+        SELECT id, role, content, artifact, meta, created_at
         FROM messages
         WHERE conversation_id = %s
         ORDER BY created_at ASC
@@ -92,6 +92,8 @@ def get_conversation(conversation_id: str, tenant_id: str, user_id: str) -> dict
     for m in messages:
         if m.get("artifact") and isinstance(m["artifact"], str):
             m["artifact"] = json.loads(m["artifact"])
+        if isinstance(m.get("meta"), str):
+            m["meta"] = json.loads(m["meta"])
     return {**conv, "messages": messages}
 
 
@@ -100,15 +102,16 @@ def add_message(
     role: str,
     content: str,
     artifact: dict[str, Any] | None = None,
+    meta: dict[str, Any] | None = None,
 ) -> dict:
     msg_id = _id("msg")
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO messages (id, conversation_id, role, content, artifact)
-                VALUES (%s, %s, %s, %s, %s::jsonb)
-                RETURNING id, role, content, artifact, created_at
+                INSERT INTO messages (id, conversation_id, role, content, artifact, meta)
+                VALUES (%s, %s, %s, %s, %s::jsonb, %s::jsonb)
+                RETURNING id, role, content, artifact, meta, created_at
                 """,
                 (
                     msg_id,
@@ -116,6 +119,7 @@ def add_message(
                     role,
                     content,
                     json.dumps(artifact, default=str) if artifact is not None else None,
+                    json.dumps(meta, default=str) if meta is not None else None,
                 ),
             )
             row = cur.fetchone()
@@ -133,6 +137,8 @@ def add_message(
             )
     if row.get("artifact") and isinstance(row["artifact"], str):
         row["artifact"] = json.loads(row["artifact"])
+    if isinstance(row.get("meta"), str):
+        row["meta"] = json.loads(row["meta"])
     return row
 
 

@@ -69,6 +69,7 @@ def _evidence(entity: dict) -> list[str]:
 def handle(message: str, *, user: dict, project_id: str | None, llm_context: dict[str, Any], meta: dict):
     """Return (summary, artifact, meta); raises KnowledgeError when the graph or model fails."""
     if not project_id:
+        meta["knowledge"] = {"status": "no_project"}
         return _nothing("이 대화는 프로젝트에 속해 있지 않아 문서 그래프를 찾을 수 없어요.", message, user, meta,
                         offer_build=False)
     sources = repo.list_sources(user["tenant_id"], project_id)
@@ -78,7 +79,14 @@ def handle(message: str, *, user: dict, project_id: str | None, llm_context: dic
     except GraphSourceError as exc:
         raise KnowledgeError(str(exc)) from exc
     entities = graph["entities"]
-    meta["knowledge"] = {"entities_total": len(entities), "truncated": graph["truncated"]}
+    meta["knowledge"] = {
+        "status": "no_entities" if not entities else "read",
+        "entities_total": graph.get("total", len(entities)), "entities_read": len(entities),
+        "relations_total": graph.get("relation_total", len(graph["relations"])),
+        "relations_read": len(graph["relations"]),
+        "truncated": graph["truncated"], "entities_in_prompt": 0, "relations_in_prompt": 0,
+        "prompt_entities": [], "used": [], "used_entities": [], "used_relations": [],
+    }
     if not entities:
         return _nothing("이 프로젝트에는 아직 문서에서 추출한 엔티티가 없어서 문서 내용으로 답할 수 없어요.",
                         message, user, meta, offer_build=True)
@@ -88,12 +96,13 @@ def handle(message: str, *, user: dict, project_id: str | None, llm_context: dic
         facts_entities, picked = _pick(message, graph, llm_context)
         meta["knowledge"].update(picked)
         if not facts_entities:
+            meta["knowledge"]["status"] = "no_match"
             return _nothing("질문과 관련된 내용을 문서 그래프에서 찾지 못했어요.", message, user, meta, offer_build=False)
     ids = {e["id"] for e in facts_entities}
     name_of = {e["id"]: e["name"] for e in entities}
     relations = [r for r in graph["relations"] if r["source"] in ids and r["target"] in ids]
     facts = {
-        "type_counts": dict(Counter(e["type"] for e in entities)),
+        "type_counts": graph.get("type_counts") or dict(Counter(e["type"] for e in entities)),
         "truncated": graph["truncated"],
         "entities": [{"type": e["type"], "name": e["name"], "properties": e["properties"],
                       "evidence": _evidence(e)} for e in facts_entities],
@@ -110,7 +119,20 @@ def handle(message: str, *, user: dict, project_id: str | None, llm_context: dic
     used_names = {n.lower() for n in answer.get("used") or [] if isinstance(n, str)}
     used = [e for e in facts_entities if e["name"].lower() in used_names]
     used_ids = {e["id"] for e in used}
-    meta["knowledge"].update(entities_in_prompt=len(facts_entities), used=[e["name"] for e in used])
+    used_relations = [r for r in relations if r["source"] in used_ids and r["target"] in used_ids]
+
+    def reference(entity: dict) -> dict:
+        return {"id": entity["id"], "type": entity["type"], "name": entity["name"],
+                "source": source_names.get(entity["source_id"], "")}
+
+    meta["knowledge"].update(
+        status="answered", entities_in_prompt=len(facts_entities), relations_in_prompt=len(relations),
+        prompt_entities=[reference(e) for e in facts_entities], used=[e["name"] for e in used],
+        used_entities=[{**reference(e), "evidence": e.get("evidence") or []} for e in used],
+        used_relations=[{"from": name_of[r["source"]], "type": r["type"],
+                         "to": name_of[r["target"]], "evidence": r.get("evidence")}
+                        for r in used_relations],
+    )
 
     widgets = [{"component": "MarkdownBlock", "title": "문서 기반 답변", "props": {"markdown": answer["markdown"]}}]
     if used:
@@ -119,7 +141,6 @@ def handle(message: str, *, user: dict, project_id: str | None, llm_context: dic
                         {"key": "description", "label": "설명"}, {"key": "source", "label": "문서 소스"}],
             "rows": [{"type": e["type"], "name": e["name"], "description": e["properties"].get("description", ""),
                       "source": source_names.get(e["source_id"], "")} for e in used]}})
-        used_relations = [r for r in relations if r["source"] in used_ids and r["target"] in used_ids]
         if used_relations:
             widgets.append({"component": "DataTable", "title": "관계", "props": {
                 "columns": [{"key": "from", "label": "시작"}, {"key": "type", "label": "관계"},

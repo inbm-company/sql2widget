@@ -59,8 +59,10 @@ backend/
 | `crypto.py` | `APP_SECRET` 기반 Fernet 암호화 — DB 연결 비밀번호 저장용 |
 | `query.py` | 고객 DB용 읽기 전용 SQL 검증·실행. `SELECT`/`WITH` 외 차단, 허용 테이블 검사, 결과 JSON 직렬화 |
 | `agent.py` | 위젯 Artifact 정리(`sanitize_artifact`) — 화이트리스트 밖 컴포넌트·키 제거. 예전 Mock 키워드 에이전트는 삭제됨 |
+| `local_models.py` | 로컬(OpenAI 호환) 서버 `/models` 조회. `POST /api/ai/local-models`(관리자 전용)가 호출 |
 | `agent_service.py` | 실 LLM 경로 오케스트레이터. `run_agent()`가 `main.py`의 `/api/chat`에서 호출되며 의도 라우팅 결과에 따라 데이터 조회/구조 답변/되묻기로 분기 |
 | `schema_linking.py` | 큰 DB의 SQL 계획 스키마 줄이기 — 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체로 승격 |
+| `chat_trace.py` | 채팅 응답의 표시용 처리 내역을 허용된 필드만 추려 저장(API 키·원시 오류·SQL 계획 제외) |
 | `intent_router.py` | 채팅 의도 라우팅 — Jev Choice 분류(재시도 포함), 실패 시 채팅 LLM 판단, 낮은 확신은 되묻기 |
 | `question_similarity.py` | DB 전체 예상 질문 생성과 역할(테이블 권한) 안전한 유사도 검색 |
 | `graph_ingestion.py` | 업로드된 문서를 읽어 문단 우선 본문 조각·명시된 문서 링크를 Neo4j에 적재(파일 수·크기 제한 포함) |
@@ -115,12 +117,12 @@ backend/
 | `skax_nms/` | SKAX NMS 샘플 DB | 복원된 전체 덤프(`cinamon` 스키마), 로컬 설정 스크립트 |
 | `chat_vector/` | 채팅 임베딩 DB | pgvector 확장, `message_embeddings` 테이블 |
 
-서비스 DB 마이그레이션은 `001_initial` ~ `009_graph_source_extraction`(프로젝트, 뷰어 역할, Graph RAG 소스·업로드 파일·엔티티 스키마·추출 상태 포함)까지 있다.
+서비스 DB 마이그레이션은 `001_initial` ~ `010_message_meta`(프로젝트, 뷰어 역할, Graph RAG 소스·업로드 파일·엔티티 스키마·추출 상태·채팅 처리 내역 포함)까지 있다.
 
 ### 2.5 나머지
 
-- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_schema_linking.py`(스키마 줄이기), `test_graph_answer.py`(문서 그래프 답변), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
-- `frontend/tests/` — Node 단위 테스트. `aiSettings.test.js`, `graphLayout.test.js`, `graphViewport.test.js`, `graphUpload.test.js`.
+- `backend/tests/` — pytest. `test_local_models.py`(로컬 모델 목록 조회), `test_chat_trace.py`(처리 내역 필터·API 저장/조회), `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_schema_linking.py`(스키마 줄이기), `test_graph_answer.py`(문서 그래프 답변), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
+- `frontend/tests/` — Node 단위 테스트. `chatTrace.test.js`(조회·전달·복구 상태 구분), `aiSettings.test.js`, `graphLayout.test.js`, `graphViewport.test.js`, `graphUpload.test.js`.
 - `backend/evals/questions.json` — 질문별 기대 Artifact 형태(컴포넌트, 최소 위젯 수)를 정의한 평가 데이터셋.
 - `backend/Dockerfile`, `backend/.dockerignore` — 백엔드 컨테이너 빌드.
 
@@ -146,6 +148,8 @@ frontend/
 | `StageCanvas.jsx` | Stage 핀보드. `react-grid-layout` 기반 드래그·리사이즈·자동 저장, `addWidgetToStage` export |
 | `ViewerStagePage.jsx` | `/p/:projectId/view` 라우트. `StageCanvas`를 읽기 전용으로 감싸는 얇은 래퍼 |
 | `AdminPanel.jsx` | 관리자 드로어 — DB 연결 등록/테스트, AI 설정, 테이블 권한 |
+| `ChatTrace.jsx` | 답변의 선택 경로·그래프 조회/전달 수·모델 사용 보고와 원문 근거를 펼쳐 표시 |
+| `chatTrace.js` | 처리 경로 이름과 실제 그래프 사용 상태의 표시 문구 |
 | `GraphSources.jsx` | DB 관리 패널의 Graph RAG 문서 소스 등록·업로드·적재 UI |
 | `ProjectGraph.jsx` | Stage의 프로젝트 문서 그래프·본문 조회 (Viewer 포함) |
 | `graphLayout.js` | 그래프 노드 배치(겹침 방지) 계산 |

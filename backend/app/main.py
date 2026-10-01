@@ -6,8 +6,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
-from app import config, question_similarity
+from app import config, local_models, question_similarity
 from app.agent_service import AgentRunError, run_agent
+from app.chat_trace import message_meta
 from app.auth import (
     create_access_token,
     get_current_user,
@@ -24,6 +25,7 @@ from app.contracts import (
     UpdateProjectRequest,
     UpdateConversationRequest,
     DatabaseConnectionIn,
+    LocalModelsRequest,
     LoginRequest,
     RefreshRequest,
     StagePutRequest,
@@ -81,6 +83,15 @@ def health():
 def require_admin(user: dict):
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
+
+
+@app.post("/api/ai/local-models")
+def list_local_models(body: LocalModelsRequest, user=Depends(get_current_user)):
+    require_admin(user)
+    try:
+        return {"models": local_models.list_models(body.base_url, body.api_key)}
+    except local_models.LocalModelsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/api/auth/login")
@@ -263,7 +274,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     assistant_msg = conv_repo.add_message(
-        body.conversation_id, "assistant", summary, artifact
+        body.conversation_id, "assistant", summary, artifact, meta=message_meta(meta)
     )
 
     assistant_embed = embed_text(

@@ -36,7 +36,7 @@
 | 프로젝트별 문서 업로드·수동 Neo4j 적재 | 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 `knowledge_qa`로 완료. [graph-rag-sources.md](features/graph-rag-sources.md) |
 | Stage 프로젝트 문서 그래프·본문 조회 | 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회. [graph-rag-sources.md](features/graph-rag-sources.md) |
 | 실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제) | [chat.md](features/chat.md) |
-| Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원 | [admin.md](features/admin.md) |
+| Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select) | [admin.md](features/admin.md) |
 | `llm_usage` 사용량 기록 골격(테이블 적재) | [admin.md](features/admin.md) 데이터 모델 |
 | 문서 체계 정비 — `AGENTS.md`/`CLAUDE.md`, `docs/01-folder-structure.md`, `docs/features/*.md`, 본 문서, `docs/dashboard.html`, `docs/kanban.html` | 이번 문서화 작업 1~5번 전체 완료 |
 | DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성 | [similarity-search-design.md](features/similarity-search-design.md) |
@@ -44,6 +44,7 @@
 | 문서 그래프 기반 답변(`knowledge_qa`) — "문서에서 …" 질문에 프로젝트의 엔티티·관계·근거로 답하고 근거 엔티티·관계 표·출처 위젯을 반환. 엔티티가 없으면 안내와 선택지 | 단위 테스트와 Northwind 문서 1개(엔티티 44개)로 실제 확인. 다른 문서 유형·500개 초과 그래프는 미검증. [chat.md](features/chat.md) |
 | 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
 | 문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기(타입별 색·속성·관계·원문 근거) | Northwind 문서 1개로 브라우저 검증(Table 16·FK 13). 다른 문서 유형은 미검증, 같은 이름 노드는 문서 전체에서 한 노드로 합쳐지는 한계. 추출은 조각을 최대 4개 동시·호출 제한 180초로 처리(52조각 11.3분, 실패 0건; 이전 순차·60초일 때 약 50분 추정). [graph-rag-sources.md](features/graph-rag-sources.md) |
+| 채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, 그래프 전체/조회/모델 전달 수, 모델이 보고한 사용 엔티티와 원문 근거, SQL 테이블 선택·유사 질문 참조 | `messages.meta` 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. [chat.md](features/chat.md) |
 
 ## 3. 진행중
 

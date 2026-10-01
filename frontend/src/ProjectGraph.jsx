@@ -129,9 +129,9 @@ function EntityGraph({ projectId }) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(storeKeys.projectEntities(projectId), () => api.getProjectEntities(projectId));
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  const types = useMemo(() => [...new Set((data?.entities || []).map((entity) => entity.type))].sort(), [data]);
+  const types = useMemo(() => [...new Set([...Object.keys(data?.type_counts || {}), ...(data?.entities || []).map((entity) => entity.type)])].sort(), [data]);
   const colorOf = (node) => TYPE_COLORS[types.indexOf(node.path) % TYPE_COLORS.length];
-  const counts = useMemo(() => Object.fromEntries(types.map((type) => [type, (data?.entities || []).filter((e) => e.type === type).length])), [data, types]);
+  const counts = useMemo(() => Object.fromEntries(types.map((type) => [type, data?.type_counts?.[type] ?? (data?.entities || []).filter((e) => e.type === type).length])), [data, types]);
   const graph = useMemo(() => {
     const search = query.trim().toLocaleLowerCase();
     const nodes = (data?.entities || []).filter((e) => !search || `${e.name} ${e.type}`.toLocaleLowerCase().includes(search))
@@ -149,14 +149,16 @@ function EntityGraph({ projectId }) {
       <input type="search" aria-label="엔티티 검색" placeholder="엔티티 이름 또는 타입 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
       <button type="button" className="ghost" disabled={isValidating} onClick={() => mutate()}>{isValidating ? "불러오는 중…" : "새로고침"}</button>
     </div>
-    {data ? <p className="muted small">엔티티 {data.entities.length}개 · 관계 {data.relations.length}개</p> : null}
+    {data ? <p className="muted small">{data.truncated
+      ? `엔티티 ${data.total}개 중 ${data.entities.length}개 표시 · 관계 ${data.relation_total}개 중 ${data.relations.length}개 표시`
+      : `엔티티 ${data.entities.length}개 · 관계 ${data.relations.length}개`}</p> : null}
     {types.length ? <div className="graph-legend" aria-label="엔티티 타입 범례">
       {types.map((type) => <span key={type} className="graph-legend-item small"><i style={{ background: colorOf({ path: type }) }} />{type} {counts[type]}</span>)}
     </div> : null}
     {isLoading ? <p className="muted" role="status">엔티티를 불러오고 있습니다…</p> : null}
     {error ? <p className="admin-status" role="alert">{error.message}</p> : null}
     {data && !data.entities.length ? <div className="graph-empty"><strong>아직 추출된 엔티티가 없습니다.</strong><p className="muted small">채팅에서 “문서를 그래프로 만들어줘”라고 요청해 스키마를 정하고 추출하세요.</p></div> : null}
-    {data?.truncated ? <p className="graph-limit small" role="status">엔티티가 많아 일부만 표시합니다.</p> : null}
+    {data?.truncated ? <p className="graph-limit small" role="status">엔티티가 많아 연결이 많은 순으로 일부만 표시합니다. 위 개수는 전체 기준입니다.</p> : null}
     {data?.entities.length && !graph.nodes.length ? <p className="muted small">검색한 엔티티가 없습니다.</p> : null}
     {graph.nodes.length ? <GraphDiagram nodes={graph.nodes} links={graph.links} selectedId={selectedId} onSelect={setSelectedId} colorOf={colorOf} label="엔티티" /> : null}
     {entity ? <div className="graph-document">

@@ -24,6 +24,34 @@
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
 }
 
+.chat-trace, .chat-trace-empty {
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.chat-trace {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.chat-trace > summary { padding: 8px 10px; cursor: pointer; }
+.chat-trace summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chat-trace-body { padding: 0 10px 10px; color: var(--ink); }
+.chat-trace-facts { display: grid; grid-template-columns: minmax(90px, 130px) minmax(0, 1fr); gap: 6px 12px; }
+.chat-trace-facts dt { color: var(--muted); }
+.chat-trace-facts dd { margin: 0; }
+.chat-trace-list { margin-top: 10px; }
+.chat-trace-list summary { cursor: pointer; }
+.chat-trace-list ul { margin: 8px 0; padding-left: 20px; }
+.chat-trace-list li { margin: 4px 0; }
+.chat-trace-body h4 { margin: 12px 0 6px; font-size: 12px; }
+.chat-trace-note { color: var(--muted); margin: 6px 0; }
+.chat-trace-evidence { margin-top: 8px; padding: 8px; background: var(--surface-elevated); border-radius: 4px; }
+.chat-trace-evidence p { margin: 4px 0; color: var(--muted); }
+.chat-trace-evidence blockquote { margin: 6px 0 0; padding-left: 8px; border-left: 2px solid var(--border); white-space: pre-wrap; }
+.chat-trace-evidence blockquote span { display: block; color: var(--muted); margin-bottom: 4px; }
+
 /* Thin overlay-style scrollbars */
 * {
   box-sizing: border-box;

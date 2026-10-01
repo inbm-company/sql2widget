@@ -106,6 +106,10 @@ LLM_EMBEDDING_MODEL=설치된-임베딩-모델-이름
 
 `LLM_EMBEDDING_MODEL` 또는 로컬 패널의 Embedding model은 선택 사항이다. 비워 두면 유사도 검색 없이 채팅을 사용할 수 있다. 예상 질문 생성·저장에는 임베딩 모델이 필요하며 벡터 차원은 기존 `CHAT_EMBEDDING_DIM`(기본 1536)과 일치해야 한다. 설정 변경을 위해 기존 벡터 DB 차원을 임의로 바꾸지 않는다.
 
+## 채팅 처리 내역
+
+답변의 **처리 내역**을 펼치면 선택 경로·분류 방식과 지식그래프 전체/조회/모델 전달 개수, 모델이 사용했다고 보고한 엔티티·원문 근거를 확인한다. 기록은 대화와 함께 저장되며 기존 답변은 기록 없음으로 표시한다. 기존 실행 환경은 `docker compose exec -T backend python scripts/migrate.py`로 `010_message_meta.sql`을 적용한다. [상세 동작](docs/features/chat.md#채팅-처리-내역-새로고침-후-유지).
+
 ## Smoke
 
 ```powershell

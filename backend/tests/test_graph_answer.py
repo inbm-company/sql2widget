@@ -67,6 +67,15 @@ def test_small_graph_goes_straight_to_the_answer_and_builds_widgets_from_used_en
     assert artifact["widgets"][3]["props"]["sources"] == [
         {"title": "Northwind 문서", "version": None, "section": "구조"}]
     assert summary == "요약" and meta["knowledge"]["used"] == ["orders", "customers"]
+    trace = meta["knowledge"]
+    assert trace["status"] == "answered" and trace["entities_read"] == 3
+    assert trace["relations_read"] == trace["relations_in_prompt"] == 1
+    assert len(trace["prompt_entities"]) == 3
+    assert [e["name"] for e in trace["used_entities"]] == ["orders", "customers"]
+    assert trace["used_entities"][0]["source"] == "Northwind 문서"
+    assert trace["used_entities"][0]["evidence"][0]["evidence"] == "orders 설명 문장"
+    assert trace["used_relations"] == [{"from": "orders", "type": "REFERENCES_TABLE",
+                                       "to": "customers", "evidence": "FK"}]
 
 
 def test_answer_without_used_entities_is_text_only(world):
@@ -92,8 +101,10 @@ def test_large_graph_is_narrowed_to_picked_entities_and_their_neighbours(world):
 def test_nothing_picked_says_so_without_answering(world):
     world["graph"] = graph_of([entity(i) for i in range(ga.MAX_FACTS + 1)])
     world["pick"] = {"entities": []}
-    summary, artifact, _ = ask()
+    summary, artifact, meta = ask()
     assert "찾지 못했어요" in summary and artifact["type"] == "choices" and len(world["calls"]) == 1
+    assert meta["knowledge"]["status"] == "no_match"
+    assert meta["knowledge"]["entities_in_prompt"] == 0
 
 
 def test_model_failure_is_raised_not_hidden(world):
@@ -114,3 +125,25 @@ def test_unreachable_graph_is_raised(monkeypatch, world):
     monkeypatch.setattr(ga.project_graph, "project_entities", down)
     with pytest.raises(ga.KnowledgeError, match="Neo4j"):
         ask()
+
+
+def test_type_quotas_take_small_types_in_full_and_give_the_rest_to_the_largest():
+    from app import project_graph
+
+    counts = {'Column': 1038, 'Table': 170, 'View': 4, 'Schema': 3, 'Database': 1}
+    quotas = project_graph._type_quotas(counts, 500)
+    assert quotas == {'Database': 1, 'Schema': 3, 'View': 4, 'Table': 170, 'Column': 322}
+    assert sum(quotas.values()) == 500
+    assert project_graph._type_quotas({'Table': 10, 'Column': 20}, 500) == {'Table': 10, 'Column': 20}  # nothing cut
+    assert project_graph._type_quotas({'A': 100, 'B': 100}, 50) == {'A': 25, 'B': 25}  # equal split when all are large
+
+
+def test_answer_counts_come_from_exact_totals_not_from_the_truncated_sample(world):
+    sample = [entity(i, "Column", f"c{i}") for i in range(3)]
+    graph = graph_of(sample, truncated=True)
+    graph.update(total=1216, type_counts={"Column": 1038, "Table": 170})
+    world["graph"] = graph
+    world["answer"] = {"summary": "s", "markdown": "m", "used": []}
+    _, _, meta = ask()
+    assert world["calls"][0][1]["facts"]["type_counts"] == {"Column": 1038, "Table": 170}
+    assert meta["knowledge"]["entities_total"] == 1216

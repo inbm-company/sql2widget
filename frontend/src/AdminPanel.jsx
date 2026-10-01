@@ -25,6 +25,39 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
   const [seedResult, setSeedResult] = useState(null);
   const [aiSettings, setAiForm] = useState(() => getAiSettings(getAiSettings().provider || "gemini"));
   const [aiDrafts, setAiDrafts] = useState({});
+  const [localModels, setLocalModels] = useState(null);
+  const [localModelsError, setLocalModelsError] = useState("");
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  async function loadLocalModels() {
+    setLoadingModels(true);
+    setLocalModelsError("");
+    try {
+      const res = await api.listLocalModels(aiSettings.baseUrl, aiSettings.apiKey);
+      setLocalModels(res.models);
+    } catch (err) {
+      setLocalModels(null);
+      setLocalModelsError(err.message);
+    } finally {
+      setLoadingModels(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!open || !showAi || aiSettings.provider !== "local") return;
+    loadLocalModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, showAi, aiSettings.provider]);
+
+  function modelSelect(field, value, optional) {
+    const names = localModels.includes(value) || !value ? localModels : [value, ...localModels];
+    return (
+      <select required={!optional} value={value} onChange={(e) => setAiForm((f) => ({ ...f, [field]: e.target.value }))}>
+        <option value="">{optional ? "사용 안 함" : "모델 선택"}</option>
+        {names.map((name) => <option key={name} value={name}>{name}</option>)}
+      </select>
+    );
+  }
 
   function switchProvider(provider) {
     setAiDrafts((drafts) => ({ ...drafts, [aiSettings.provider]: aiSettings }));
@@ -197,13 +230,23 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
                 <option value="local">로컬 모델 (OpenAI 호환)</option>
               </select>
             </label>
-            <label>Model<input required value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder={aiSettings.provider === "local" ? "로컬 서버에 설치된 모델 이름" : "모델 이름"} /></label>
+            {aiSettings.provider === "local" && localModels ? (
+              <label>Model{modelSelect("model", aiSettings.model, false)}</label>
+            ) : (
+              <label>Model<input required value={aiSettings.model} onChange={(e) => setAiForm((f) => ({ ...f, model: e.target.value }))} placeholder={aiSettings.provider === "local" ? "로컬 서버에 설치된 모델 이름" : "모델 이름"} /></label>
+            )}
             {aiSettings.provider !== "gemini" ? (
               <label>Base URL<input required type="url" value={aiSettings.baseUrl} onChange={(e) => setAiForm((f) => ({ ...f, baseUrl: e.target.value }))} /></label>
             ) : null}
             <label>API key{aiSettings.provider === "local" ? " (선택)" : ""}<input type="password" value={aiSettings.apiKey} onChange={(e) => setAiForm((f) => ({ ...f, apiKey: e.target.value }))} autoComplete="off" /></label>
             {aiSettings.provider === "local" ? <>
-              <label>Embedding model (선택)<input value={aiSettings.embeddingModel} onChange={(e) => setAiForm((f) => ({ ...f, embeddingModel: e.target.value }))} placeholder="예상 질문 생성·검색에 사용할 임베딩 모델" /></label>
+              {localModels ? (
+                <label>Embedding model (선택){modelSelect("embeddingModel", aiSettings.embeddingModel, true)}</label>
+              ) : (
+                <label>Embedding model (선택)<input value={aiSettings.embeddingModel} onChange={(e) => setAiForm((f) => ({ ...f, embeddingModel: e.target.value }))} placeholder="예상 질문 생성·검색에 사용할 임베딩 모델" /></label>
+              )}
+              <button type="button" className="ghost" onClick={loadLocalModels} disabled={loadingModels}>{loadingModels ? "불러오는 중…" : "모델 목록 새로고침"}</button>
+              {localModelsError ? <p className="muted small">모델 목록을 불러오지 못해 직접 입력합니다: {localModelsError}</p> : null}
               <p className="muted small">Base URL은 백엔드에서 접근할 주소입니다. Docker에서 호스트 서버에 연결할 때는 host.docker.internal을 사용하세요. 임베딩 모델이 없으면 채팅만 사용할 수 있습니다.</p>
             </> : null}
             <p className="muted small">설정은 Provider별로 이 브라우저에 저장됩니다. 저장한 Provider를 채팅과 예상 질문 생성·검색에 사용합니다.</p>

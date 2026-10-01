@@ -111,7 +111,10 @@ def link_graph(**kwargs):
 def test_graph_pick_is_limited_to_permitted_tables_and_sees_every_table(monkeypatch):
     calls = graph(monkeypatch)
     result = link_graph()
-    assert result == {"source": "graph", "tables": {"orders", "customers"}, "total": 32}
+    assert result == {"source": "graph", "tables": {"orders", "customers"}, "total": 32,
+                      "documented_tables": 2, "selected_descriptions": [
+                          {"name": "customers", "description": "고객"},
+                          {"name": "orders", "description": "주문"}]}
     names = [item["name"] for item in calls[0]["tables"]]
     assert names == sorted(name.lower() for name in ALLOWED)  # undocumented tables stay selectable
     assert {"name": "orders", "description": "주문"} in calls[0]["tables"]
@@ -160,3 +163,20 @@ def test_run_agent_uses_graph_link_when_no_question_matches(monkeypatch):
     _, _, meta = agent_service.run_agent("q", tenant_id="t", user_id="u", project_id="p")
     assert schemas == ["LINKED:['customers', 'orders']"]
     assert meta["schema_link"]["source"] == "graph"
+
+
+def test_table_catalog_registers_bare_names_for_schema_qualified_entities():
+    from app.project_graph import read_table_catalog
+
+    class FakeTx:
+        def run(self, *_args, **_kwargs):
+            return [
+                {"name": "cinamon.audit_log_web", "properties": '{"description": "접속 로그"}'},
+                {"name": "etc.audit_log_web", "properties": "{}"},
+                {"name": "Orders", "properties": '{"category": "매출"}'},
+            ]
+
+    catalog = read_table_catalog(FakeTx(), "t", "p")
+    assert catalog["cinamon.audit_log_web"] == "접속 로그"
+    assert catalog["audit_log_web"] == "접속 로그"
+    assert catalog["orders"] == "매출"

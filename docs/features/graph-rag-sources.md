@@ -96,6 +96,15 @@ Neo4j 구조:
 - **검증 결과(2026-10-01, 서버 기본 AI 설정, Northwind 스키마 문서 1개)**: 제안은 `Database`·`Table`·`Column` 3타입과 `CONTAINS_TABLE`·`HAS_COLUMN`·`REFERENCES_TABLE`·`REFERENCES_COLUMN` 4관계였고, 추출은 조각 4개에서 `Table` 16개 전부와 FK 관계 13개 전부(문서 ERD와 일치)를 뽑았다. 한계: 같은 타입·이름은 문서 전체에서 한 노드로 합쳐지므로 `customer_id`처럼 여러 테이블에 있는 `Column`이 하나로 섞인다(`Column`이 55개뿐인 이유 중 하나). 컬럼은 노드가 아니라 `Table` 속성으로 두는 편이 맞을 수 있다.
 - **아직 없는 것**: 스키마 직접 편집 화면(채팅 지시문 또는 `PUT .../schema` API로만 수정).
 
+## 엔티티 조회와 표본
+
+엔티티가 `limit`(기본 500)보다 많으면 일부만 돌려준다. 예전에는 타입 이름 순으로 잘라서 `Column`이 알파벳 앞이라 500개가 전부 컬럼이 되었고, 양 끝이 모두 표본 안에 있어야 읽는 관계는 0개가 됐다(Table 170·Column 1,038 소스에서 확인).
+
+- **타입별 공평 할당**: 개수가 적은 타입부터 전부 담고 남는 자리를 가장 큰 타입이 가져간다. 타입 안에서는 연결이 많은 엔티티가 먼저다. 1,216개 소스·limit 500: Table 170(전부)·Schema 3·View 4·Database 1·Column 322, 관계 1,845개 중 1,193개.
+- **정확한 전체 값**: 응답의 `total`(전체 엔티티), `type_counts`(타입별), `relation_total`(전체 관계)는 표본이 아니라 별도 집계다. 화면 범례와 문서 질문의 "몇 개" 답이 이 값을 쓴다.
+- **화면**: 잘리면 "엔티티 1216개 중 500개 표시 · 관계 1845개 중 1193개 표시"로 보여 준다. 범례의 타입별 개수는 전체 기준이다.
+- 표본에서 빠진 엔티티(주로 컬럼)는 이름 검색에 걸리지 않는다. 타입 필터로 보고 싶은 타입만 불러오는 기능은 아직 없다.
+
 ## 엔티티 추출 속도
 
 조각당 LLM 호출 1회이고 출력이 길어(엔티티·관계마다 원문 근거 복사) 한 호출이 11~60초 걸린다. 이전에는 호출 제한 시간 60초에 자주 걸렸다(로그 12.5분 중 약 7분이 타임아웃 대기). 조각을 순차로 보내고 타임아웃 뒤 다시 보내서 52조각에 약 50분으로 추정됐다.
@@ -150,7 +159,7 @@ Neo4j 구조:
 | `POST /api/projects/{project_id}/graph-sources/{id}/extract` | 승인된 스키마로 엔티티 추출 작업 시작(`X-LLM-*` 헤더 필요). 스키마 미승인·미적재는 400, 이미 추출 중이면 409. 응답은 `extract_status=running`인 소스 | admin + 소유자 |
 | `POST /api/projects/{project_id}/graph-sources/{id}/extract/cancel` | 실행 중인 추출을 취소(대기 중 조각은 보내지 않음). 실행 중이 아니면 409 | admin + 소유자 |
 | `GET /api/projects/{project_id}/graph-sources/{id}/entities?limit=500` | 활성 엔티티(`id`, `type`, `name`, `properties`)와 관계(`source`, `type`, `target`, `evidence`) 반환 | admin + 소유자 |
-| `GET /api/projects/{project_id}/graph/entities?limit=500` | 프로젝트 모든 소스의 활성 엔티티(`type`, `name`, `properties`, `evidence`)와 관계 반환. Stage ‘엔티티’ 보기가 사용 | 소유자 |
+| `GET /api/projects/{project_id}/graph/entities?limit=500` | 프로젝트 모든 소스의 활성 엔티티(`type`, `name`, `properties`, `evidence`)와 관계 반환. Stage ‘엔티티’ 보기가 사용. 엔티티가 `limit`를 넘으면 **타입별로 공평하게 나눈 표본**(아래 절)을 주고, 전체 기준의 `total`·`type_counts`·`relation_total`과 `truncated`를 함께 준다 | 소유자 |
 | `GET /api/projects/{project_id}/graph?limit=200` | 활성 문서 노드·링크·개수·표시 제한 반환 | 소유자 |
 | `GET /api/projects/{project_id}/graph/documents/{document_id}` | 소속 문서 정보와 본문 조회, 다른 프로젝트 문서는 404 | 소유자 |
 

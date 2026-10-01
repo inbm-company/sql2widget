@@ -5,7 +5,7 @@
 | 문서명 | 기능 문서 — 채팅/에이전트 |
 | 기준일 | 2026-10-01 (구현 기준) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(Artifact 표시), [admin.md](admin.md)(연결·권한·AI 설정) |
-| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/schema_linking.py`, `backend/app/graph_answer.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
+| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/schema_linking.py`, `backend/app/graph_answer.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`), `frontend/src/ChatTrace.jsx`, `backend/app/chat_trace.py` |
 
 이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.
 
@@ -22,7 +22,7 @@
 | 항목 | 내용 |
 |------|------|
 | 입력 | `conversation_id`, `message`, `connection_id`(선택), `route`(선택 — 되묻기 버튼으로 사용자가 고른 경로) |
-| 처리 | 1) user 메시지 저장 2) 첫 메시지로 대화 제목 갱신 3) 에이전트 실행 4) assistant 메시지 + artifact 저장 |
+| 처리 | 1) user 메시지 저장 2) 첫 메시지로 대화 제목 갱신 3) 에이전트 실행 4) assistant 메시지 + artifact + 표시용 meta 저장 |
 | 출력 | `user_message`, `assistant_message`, `artifact`, `meta`, `related_messages`, `embedding_provider`, `embedding_error` |
 | UI | Enter 전송, Shift+Enter 줄바꿈. 실패 시 입력값 복원 + 오류 문구 |
 | 타임아웃 | 프론트 채팅 요청 150초 (`frontend/src/api.js` `timeoutMs: 150000`) — 실 LLM 응답 + SQL 재시도(최대 1회 repair) 여유 |
@@ -52,7 +52,7 @@ Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과
 
 "문서에서 …", "문서에 따르면 …"처럼 문서에 적힌 내용을 묻는 질문은 프로젝트의 **추출된 엔티티**로 답한다. SQL은 실행하지 않는다.
 
-1. **읽기** — `project_graph.project_entities`(고정 Cypher, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500)·관계·원문 근거를 읽는다. LLM이 Cypher를 쓰지 않는다.
+1. **읽기** — `project_graph.project_entities`(고정 Cypher, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500, 타입별로 공평하게 나눈 표본)·관계·원문 근거를 읽고, 타입별 정확한 개수(`type_counts`)와 전체 개수는 별도 집계로 함께 읽는다. LLM이 Cypher를 쓰지 않는다.
 2. **좁히기** — 엔티티가 40개를 넘으면 채팅 LLM이 "타입·이름·설명" 목록에서 관련 이름을 고르고(최대 15), 코드가 그 엔티티와 직접 이웃을 모은다(최대 40). 40개 이하이면 고르는 호출 없이 전부 쓴다.
 3. **답하기** — 채팅 LLM이 `facts`(타입별 개수, 엔티티와 속성·근거 문장, 관계)만으로 답한다. 문서에 없으면 없다고 답하게 한다. 답변이 근거로 쓴 엔티티 이름(`used`)을 함께 받는다.
 4. **위젯** — 코드가 만든다(LLM이 값을 지어내지 않음): `MarkdownBlock`(문서 기반 답변), 근거 `DataTable`(타입·이름·설명·문서 소스), 근거 사이의 관계 `DataTable`, 근거 문장이 속한 제목의 `SourceList`.
@@ -65,7 +65,7 @@ Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과
 | Neo4j·LLM 실패 | HTTP 502 + 사유(조용한 대체 없음) |
 
 - **라우팅**: Jev 상태에 `has_document_graph`(프로젝트 소스 중 추출된 엔티티가 있는지)를 넘긴다. 문서가 DB 구조를 설명하는 경우에도 질문이 문서를 근거로 말하면 `knowledge_qa`, 문서 언급 없이 연결된 DB의 구조를 물으면 `schema_qa`다. 두 답은 출처가 달라 값이 다를 수 있다(Northwind: 문서 16개 테이블 vs 실제 DB 15개).
-- **한계**: 엔티티 500개를 넘는 그래프는 일부만 읽는다(`truncated`). 엔티티 타입은 문서마다 승인된 스키마를 따르므로 `Table`이 아닌 타입에도 동작하지만 검증한 것은 Northwind 문서 1개다.
+- **한계**: 엔티티 500개를 넘는 그래프는 표본만 읽는다(`truncated`). "몇 개" 질문은 정확한 집계로 답하지만, 표본에서 빠진 엔티티(주로 컬럼)의 내용 질문은 답하지 못할 수 있다. 응답에는 불완전할 수 있다는 안내가 붙는다. Table 170·Column 1,038 소스에서 "테이블 몇 개"(170)·"컬럼 몇 개"(1,038)·"뷰 목록"(4개)에 정확히 답했다. 엔티티 타입은 문서마다 승인된 스키마를 따르므로 `Table`이 아닌 타입에도 동작하지만 검증한 것은 Northwind 문서 1개다.
 
 ### 스키마 줄이기 (`schema_linking.link_from_matches`)
 
@@ -98,6 +98,18 @@ Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과
 5. **1회 복구 재시도** — SQL/JSON 실행이 실패하면 실패 사유를 `repair_hint`로 넣어 LLM에 재요청. 그것도 실패하면 (Mock 폴백 없이) `AgentRunError`를 던진다.
 6. **문서 근거 보강** — 질문 또는 위젯 제목에 "공격"/"attack"이 있으면 `DocumentProvider.search()`로 관련 문서를 찾아 `MarkdownBlock`(해결 방안) + `SourceList`(출처) 위젯을 추가. 출처가 없으면 근거 없는 해결 방안을 지어내지 않는다.
 7. **사용량 기록** — 실 LLM 호출마다 `llm_usage`에 provider/model/토큰 수/성공 여부를 기록(`llm.log_usage`).
+
+### 채팅 처리 내역 (새로고침 후 유지)
+
+답변 위의 **처리 내역**을 펼치면 선택 경로·분류 방식(Jev / 채팅 LLM 폴백 / 사용자 선택)·분류 확신·답변 모델을 확인한다. 그래프 사용 여부는 실행 결과로 표시하며, 그래프 구성은 문서 질문 답변과 구분한다.
+
+- `assistant_message.meta`와 대화 조회의 `messages[].meta`에 표시용 처리 내역을 저장한다(`messages.meta`, 마이그레이션 `010_message_meta.sql`). 기존 최상위 `meta` 응답은 유지한다.
+- 문서 질문의 `knowledge`에는 `status`, 그래프 전체 `entities_total`/`relations_total`, 실제 읽은 `entities_read`/`relations_read`, `truncated`, 답변 모델에 전달한 `entities_in_prompt`/`relations_in_prompt`와 `prompt_entities`를 기록한다. 500개 한도 조회는 전체 개수와 구분한다.
+- `used_entities`는 모델이 사용했다고 보고한 엔티티의 ID·타입·이름·문서 소스·원문 근거다. `used_relations`는 보고된 엔티티 사이의 관계다. 실제 조회·전달 사실과 모델의 사용 보고를 구분하며, 정확성은 원문과 대조한다. 모델이 보고하지 않으면 빈 목록으로 표시한다.
+- SQL의 `schema_link`는 그래프 기반 테이블 선택·실패/미사용 사유·전체 스키마 복구 재시도·대응되는 테이블 설명 수와 선택한 설명을 표시한다. `question_retrieval`은 검색 상태·참고 질문 수·질문/유사도를 표시한다.
+- `graph_build`에는 응답 당시 소스·스키마/추출 상태·엔티티/관계 수를 기록한다. 백그라운드 진행 상태는 기존 그래프 카드에서 갱신하며, 처리 내역은 응답 당시 기록이다.
+- 표시용 기록은 허용된 필드만 저장하며 API 키·요청 헤더·원시 오류·유사 질문 SQL 계획을 포함하지 않는다. 서버 로그·감사 로그에 문서 본문을 추가하지 않는다. 최종 HTTP 502 오류는 기존 오류 화면을 유지한다.
+- 기존 답변은 `meta=null`로 **기록 없음**을 표시한다. 과거 사용 여부를 추정하거나 재계산하지 않는다.
 
 ### LLM 프로바이더
 

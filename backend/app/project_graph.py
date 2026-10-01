@@ -79,17 +79,46 @@ def project_graph(tenant_id: str, project_id: str, source_ids: list[str], limit:
     return _read(read_graph, tenant_id, project_id, source_ids, limit)
 
 
+def _type_quotas(type_counts: dict[str, int], limit: int) -> dict[str, int]:
+    """Split `limit` across entity types: smaller types are taken in full, larger ones share the remainder."""
+    quotas, remaining = {}, limit
+    for position, (kind, count) in enumerate(sorted(type_counts.items(), key=lambda item: (item[1], item[0]))):
+        quotas[kind] = min(count, remaining // (len(type_counts) - position))
+        remaining -= quotas[kind]
+    return quotas
+
+
 def read_entities(tx, tenant_id: str, project_id: str, source_ids: list[str], limit: int) -> dict:
     scope = {'tenant': tenant_id, 'project': project_id, 'sources': source_ids}
+    # Exact totals first: the list below is only a sample, so counts must not be derived from it.
+    type_counts = {r['type']: r['n'] for r in tx.run('''
+        MATCH (e:Entity {tenant_id: $tenant, project_id: $project, active: true})
+        WHERE e.source_id IN $sources
+        RETURN e.type AS type, count(*) AS n ORDER BY n DESC, type
+        ''', **scope)}
+    relation_total = tx.run('''
+        MATCH (a:Entity {tenant_id: $tenant, project_id: $project, active: true})-[r]->(b:Entity {active: true})
+        WHERE a.source_id IN $sources AND r.active = true AND r.source_id IN $sources
+        RETURN count(r) AS n
+        ''', **scope).single()['n']
+    # Every type gets a fair share of the sample (small types in full, the biggest type takes what is left),
+    # best-connected entities first within a type. Cutting by type name would fill the sample with one type.
     entities = [dict(r) for r in tx.run('''
         MATCH (e:Entity {tenant_id: $tenant, project_id: $project, active: true})
         WHERE e.source_id IN $sources
+        OPTIONAL MATCH (e)-[r]-(:Entity {active: true})
+        WHERE r.active = true AND r.source_id IN $sources
+        WITH e, count(r) AS degree
+        ORDER BY degree DESC, e.name
+        WITH e.type AS type, collect({e: e, degree: degree}) AS items
+        UNWIND items[..toInteger($quota[type])] AS item
+        WITH item.e AS e, item.degree AS degree
         OPTIONAL MATCH (e)-[f:FROM_CHUNK {active: true}]->(c:GraphChunk {active: true})
-        WITH e, collect(DISTINCT {evidence: f.evidence, heading: c.heading})[..3] AS evidence
+        WITH e, degree, collect(DISTINCT {evidence: f.evidence, heading: c.heading})[..3] AS evidence
         RETURN e.id AS id, e.type AS type, e.name AS name, e.props AS properties, e.source_id AS source_id,
-               evidence
-        ORDER BY type, name LIMIT $limit
-        ''', limit=limit, **scope)]
+               evidence, degree
+        ORDER BY degree DESC, type, name
+        ''', quota=_type_quotas(type_counts, limit), **scope)]
     for entity in entities:
         entity['properties'] = json.loads(entity['properties'] or '{}')
     ids = [e['id'] for e in entities]
@@ -99,11 +128,13 @@ def read_entities(tx, tenant_id: str, project_id: str, source_ids: list[str], li
         RETURN a.id AS source, type(r) AS type, b.id AS target, r.evidence AS evidence
         ORDER BY type, source, target LIMIT $limit
         ''', ids=ids, limit=limit * 4, **scope)]
-    return {'entities': entities, 'relations': relations, 'truncated': len(entities) >= limit}
+    total = sum(type_counts.values())
+    return {'entities': entities, 'relations': relations, 'truncated': total > len(entities), 'total': total,
+            'type_counts': type_counts, 'relation_total': relation_total}
 
 
 def read_table_catalog(tx, tenant_id: str, project_id: str) -> dict[str, str]:
-    """Documented `Table` entities of the project: lowercase name -> one-line description."""
+    """Documented `Table` entities of the project: lowercase name (and bare name without schema) -> one-line description."""
     catalog: dict[str, str] = {}
     for record in tx.run('''
         MATCH (e:Entity {type: 'Table', tenant_id: $tenant, project_id: $project, active: true})
@@ -111,7 +142,12 @@ def read_table_catalog(tx, tenant_id: str, project_id: str) -> dict[str, str]:
         ''', tenant=tenant_id, project=project_id):
         properties = json.loads(record['properties'] or '{}')
         text = ' · '.join(str(properties[k]) for k in ('category', 'description') if properties.get(k))
-        catalog.setdefault(record['name'].lower(), text)
+        full_name = record['name'].lower()
+        catalog.setdefault(full_name, text)
+        # Permitted tables are bare names; the graph stores `schema.table`.
+        bare_name = full_name.rsplit('.', 1)[-1].strip('"')
+        if not catalog.get(bare_name):
+            catalog[bare_name] = text
     return catalog
 
 
@@ -125,7 +161,7 @@ def source_entities(tenant_id: str, project_id: str, source_id: str, limit: int)
 
 def project_entities(tenant_id: str, project_id: str, source_ids: list[str], limit: int) -> dict:
     if not source_ids:
-        return {'entities': [], 'relations': [], 'truncated': False}
+        return {'entities': [], 'relations': [], 'truncated': False, 'total': 0, 'type_counts': {}, 'relation_total': 0}
     return _read(read_entities, tenant_id, project_id, source_ids, limit)
 
 
