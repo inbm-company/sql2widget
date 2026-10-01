@@ -5,9 +5,12 @@ import json
 import logging
 import re
 import threading
+import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
+from app import config
 from app.graph_ingestion import GraphSourceError, build_documents, document_id, graph_driver
 from app.graph_schema import RELATION_NAME, normalize
 from app.llm import json_with_llm
@@ -18,6 +21,7 @@ MAX_NAME_CHARS = 200
 MAX_EVIDENCE_CHARS = 300
 MAX_PROPERTY_CHARS = 300
 MAX_CONSECUTIVE_FAILURES = 3
+RETRY_DELAY_SECONDS = 3.0  # pause before the second attempt so a rate limit can clear
 
 EXTRACT_HINT = """You extract graph entities from ONE chunk of a document, following a fixed schema.
 Return ONE JSON object:
@@ -85,16 +89,23 @@ def chunk_plan(source_id: str, files: dict[str, str]) -> list[dict]:
 
 
 def extract_chunk(chunk: dict, schema: dict, *, tenant_id: str, user_id: str, llm_settings: dict) -> tuple[list, list]:
-    """Ask the model about one chunk; retry once, since a single bad answer should not sink the job."""
+    """Ask the model about one chunk; retry once, since a single bad answer should not sink the job.
+
+    Runs in worker threads. Each call may take up to EXTRACT_TIMEOUT_SECONDS because dense chunks
+    produce long answers (verbatim evidence for every entity and relation).
+    """
     slim = {'entity_types': [{k: t[k] for k in ('name', 'description', 'properties')} for t in schema['entity_types']],
             'relation_types': schema['relation_types']}
     error = ''
-    for _ in range(2):
+    for attempt in range(2):
+        if attempt:
+            time.sleep(RETRY_DELAY_SECONDS)
         result = json_with_llm(
             EXTRACT_HINT, {'schema': slim, 'document': chunk['path'], 'heading': chunk['heading'], 'chunk': chunk['text']},
             tenant_id=tenant_id, user_id=user_id, conversation_id=None,
             runtime_provider=llm_settings.get('provider') or None, runtime_api_key=llm_settings.get('api_key') or None,
-            runtime_model=llm_settings.get('model') or None, runtime_base_url=llm_settings.get('base_url') or None)
+            runtime_model=llm_settings.get('model') or None, runtime_base_url=llm_settings.get('base_url') or None,
+            timeout=config.EXTRACT_TIMEOUT_SECONDS)
         if result.get('result') is None:
             error = str(result.get('error'))
             continue
@@ -181,23 +192,32 @@ def run_job(source: dict, schema: dict, plan: list[dict], *, user_id: str, llm_s
     cancel = _cancel_events[source['id']]
     progress = {'done': 0, 'total': len(plan), 'failed': 0}
     try:
-        per_chunk, streak, last_error = [], 0, ''
-        for chunk in plan:
-            if cancel.is_set():
-                raise GraphSourceError('사용자가 추출을 취소했습니다. 기존 엔티티는 바뀌지 않았습니다.')
-            try:
-                found = extract_chunk(chunk, schema, tenant_id=source['tenant_id'], user_id=user_id,
-                                      llm_settings=llm_settings)
-                per_chunk.append((chunk, *found))
-                streak = 0
-            except GraphSourceError as exc:
-                progress['failed'] += 1
-                streak, last_error = streak + 1, str(exc)
-                log.warning('entity extraction failed for a chunk of source %s', source['id'])
-                if streak >= MAX_CONSECUTIVE_FAILURES:
-                    raise GraphSourceError(f'연속 {streak}개 조각에서 추출에 실패해 중단했습니다: {last_error}') from None
-            progress['done'] += 1
-            repo.set_extract_progress(*ids, progress)
+        results, streak, last_error = {}, 0, ''
+        pool = ThreadPoolExecutor(max_workers=config.EXTRACT_CONCURRENCY, thread_name_prefix='extract')
+        try:
+            pending = {pool.submit(extract_chunk, chunk, schema, tenant_id=source['tenant_id'], user_id=user_id,
+                                   llm_settings=llm_settings): index for index, chunk in enumerate(plan)}
+            while pending:
+                if cancel.is_set():
+                    raise GraphSourceError('사용자가 추출을 취소했습니다. 기존 엔티티는 바뀌지 않았습니다.')
+                finished, _ = wait(pending, timeout=1, return_when=FIRST_COMPLETED)
+                for future in finished:
+                    index = pending.pop(future)
+                    try:
+                        results[index] = (plan[index], *future.result())
+                        streak = 0
+                    except GraphSourceError as exc:
+                        progress['failed'] += 1
+                        streak, last_error = streak + 1, str(exc)
+                        log.warning('entity extraction failed for a chunk of source %s', source['id'])
+                        if streak >= MAX_CONSECUTIVE_FAILURES:
+                            raise GraphSourceError(
+                                f'연속 {streak}개 조각에서 추출에 실패해 중단했습니다: {last_error}') from None
+                    progress['done'] += 1
+                    repo.set_extract_progress(*ids, progress)
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)  # calls already running end on their own timeout
+        per_chunk = [results[index] for index in sorted(results)]  # chunk order keeps the merge deterministic
         if not per_chunk:
             raise GraphSourceError(f'모든 조각에서 추출에 실패했습니다: {last_error}')
         entities, relations = merge_results(source['id'], per_chunk)

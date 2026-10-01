@@ -22,9 +22,9 @@ class OpenAIProvider:
         if not self.model:
             raise ValueError(f"{self.name}: chat model is required")
 
-    def plan(self, system_hint, user_content):
+    def plan(self, system_hint, user_content, timeout=None):
         data = transport.post_json(
-            self.base_url, "/chat/completions", api_key=self.api_key,
+            self.base_url, "/chat/completions", api_key=self.api_key, **({"timeout": timeout} if timeout else {}),
             payload={
                 "model": self.model, "temperature": 0.1,
                 "response_format": {"type": "json_object"},

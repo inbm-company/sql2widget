@@ -13,8 +13,8 @@ from app.prompts import ROUTE_HINT
 from app.providers import transport
 
 ANSWER_ROUTES = ("data_query", "schema_qa", "knowledge_qa", "graph_build")
-# 되묻기 버튼으로 제공하는 경로. 지식그래프 검색이 연결되면 knowledge_qa를 추가한다.
-CHOICE_ROUTES = ("data_query", "schema_qa")
+# 되묻기 버튼으로 제공하는 경로.
+CHOICE_ROUTES = ("data_query", "schema_qa", "knowledge_qa")
 ROUTE_LABELS = {
     "data_query": "데이터를 조회해 차트·표로 보기",
     "schema_qa": "테이블 구조 설명 듣기",
@@ -22,8 +22,10 @@ ROUTE_LABELS = {
 }
 JEV_CRITERIA = {
     "data_query": "DB의 데이터를 숫자·표·차트로 조회해 달라는 요청",
-    "schema_qa": "DB의 테이블·컬럼·관계 같은 구조에 대한 질문",
-    "knowledge_qa": "업로드된 문서나 지식그래프의 내용에 대한 질문",
+    "schema_qa": "지금 연결된 DB의 테이블·컬럼·관계 같은 구조에 대한 질문. 문서·자료·정책을 근거로 언급하지 않는 경우",
+    "knowledge_qa": "업로드한 문서나 지식그래프에 적힌 내용을 묻거나, '문서에서'·'문서에 따르면'처럼 문서를 근거로 답하길 "
+                    "원하는 질문. 문서가 DB 구조를 설명하는 내용이어도 문서를 언급하면 여기에 해당. "
+                    "has_document_graph가 거짓이면 아직 추출된 문서 내용이 없다는 뜻",
     "graph_build": "업로드한 문서를 지식그래프(노드·관계)로 만들거나, 그 노드 종류·관계 구조(스키마)를 정하거나 고치려는 요청. "
                    "pending_graph_flow가 참이면 직전에 제안된 그래프 스키마에 대한 답·수정 요청도 여기에 해당",
     "other": "위 어디에도 맞지 않거나 무엇을 원하는지 알 수 없는 입력",
@@ -101,24 +103,23 @@ def decide_route(
     message: str,
     *,
     tables: set[str],
-    similar_matched: bool,
     forced_route: str | None,
     llm_context: dict[str, Any],
     pending_graph_flow: bool = False,
+    has_document_graph: bool = False,
 ) -> dict[str, Any]:
     """Return {route, source, confidence, probabilities, clarify, jev_error?}.
 
-    A user's own choice or a matched expected question needs no model call.
+    A user's own choice needs no model call. Expected-question similarity is not a
+    routing signal; it is only used later, when the SQL is planned.
     Jev failures are recorded in the result, never hidden; if the chat LLM also
     fails a RouteError is raised.
     """
     if forced_route in ANSWER_ROUTES:
         return {"route": forced_route, "source": "user_choice", "clarify": False}
-    if similar_matched:
-        return {"route": "data_query", "source": "similarity", "clarify": False}
 
-    state = {"question": message, "tables": sorted(tables), "has_similar_question": False,
-             "pending_graph_flow": pending_graph_flow}
+    state = {"question": message, "tables": sorted(tables),
+             "pending_graph_flow": pending_graph_flow, "has_document_graph": has_document_graph}
     jev_error = None
     if config.TYPESAFE_API_KEY:
         try:

@@ -6,7 +6,7 @@ import secrets
 from typing import Any
 
 from app.agent import sanitize_artifact
-from app import graph_chat, question_similarity, schema_linking
+from app import graph_answer, graph_chat, question_similarity, schema_linking
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.intent_router import RouteError, choices_for, decide_route
@@ -354,15 +354,6 @@ def run_agent(
     runtime_llm = llm_settings or {}
     schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
 
-    retrieval = {"status": "no_connection", "matches": []}
-    if used_conn and allowed:
-        retrieval = question_similarity.search_questions(
-            message, tenant_id=tenant_id, connection_id=used_conn,
-            allowed_tables=allowed, llm_settings=runtime_llm,
-            user_role=user_role, embedding_result=embedding_result,
-        )
-    meta["question_retrieval"] = retrieval
-
     llm_context = {
         "tenant_id": tenant_id, "user_id": user_id, "conversation_id": conversation_id,
         "runtime_provider": runtime_llm.get("provider"),
@@ -372,9 +363,9 @@ def run_agent(
     }
     try:
         decision = decide_route(
-            message, tables=allowed or set(), forced_route=forced_route,
-            similar_matched=retrieval["status"] == "matched", llm_context=llm_context,
+            message, tables=allowed or set(), forced_route=forced_route, llm_context=llm_context,
             pending_graph_flow=graph_flow_pending,
+            has_document_graph=graph_answer.has_entities(tenant_id, project_id),
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -390,15 +381,26 @@ def run_agent(
             message, decision.get("probabilities"), meta,
         )
     if decision["route"] == "knowledge_qa":
-        return _clarify(
-            "문서(지식그래프) 검색은 아직 채팅에 연결되지 않았어요. 다른 방식으로 처리할까요?",
-            message, None, meta,
-        )
+        try:
+            return graph_answer.handle(message, user=graph_user, project_id=project_id,
+                                       llm_context=llm_context, meta=meta)
+        except graph_answer.KnowledgeError as exc:
+            raise AgentRunError(f"문서 그래프로 답하지 못했습니다: {exc}") from exc
     if decision["route"] == graph_chat.ROUTE and project_id:
         return graph_chat.handle(message, user=graph_user, project_id=project_id,
                                  llm_settings=runtime_llm, action=None, meta=meta)
     if decision["route"] == "schema_qa":
         return _answer_schema(message, schema_text, llm_context, meta)
+
+    # Expected-question similarity is only used here, to plan the SQL.
+    retrieval = {"status": "no_connection", "matches": []}
+    if used_conn and allowed:
+        retrieval = question_similarity.search_questions(
+            message, tenant_id=tenant_id, connection_id=used_conn,
+            allowed_tables=allowed, llm_settings=runtime_llm,
+            user_role=user_role, embedding_result=embedding_result,
+        )
+    meta["question_retrieval"] = retrieval
 
     # The current schema is already supplied separately. Keep references compact.
     references = [

@@ -569,13 +569,13 @@ def test_chat_flow_is_admin_only_and_asks_which_source(source_api, monkeypatch):
 def test_router_knows_graph_build_and_pending_flow(monkeypatch):
     from app import intent_router as router
     assert 'graph_build' in router.ANSWER_ROUTES and 'graph_build' in router.JEV_CRITERIA
-    decision = router.decide_route('Column도 노드로', tables=set(), similar_matched=False,
+    decision = router.decide_route('Column도 노드로', tables=set(),
                                    forced_route='graph_build', llm_context={}, pending_graph_flow=True)
     assert decision['route'] == 'graph_build' and decision['clarify'] is False
     seen = {}
     monkeypatch.setattr(router.config, 'TYPESAFE_API_KEY', 'k')
     monkeypatch.setattr(router, 'route_with_jev', lambda state: seen.update(state) or {
         'route': 'graph_build', 'confidence': 0.9, 'probabilities': {}, 'source': 'jev'})
-    router.decide_route('그렇게 해줘', tables=set(), similar_matched=False, forced_route=None,
+    router.decide_route('그렇게 해줘', tables=set(), forced_route=None,
                         llm_context={}, pending_graph_flow=True)
     assert seen['pending_graph_flow'] is True

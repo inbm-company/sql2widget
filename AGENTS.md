@@ -25,11 +25,11 @@
 | 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`viewer` 역할 구분 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
 | 채팅(에이전트) | 자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환 | [chat.md](docs/features/chat.md) |
-| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
+| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 문서 그래프 기반 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
 | 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
 | Artifact/위젯 표시 | 채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시 | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 자동 저장·새로고침 후 복원 | [stage.md](docs/features/stage.md) |
-| 프로젝트 문서 그래프(Graph RAG 준비) | 프로젝트별 문서 업로드 → Neo4j 수동 적재 → Stage에서 문서 그래프·본문 조회. 질문 검색 연동은 미구현 | [graph-rag-sources.md](docs/features/graph-rag-sources.md) |
+| 프로젝트 문서 그래프(Graph RAG 준비) | 프로젝트별 문서 업로드 → Neo4j 적재 → 엔티티 추출 → Stage에서 그래프·본문 조회, 채팅에서 "문서에서 …" 질문에 엔티티·근거로 답변(`knowledge_qa`) | [graph-rag-sources.md](docs/features/graph-rag-sources.md) |
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |
 | 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정 | [admin.md](docs/features/admin.md) |
 

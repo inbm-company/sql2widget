@@ -102,6 +102,7 @@ def json_with_llm(
     runtime_api_key: str | None = None,
     runtime_model: str | None = None,
     runtime_base_url: str | None = None,
+    timeout: float | None = None,
 ) -> dict[str, Any]:
     """Ask the configured chat model for one JSON object and log the usage."""
     provider = (runtime_provider or effective_provider()).lower()
@@ -118,7 +119,7 @@ def json_with_llm(
         return {"provider": provider, "result": None, "error": error}
     provider, model = adapter.name, adapter.model
     try:
-        result, usage = adapter.plan(system_hint, user_content)
+        result, usage = adapter.plan(system_hint, user_content, **({"timeout": timeout} if timeout else {}))
         log_usage(
             tenant_id=tenant_id,
             user_id=user_id,

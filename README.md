@@ -93,6 +93,17 @@ LLM_API_KEY=
 LLM_EMBEDDING_MODEL=설치된-임베딩-모델-이름
 ```
 
+### 채팅 라우팅·스키마 줄이기 환경변수
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `TYPESAFE_API_KEY` | (없음) | 채팅 의도 라우팅에 쓰는 TypeSafe Jev 키. 비우면 채팅 LLM이 대신 판단하고 응답 `meta.route_jev_error`에 사유가 남는다 |
+| `TYPESAFE_BASE_URL` / `TYPESAFE_MODEL` | `https://api.typesafe.ai` / `jev-latest` | Jev 호출 대상 |
+| `ROUTE_MIN_CONFIDENCE` | `0.5` | 이 값 미만의 Jev 확신은 선택지(되묻기)로 처리. 실제 질문 데이터로 검증되지 않은 초기값 |
+| `SCHEMA_LINK_MIN_TABLES` | `20` | 허용 테이블이 이 개수를 넘으면 SQL 계획에 관련 테이블만 전달 |
+| `EXTRACT_CONCURRENCY` | `4` | 문서 엔티티 추출에서 동시에 LLM에 보내는 조각 수. 올리면 빨라지지만 AI 제공자의 요청 제한(429)에 걸릴 수 있다 |
+| `EXTRACT_TIMEOUT_SECONDS` | `180` | 엔티티 추출 LLM 호출 1회의 제한 시간(초) |
+
 `LLM_EMBEDDING_MODEL` 또는 로컬 패널의 Embedding model은 선택 사항이다. 비워 두면 유사도 검색 없이 채팅을 사용할 수 있다. 예상 질문 생성·저장에는 임베딩 모델이 필요하며 벡터 차원은 기존 `CHAT_EMBEDDING_DIM`(기본 1536)과 일치해야 한다. 설정 변경을 위해 기존 벡터 DB 차원을 임의로 바꾸지 않는다.
 
 ## Smoke

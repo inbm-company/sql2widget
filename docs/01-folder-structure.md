@@ -66,6 +66,7 @@ backend/
 | `graph_ingestion.py` | 업로드된 문서를 읽어 문단 우선 본문 조각·명시된 문서 링크를 Neo4j에 적재(파일 수·크기 제한 포함) |
 | `graph_schema.py` | 문서 그래프 엔티티 스키마 — 채팅 LLM 제안, 닫힌 타입 검증(이름 형식·개수·예약어) |
 | `graph_service.py` | 문서 소스 작업(적재·스키마 제안/승인·추출 시작/취소)의 공통 로직. REST 라우트와 채팅이 함께 사용 |
+| `graph_answer.py` | 채팅 `knowledge_qa` 경로 — 프로젝트 문서의 엔티티·관계·근거로 답변과 근거 위젯을 만든다(고정 Cypher로 읽기, 40개 초과 시 LLM으로 좁히기) |
 | `graph_chat.py` | 채팅 `graph_build` 경로 — 스키마 협의·승인·추출을 대화로 진행하고 `graph_flow` 카드·버튼을 반환 |
 | `graph_extraction.py` | 승인된 스키마로 조각에서 엔티티·관계를 LLM 추출(근거 인용 검증)하고 Neo4j에 반영하는 백그라운드 작업 |
 | `project_graph.py` | 프로젝트 범위 Neo4j 그래프·문서 본문 조회, 기존 소스의 프로젝트 연결 |
@@ -118,7 +119,7 @@ backend/
 
 ### 2.5 나머지
 
-- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_schema_linking.py`(스키마 줄이기), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
+- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_schema_linking.py`(스키마 줄이기), `test_graph_answer.py`(문서 그래프 답변), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
 - `frontend/tests/` — Node 단위 테스트. `aiSettings.test.js`, `graphLayout.test.js`, `graphViewport.test.js`, `graphUpload.test.js`.
 - `backend/evals/questions.json` — 질문별 기대 Artifact 형태(컴포넌트, 최소 위젯 수)를 정의한 평가 데이터셋.
 - `backend/Dockerfile`, `backend/.dockerignore` — 백엔드 컨테이너 빌드.

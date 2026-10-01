@@ -220,7 +220,7 @@
     <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
     <section class="board">
       <div class="col done">
-        <div class="col-head"><span class="dot"></span>완료<span class="count">19</span></div>
+        <div class="col-head"><span class="dot"></span>완료<span class="count">20</span></div>
         <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
         <div class="card"><div class="t">프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·문서 소스 보존, New chat 생성 오류 수정</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
         <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
@@ -230,7 +230,7 @@
         <div class="card"><div class="t">샘플 DB 구성</div><div class="n">SOC + Global Sales + 서비스 DB, Docker Compose</div></div>
         <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">로컬 일반 스키마 데모용</div></div>
         <div class="card"><div class="t">Graph RAG 준비용 Neo4j 로컬 설치</div><div class="n">Community 2026.09.0 · 독립 Compose 서비스 · 로컬 전용 Browser/Bolt · 인증·영속 볼륨·healthcheck · <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></div></div>
-        <div class="card"><div class="t">프로젝트별 문서 업로드·수동 Neo4j 적재</div><div class="n">프로젝트 소유자·테넌트 분리 · 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체 · 적재 상태 · Markdown/텍스트 본문·문서 링크 · 재적재 중복 방지. 질문 검색 연동은 미구현 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
+        <div class="card"><div class="t">프로젝트별 문서 업로드·수동 Neo4j 적재</div><div class="n">프로젝트 소유자·테넌트 분리 · 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체 · 적재 상태 · Markdown/텍스트 본문·문서 링크 · 재적재 중복 방지. 질문 연동은 knowledge_qa로 완료 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
         <div class="card"><div class="t">Stage 프로젝트 문서 그래프·본문 조회</div><div class="n">위젯/그래프 전환 · 문서 노드·링크 · 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지 · 본문·연결 문서 조회 · Viewer 조회 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
         <div class="card"><div class="t">실 LLM 전용 채팅 에이전트</div><div class="n">OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원</div><div class="n">브라우저 프로필, Model/Key/Base URL/Embedding model · <a href="features/admin.md">admin.md</a></div></div>
@@ -238,8 +238,9 @@
         <div class="card"><div class="t">DB별 예상 질문 유사도 DB</div><div class="n">전체 테이블 질문 생성 → 검색 결과 참조 답변 생성 · <a href="features/similarity-search-design.md">상세 문서</a></div></div>
         <div class="card"><div class="t">채팅 의도 라우팅</div><div class="n">Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지 · 실제 Jev 호출 확인(2026-10-01) · 임계값 0.5는 검증 전 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">문서 체계 정비</div><div class="n">AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, 본 대시보드</div></div>
+        <div class="card"><div class="t">문서 그래프 기반 답변 (knowledge_qa)</div><div class="n">"문서에서 …" 질문에 엔티티·관계·근거로 답하고 근거 엔티티·관계 표·출처 위젯 반환 · Northwind 문서 1개로 확인, 다른 문서 유형 미검증 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">큰 DB의 SQL 계획 스키마 줄이기</div><div class="n">허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달 · 실패 시 전체 스키마로 재시도 · Northwind 확인, 100개 이상 DB 미검증 · <a href="features/chat.md">chat.md</a></div></div>
-        <div class="card"><div class="t">문서 그래프 엔티티 구성</div><div class="n">LLM 스키마 제안 → 채팅 수정·승인 → 엔티티 추출·적재 → Stage ‘엔티티’ 보기 · Northwind 1개 브라우저 검증, 다른 유형 미검증 · <a href="features/graph-rag-sources.md">graph-rag-sources.md</a></div></div>
+        <div class="card"><div class="t">문서 그래프 엔티티 구성</div><div class="n">LLM 스키마 제안 → 채팅 수정·승인 → 엔티티 추출·적재 → Stage ‘엔티티’ 보기 · Northwind 1개 브라우저 검증, 다른 유형 미검증 · 추출 4개 동시·호출 180초(52조각 11.3분, 이전 약 50분 추정) · <a href="features/graph-rag-sources.md">graph-rag-sources.md</a></div></div>
       </div>
 
       <div class="col wip">
@@ -250,12 +251,11 @@
       </div>
 
       <div class="col plan">
-        <div class="col-head"><span class="dot"></span>예정<span class="count">7</span></div>
+        <div class="col-head"><span class="dot"></span>예정<span class="count">6</span></div>
         <div class="card"><span class="pri high">HIGH</span><div class="t">질문 유사도 테스트 하니스</div><div class="n">비슷한 질문 → 같은 furniture 검증, 미착수</div></div>
         <div class="card"><span class="pri med">MED</span><div class="t">Circle 게이지 조합 카탈로그</div><div class="n">ring × size × companion, 카탈로그에 아직 없음</div></div>
         <div class="card"><span class="pri low">LOW</span><div class="t">Viewer 다크 Orion 자리표시 정리</div><div class="n"><span class="mono">variant="orion"</span> · <a href="features/viewer.md">viewer.md</a></div></div>
         <div class="card"><span class="pri low">LOW</span><div class="t">실 RAG 고도화</div><div class="n">DocumentProvider는 Mock 고정 문서만</div></div>
-        <div class="card"><div class="t">라우터 knowledge_qa 경로 연결</div><div class="n">Neo4j 지식그래프 질문 기반 검색 → 문서 근거 답변, 검색 방식 미결정 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">LLM 사용량 조회 UI</div><div class="n">기록만 되고 화면에 안 보임</div></div>
         <div class="card"><div class="t">Stage 서버측 role 검사</div><div class="n">현재 소유자 검사만, readOnly는 프론트 전용 · <a href="features/stage.md">stage.md</a></div></div>
       </div>

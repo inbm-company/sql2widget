@@ -44,6 +44,9 @@ LLM_EMBEDDING_MODEL = env("LLM_EMBEDDING_MODEL", "")
 TYPESAFE_API_KEY = env("TYPESAFE_API_KEY", "")
 TYPESAFE_BASE_URL = env("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
 TYPESAFE_MODEL = env("TYPESAFE_MODEL", "jev-latest")
+# 엔티티 추출: LLM 호출 1회의 제한 시간(초)과 동시에 처리할 조각 수. 출력이 큰 조각은 60초를 넘기기 쉽다.
+EXTRACT_TIMEOUT_SECONDS = float(env("EXTRACT_TIMEOUT_SECONDS", "180"))
+EXTRACT_CONCURRENCY = max(1, int(env("EXTRACT_CONCURRENCY", "4")))
 # 이 값 미만의 confidence는 되묻기로 처리한다. 실제 질문 데이터로 검증해 조정할 것.
 ROUTE_MIN_CONFIDENCE = float(env("ROUTE_MIN_CONFIDENCE", "0.5"))
 # 허용 테이블이 이 개수를 넘으면 SQL 계획에 관련 테이블만 전달한다(작은 DB는 전부 전달).

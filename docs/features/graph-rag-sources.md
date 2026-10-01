@@ -89,14 +89,30 @@ Neo4j 구조:
 승인된 스키마로 문서 조각에서 엔티티·관계를 뽑아 Neo4j에 저장하는 백그라운드 작업이다(`graph_extraction.py`).
 
 - **전제**: 스키마가 `approved`이고 소스 상태가 `completed`(적재 완료)여야 한다. 아니면 400. 문서를 교체하면 상태가 `registered`로 돌아가므로 다시 적재해야 추출할 수 있다.
-- **실행**: `extract`를 호출하면 즉시 `extract_status=running`으로 응답하고, 서버 안의 백그라운드 스레드가 조각을 하나씩 LLM에 보낸다(소스당 1개, 중복 요청은 409). 진행률은 소스의 `extract_progress`(`done`·`total`·`failed`)로 조회한다. AI 연결은 요청의 `X-LLM-*` 헤더를 쓰며 서버에 저장하지 않는다. 추출 중에는 적재·문서 교체를 409로 막는다.
+- **실행**: `extract`를 호출하면 즉시 `extract_status=running`으로 응답하고, 서버 안의 백그라운드 스레드가 조각을 **동시에 최대 `EXTRACT_CONCURRENCY`개(기본 4)씩** LLM에 보낸다(소스당 1개, 중복 요청은 409). LLM 호출 1회의 제한 시간은 `EXTRACT_TIMEOUT_SECONDS`(기본 180초)다. 조각 결과는 끝나는 순서와 무관하게 조각 순서대로 병합한다. 진행률은 소스의 `extract_progress`(`done`·`total`·`failed`)로 조회한다. AI 연결은 요청의 `X-LLM-*` 헤더를 쓰며 서버에 저장하지 않는다. 추출 중에는 적재·문서 교체를 409로 막는다.
 - **검증**: 스키마에 없는 타입·속성은 버린다. 엔티티 이름·관계 양끝 이름·`evidence`(원문 그대로 인용)가 해당 조각 본문에 실제로 있어야 하며(Markdown 기호·대소문자·공백 차이는 무시), 없으면 버린다. 관계의 양끝 타입은 스키마 정의를 따른다. 같은 타입·이름(대소문자 무시)은 한 노드로 합치고, 관계에 나온 끝점은 엔티티로 함께 만든다.
-- **실패 처리**: 조각 하나는 1회 재시도하고, 연속 3개가 실패하면 중단한다. 모든 조각이 실패해도 `failed`다. 일부만 실패하면 완료하되 `failed` 개수를 표시한다. 실패해도 이전 성공 결과(엔티티·`entity_count`)는 바뀌지 않는다. 취소(`extract/cancel`)는 현재 조각이 끝난 뒤 멈추고 마찬가지로 기존 결과를 유지한다. 서버가 재시작되면 실행 중이던 작업은 `failed`로 바뀌어 다시 실행할 수 있다.
+- **실패 처리**: 조각 하나는 3초 쉰 뒤 1회 재시도하고, 완료 순서로 연속 3개 조각이 실패하면 중단한다(대기 중인 조각은 호출하지 않고, 이미 나간 호출은 제한 시간 안에 끝난다). 모든 조각이 실패해도 `failed`다. 일부만 실패하면 완료하되 `failed` 개수를 표시한다. 실패해도 이전 성공 결과(엔티티·`entity_count`)는 바뀌지 않는다. 취소(`extract/cancel`)는 1초 안에 작업을 멈추고(이미 나간 호출은 결과를 버린다) 마찬가지로 기존 결과를 유지한다. 서버가 재시작되면 실행 중이던 작업은 `failed`로 바뀌어 다시 실행할 수 있다.
 - **저장**: 모든 조각을 처리한 뒤 Neo4j에 한 트랜잭션으로 반영한다. 노드는 `(:Entity {id, type, name, props, source_id, tenant_id, project_id, active})`(타입은 라벨이 아닌 `type` 속성), 근거는 `(Entity)-[:FROM_CHUNK {evidence}]->(GraphChunk)`, 관계는 스키마의 관계 이름 그대로다. 재추출하면 이전 엔티티·관계·근거 연결은 `active=false`로 남기고 이번 결과만 활성화한다. ID는 소스·타입·이름으로 고정이라 재실행해도 노드가 늘지 않는다.
 - **검증 결과(2026-10-01, 서버 기본 AI 설정, Northwind 스키마 문서 1개)**: 제안은 `Database`·`Table`·`Column` 3타입과 `CONTAINS_TABLE`·`HAS_COLUMN`·`REFERENCES_TABLE`·`REFERENCES_COLUMN` 4관계였고, 추출은 조각 4개에서 `Table` 16개 전부와 FK 관계 13개 전부(문서 ERD와 일치)를 뽑았다. 한계: 같은 타입·이름은 문서 전체에서 한 노드로 합쳐지므로 `customer_id`처럼 여러 테이블에 있는 `Column`이 하나로 섞인다(`Column`이 55개뿐인 이유 중 하나). 컬럼은 노드가 아니라 `Table` 속성으로 두는 편이 맞을 수 있다.
-- **아직 없는 것**: 엔티티를 이용한 질문 검색(`knowledge_qa` 연결), 스키마 직접 편집 화면(채팅 지시문 또는 `PUT .../schema` API로만 수정).
+- **아직 없는 것**: 스키마 직접 편집 화면(채팅 지시문 또는 `PUT .../schema` API로만 수정).
+
+## 엔티티 추출 속도
+
+조각당 LLM 호출 1회이고 출력이 길어(엔티티·관계마다 원문 근거 복사) 한 호출이 11~60초 걸린다. 이전에는 호출 제한 시간 60초에 자주 걸렸다(로그 12.5분 중 약 7분이 타임아웃 대기). 조각을 순차로 보내고 타임아웃 뒤 다시 보내서 52조각에 약 50분으로 추정됐다.
+
+| 항목 | 이전 | 현재 |
+|------|------|------|
+| 처리 방식 | 순차 | 최대 4개 동시 |
+| 호출 제한 시간 | 60초 | 180초 |
+| 52조각(Northwind 문서 11개, 153 kB, 서버 기본 AI) | 약 50분 추정, 13조각 처리 시 실패 3건 | **11.3분, 실패 0건**, 엔티티 1,216개·관계 1,845개 |
+
+- 환경변수 `EXTRACT_CONCURRENCY`, `EXTRACT_TIMEOUT_SECONDS`로 조정한다. 동시 호출이 많아지면 AI 제공자의 요청 제한(429)에 걸릴 수 있다.
+- 호출 평균 출력 약 6천 토큰(최대 약 1만 토큰). 모델이 JSON 뒤에 불필요한 문자를 붙여 파싱에 실패하는 호출이 간혹 있으나(52회 중 1회) 재시도로 해결됐다.
+- 결과는 모든 조각이 끝난 뒤 한 번에 기록한다. 서버가 재시작되면(`--reload`로 코드를 저장한 경우 포함) 진행 중이던 추출은 `failed`가 되고 처음부터 다시 해야 한다.
 
 ## 채팅 연동
+
+(질문으로 엔티티를 조회해 답하는 `knowledge_qa`는 [chat.md](chat.md) "문서 그래프로 답하기" 절.)
 
 문서 그래프 구성(스키마 협의·승인·추출)을 채팅에서 진행한다. 구현은 `graph_chat.py`이고 REST 라우트와 같은 로직(`graph_service.py`)을 쓴다.
 
@@ -132,7 +148,7 @@ Neo4j 구조:
 | `PUT /api/projects/{project_id}/graph-sources/{id}/schema` | `{schema}`를 검증해 저장하고 `proposed`로 되돌림. 검증 실패는 400 | admin + 소유자 |
 | `POST /api/projects/{project_id}/graph-sources/{id}/schema/approve` | 저장된 초안을 `approved`로 확정. 초안이 없으면 400 | admin + 소유자 |
 | `POST /api/projects/{project_id}/graph-sources/{id}/extract` | 승인된 스키마로 엔티티 추출 작업 시작(`X-LLM-*` 헤더 필요). 스키마 미승인·미적재는 400, 이미 추출 중이면 409. 응답은 `extract_status=running`인 소스 | admin + 소유자 |
-| `POST /api/projects/{project_id}/graph-sources/{id}/extract/cancel` | 실행 중인 추출을 현재 조각 뒤에 취소. 실행 중이 아니면 409 | admin + 소유자 |
+| `POST /api/projects/{project_id}/graph-sources/{id}/extract/cancel` | 실행 중인 추출을 취소(대기 중 조각은 보내지 않음). 실행 중이 아니면 409 | admin + 소유자 |
 | `GET /api/projects/{project_id}/graph-sources/{id}/entities?limit=500` | 활성 엔티티(`id`, `type`, `name`, `properties`)와 관계(`source`, `type`, `target`, `evidence`) 반환 | admin + 소유자 |
 | `GET /api/projects/{project_id}/graph/entities?limit=500` | 프로젝트 모든 소스의 활성 엔티티(`type`, `name`, `properties`, `evidence`)와 관계 반환. Stage ‘엔티티’ 보기가 사용 | 소유자 |
 | `GET /api/projects/{project_id}/graph?limit=200` | 활성 문서 노드·링크·개수·표시 제한 반환 | 소유자 |

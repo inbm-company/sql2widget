@@ -5,7 +5,7 @@
 | 문서명 | 기능 문서 — 채팅/에이전트 |
 | 기준일 | 2026-10-01 (구현 기준) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(Artifact 표시), [admin.md](admin.md)(연결·권한·AI 설정) |
-| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/schema_linking.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
+| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/schema_linking.py`, `backend/app/graph_answer.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
 
 이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.
 
@@ -29,15 +29,14 @@
 
 ### 의도 라우팅 (`intent_router.decide_route`)
 
-`run_agent`는 SQL 계획을 세우기 전에 메시지를 어떤 경로로 처리할지 먼저 정한다. 결과는 `meta.route`(`data_query` / `schema_qa` / `knowledge_qa` / `graph_build` / `clarify`), `meta.route_source`(`user_choice` / `similarity` / `jev` / `llm_fallback`)로 응답에 남는다.
+`run_agent`는 SQL 계획을 세우기 전에 메시지를 어떤 경로로 처리할지 먼저 정한다. 결과는 `meta.route`(`data_query` / `schema_qa` / `knowledge_qa` / `graph_build` / `clarify`), `meta.route_source`(`user_choice` / `jev` / `llm_fallback`)로 응답에 남는다. 예상 질문 유사도는 경로 결정에 쓰지 않고 `data_query`의 SQL 계획에만 쓴다. 전체 흐름도는 [dashboard.html](../dashboard.html)의 채팅 절에 있다.
 
 | 순서 | 판단 | 비고 |
 |------|------|------|
 | 1 | 요청에 `route`가 있으면 그대로 사용 | 되묻기 버튼을 누른 경우. 모델 호출 없음 |
-| 2 | 예상 질문 유사도 검색이 `matched`면 `data_query` | 모델 호출 없음 |
-| 3 | TypeSafe **Jev** Choice 질문(`POST {TYPESAFE_BASE_URL}/v1/systemone`)으로 분류 | `TYPESAFE_API_KEY` 필요. 429/529/네트워크 오류는 최대 2회 재시도(0.5초·1초 백오프), 401/422 등은 재시도 없이 즉시 실패 |
-| 4 | Jev를 못 쓰면 채팅 LLM(`json_with_llm`)이 경로를 선택 | `meta.route_source = "llm_fallback"`, `meta.route_jev_error`에 사유 기록 — 숨기지 않는다 |
-| 5 | 그 LLM도 실패하면 `AgentRunError` → HTTP 502 | |
+| 2 | TypeSafe **Jev** Choice 질문(`POST {TYPESAFE_BASE_URL}/v1/systemone`)으로 분류 | `TYPESAFE_API_KEY` 필요. 429/529/네트워크 오류는 최대 2회 재시도(0.5초·1초 백오프), 401/422 등은 재시도 없이 즉시 실패 |
+| 3 | Jev를 못 쓰면 채팅 LLM(`json_with_llm`)이 경로를 선택 | `meta.route_source = "llm_fallback"`, `meta.route_jev_error`에 사유 기록 — 숨기지 않는다 |
+| 4 | 그 LLM도 실패하면 `AgentRunError` → HTTP 502 | |
 
 Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과가 `other`면 **되묻기**(`clarify`)로 처리한다. 임계값은 실제 질문 데이터로 검증되지 않은 초기값이다.
 
@@ -45,9 +44,28 @@ Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과
 |------|------|
 | `data_query` | 아래 "에이전트 실행 경로" 그대로(SQL + 위젯) |
 | `schema_qa` | 허용된 스키마 텍스트만으로 LLM이 테이블·컬럼 구조를 설명. SQL 실행 없음. `MarkdownBlock` 위젯 1개 |
-| `knowledge_qa` | 지식그래프 검색이 아직 채팅에 연결되지 않아 그렇게 안내하고 선택지를 제시 |
+| `knowledge_qa` | 프로젝트 문서에서 추출한 엔티티·관계·근거로 답한다(위 "문서 그래프로 답하기" 절). 추출된 엔티티가 없으면 안내와 선택지 |
 | `graph_build` | 업로드한 문서를 지식그래프로 만드는 협의·승인·추출 흐름(관리자 전용, DB 연결 불필요). `graph_action`이 있으면 버튼 동작으로 바로 처리. 자세한 동작은 [graph-rag-sources.md](graph-rag-sources.md) 채팅 연동 절 |
 | `clarify` | 위젯 없이 선택지 버튼(`artifact.type = "choices"`, `artifact.choices[{label, route, message}]`)을 반환. 버튼을 누르면 같은 메시지를 `route`와 함께 다시 전송하므로 대화에 사용자 메시지가 한 번 더 남는다. 선택지는 assistant 메시지의 artifact에 저장되어 새로고침 후에도 유지된다 |
+
+### 문서 그래프로 답하기 (`graph_answer.handle`, `knowledge_qa`)
+
+"문서에서 …", "문서에 따르면 …"처럼 문서에 적힌 내용을 묻는 질문은 프로젝트의 **추출된 엔티티**로 답한다. SQL은 실행하지 않는다.
+
+1. **읽기** — `project_graph.project_entities`(고정 Cypher, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500)·관계·원문 근거를 읽는다. LLM이 Cypher를 쓰지 않는다.
+2. **좁히기** — 엔티티가 40개를 넘으면 채팅 LLM이 "타입·이름·설명" 목록에서 관련 이름을 고르고(최대 15), 코드가 그 엔티티와 직접 이웃을 모은다(최대 40). 40개 이하이면 고르는 호출 없이 전부 쓴다.
+3. **답하기** — 채팅 LLM이 `facts`(타입별 개수, 엔티티와 속성·근거 문장, 관계)만으로 답한다. 문서에 없으면 없다고 답하게 한다. 답변이 근거로 쓴 엔티티 이름(`used`)을 함께 받는다.
+4. **위젯** — 코드가 만든다(LLM이 값을 지어내지 않음): `MarkdownBlock`(문서 기반 답변), 근거 `DataTable`(타입·이름·설명·문서 소스), 근거 사이의 관계 `DataTable`, 근거 문장이 속한 제목의 `SourceList`.
+5. **응답 `meta.knowledge`** — `entities_total`, `truncated`, `picked`, `entities_in_prompt`, `used`.
+
+| 상황 | 동작 |
+|------|------|
+| 프로젝트에 추출된 엔티티가 없음 | 안내 + 선택지(`graph_build`는 관리자에게만, `data_query`, `schema_qa`) |
+| 좁히기에서 관련 엔티티 없음 | "찾지 못했어요" + 선택지. 답을 지어내지 않음 |
+| Neo4j·LLM 실패 | HTTP 502 + 사유(조용한 대체 없음) |
+
+- **라우팅**: Jev 상태에 `has_document_graph`(프로젝트 소스 중 추출된 엔티티가 있는지)를 넘긴다. 문서가 DB 구조를 설명하는 경우에도 질문이 문서를 근거로 말하면 `knowledge_qa`, 문서 언급 없이 연결된 DB의 구조를 물으면 `schema_qa`다. 두 답은 출처가 달라 값이 다를 수 있다(Northwind: 문서 16개 테이블 vs 실제 DB 15개).
+- **한계**: 엔티티 500개를 넘는 그래프는 일부만 읽는다(`truncated`). 엔티티 타입은 문서마다 승인된 스키마를 따르므로 `Table`이 아닌 타입에도 동작하지만 검증한 것은 Northwind 문서 1개다.
 
 ### 스키마 줄이기 (`schema_linking.link_from_matches`)
 
