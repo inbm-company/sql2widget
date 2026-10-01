@@ -101,7 +101,7 @@ backend/
 | `seed_northwind_recent.py` | Northwind에 결정론적 "최근 운영 데이터" 델타 생성 |
 | `seed_skax_nms.py` | 복원된 SKAX NMS DB를 연결로 등록하고 `cinamon` 스키마 테이블 권한 허용 |
 | `smoke_chat_e2e.py` | 실행 중인 API에 대한 채팅 E2E 스모크 |
-| `smoke_eval.py` | 로그인 + SOC 샘플 질문 스모크 (evals/questions.json과 별개의 빠른 점검) |
+| `smoke_eval.py` | 로그인 + SOC 샘플 질문 스모크. 기본은 실모델 위젯 생성, `--expect-ai-error`는 AI 미설정 HTTP 502 검증 (evals/questions.json과 별개의 빠른 점검) |
 | `smoke_stage.py` | Stage 위젯 추가/조회 스모크 |
 
 ### 2.4 `backend/sql/` — DB별 SQL 원본

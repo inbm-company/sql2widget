@@ -33,7 +33,7 @@ jobs:
         working-directory: frontend
       - name: Start integration environment
         run: |
-          docker compose up -d --build db db-customer db-stage-global backend
+          docker compose up -d --build --wait --wait-timeout 300 db db-customer db-stage-global neo4j backend
           for attempt in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8010/api/health; then exit 0; fi
             sleep 3
@@ -42,7 +42,7 @@ jobs:
       - name: Backend tests
         run: docker compose exec -T backend pytest -q
       - name: Login and chat smoke
-        run: docker compose exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py
+        run: docker compose exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py --expect-ai-error
       - name: Clean up
         if: always()
         run: docker compose down

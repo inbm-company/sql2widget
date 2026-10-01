@@ -220,7 +220,7 @@ def test_agent_passes_question_references_to_initial_and_repair_plans(monkeypatc
         return "ok", {"widgets": []}
 
     monkeypatch.setattr(agent_service, "_materialize_plan", materialize)
-    _, _, meta = agent_service.run_agent("주문 건수?", tenant_id="t", user_id="u")
+    _, _, meta = agent_service.run_agent("주문 건수?", tenant_id="t", user_id="u", forced_route="data_query")
     assert meta["question_retrieval"]["matches"][0]["id"] == "q-1"
     assert len(calls) == 2
     assert all(call["matched_questions"][0]["question"] == "주문 건수를 보여줘" for call in calls)

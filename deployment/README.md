@@ -7,7 +7,7 @@
 ## GitHub Actions
 
 `.github/workflows/deploy.yml`:
-1. PR 및 main push: 프런트 빌드, DB를 포함한 백엔드 테스트, 로그인/채팅 smoke.
+1. PR 및 main push: 프런트 빌드, PostgreSQL·Neo4j를 포함한 백엔드 테스트, 로그인/채팅 smoke.
 2. main push 또는 수동 실행: frontend/backend의 amd64 이미지를 GHCR에 커밋 SHA 태그로 게시.
 3. production 환경의 VPS에 배포 파일 업로드, 이미지 pull, health 확인.
 4. 배포 실패 시 직전 이미지로 복구. DB 마이그레이션은 자동 되돌리지 않습니다.
@@ -17,6 +17,10 @@
 Neo4j를 실행 대상으로 지정하지 않아도 Compose는 전체 설정의 필수 변수를 검증하므로,
 환경 기동·테스트·정리 단계 모두 같은 `.env`를 사용합니다.
 로컬 및 운영 서버의 비밀번호는 변경하지 않습니다.
+CI는 Neo4j의 healthcheck가 통과할 때까지 기다린 뒤 백엔드 테스트를 실행합니다.
+AI 키를 등록하지 않는 CI의 채팅 smoke는 `smoke_eval.py --expect-ai-error`로 실행하며,
+로그인 성공과 AI 미설정 시 HTTP 502 반환을 검증합니다. 임의의 502 오류나 성공 위젯 응답은
+이 모드에서 통과하지 않습니다. 실모델 위젯 생성 검증은 AI 연결을 설정한 뒤 기본 모드로 실행합니다.
 
 필요한 production 환경 변수: `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `DEPLOY_PATH`.
 필요한 비밀값: `VPS_SSH_PRIVATE_KEY`, `VPS_HOST_KEY`.

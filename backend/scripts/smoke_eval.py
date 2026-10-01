@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Smoke: login + SOC sample questions against running API."""
 
+import argparse
 import json
 import os
 import sys
@@ -18,6 +19,12 @@ QUESTIONS = [
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--expect-ai-error", action="store_true",
+        help="Verify HTTP 502 with no AI provider configured, for CI without an AI key.",
+    )
+    args = parser.parse_args()
     client = httpx.Client(base_url=BASE, timeout=30.0)
     r = client.post(
         "/api/auth/login",
@@ -41,11 +48,21 @@ def main() -> int:
             headers=headers,
             json={"conversation_id": conv_id, "message": q},
         )
-        chat.raise_for_status()
-        artifact = chat.json()["artifact"]
-        components = [w["component"] for w in artifact.get("widgets", [])]
-        ok = len(components) > 0
-        results.append({"question": q, "ok": ok, "components": components, "type": artifact.get("type")})
+        if args.expect_ai_error:
+            body = chat.json()
+            ok = (
+                chat.status_code == 502
+                and "No AI provider configured" in str(body.get("detail", ""))
+                and "artifact" not in body
+            )
+            results.append({"question": q, "ok": ok, "status_code": chat.status_code,
+                            "expected_ai_error": True})
+        else:
+            chat.raise_for_status()
+            artifact = chat.json()["artifact"]
+            components = [w["component"] for w in artifact.get("widgets", [])]
+            ok = len(components) > 0
+            results.append({"question": q, "ok": ok, "components": components, "type": artifact.get("type")})
         print(json.dumps(results[-1], ensure_ascii=False))
 
     passed = sum(1 for r in results if r["ok"])
