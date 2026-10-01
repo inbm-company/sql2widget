@@ -51,6 +51,7 @@ services:
       DEMO_CUSTOMER_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-customer:5432/agent4any_customer_demo
       STAGE_GLOBAL_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-stage-global:5432/agent4any_stage_global
       LLM_PROVIDER: mock
+      TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
       CORS_ORIGINS: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
     depends_on:
       db: {condition: service_healthy}

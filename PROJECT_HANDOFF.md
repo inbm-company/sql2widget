@@ -58,7 +58,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 
 - 로그인 JWT (access + refresh). admin / viewer.
 - 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문. 프로젝트 삭제(연관 대화·Stage 정리, 문서 소스는 미연결로 보존).
-- 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → 예상 질문 유사도 → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로 `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 아직 채팅에 연결되지 않았다. 운영 `compose.production.yml`은 `TYPESAFE_*`를 넘기지 않아 운영에서는 Jev 없이 LLM 폴백으로 동작한다. 상세: `docs/features/chat.md`.
+- 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → 예상 질문 유사도 → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로 `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 아직 채팅에 연결되지 않았다. 운영 `compose.production.yml`은 `TYPESAFE_API_KEY`만 넘기며(비면 LLM 폴백), 나머지 `TYPESAFE_*`·`ROUTE_MIN_CONFIDENCE`는 코드 기본값을 쓴다. 상세: `docs/features/chat.md`.
 - DB별 예상 질문 유사도 검색(`question_similarity.py`, `question_catalog.py`): 유사 질문이 있으면 연결된 SQL·위젯을 참조해 답한다. 상세: `docs/features/similarity-search-design.md`.
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
