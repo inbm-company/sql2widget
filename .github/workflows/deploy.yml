@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Prepare CI environment
+        run: |
+          ci_neo4j_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$ci_neo4j_password"
+          sed "s/^NEO4J_PASSWORD=.*/NEO4J_PASSWORD=$ci_neo4j_password/" .env.example > .env
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -28,7 +33,6 @@ jobs:
         working-directory: frontend
       - name: Start integration environment
         run: |
-          cp .env.example .env
           docker compose up -d --build db db-customer db-stage-global backend
           for attempt in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8010/api/health; then exit 0; fi

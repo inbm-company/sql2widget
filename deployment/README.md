@@ -12,6 +12,12 @@
 3. production 환경의 VPS에 배포 파일 업로드, 이미지 pull, health 확인.
 4. 배포 실패 시 직전 이미지로 복구. DB 마이그레이션은 자동 되돌리지 않습니다.
 
+테스트 job은 체크아웃 직후 `.env.example`을 `.env`로 복사하고, 매 실행마다
+임시 `NEO4J_PASSWORD`를 생성해 채웁니다. 생성한 값은 Actions 로그에서 마스킹합니다.
+Neo4j를 실행 대상으로 지정하지 않아도 Compose는 전체 설정의 필수 변수를 검증하므로,
+환경 기동·테스트·정리 단계 모두 같은 `.env`를 사용합니다.
+로컬 및 운영 서버의 비밀번호는 변경하지 않습니다.
+
 필요한 production 환경 변수: `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `DEPLOY_PATH`.
 필요한 비밀값: `VPS_SSH_PRIVATE_KEY`, `VPS_HOST_KEY`.
 서버의 배포 경로는 배포 사용자가 쓸 수 있어야 합니다.
