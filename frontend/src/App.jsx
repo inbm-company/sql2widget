@@ -171,13 +171,29 @@ function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = 
   );
 }
 
-function AssistantAnswer({ content, artifact, projectId, onAdded, readOnly = false }) {
+function AssistantAnswer({ content, artifact, projectId, onAdded, onChoose, readOnly = false }) {
   const [view, setView] = useState("widget");
   const hasArtifact = Boolean(artifact?.widgets?.length || artifact?.artifact_id);
 
   return (
     <div className="assistant-block">
       {content ? <div className="msg-content">{content}</div> : null}
+
+      {artifact?.choices?.length ? (
+        <div className="prompt-suggestions">
+          {artifact.choices.map((choice) => (
+            <button
+              key={choice.route}
+              type="button"
+              className="prompt-row"
+              onClick={() => onChoose(choice)}
+              disabled={readOnly}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {hasArtifact ? (
         <div className="artifact-section">
@@ -343,10 +359,11 @@ function ConversationItem({
   );
 }
 
-function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, readOnly = false }) {
+function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, onDeleted, deletingDisabled = false, readOnly = false }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(project.title);
   const [busy, setBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (!editing) setDraft(project.title);
@@ -367,6 +384,21 @@ function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, readOn
     } catch {
       setDraft(project.title);
       setEditing(false);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (busy || readOnly || deletingDisabled) return;
+    if (!window.confirm(`“${project.title}” 프로젝트를 삭제할까요?\n\n모든 대화·메시지와 Stage 위젯이 함께 삭제되며 복구할 수 없습니다.\n문서 소스는 미연결 상태로 보존됩니다.`)) return;
+    setBusy(true);
+    setDeleteError("");
+    try {
+      await api.deleteProject(project.id);
+      await onDeleted?.(project.id);
+    } catch (err) {
+      setDeleteError(err?.message || "프로젝트를 삭제하지 못했습니다. 다시 시도해 주세요.");
     } finally {
       setBusy(false);
     }
@@ -397,6 +429,7 @@ function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, readOn
         <button
           type="button"
           className="project-item"
+          disabled={busy}
           title={readOnly ? project.title : "더블 클릭하여 이름 변경"}
           onClick={(event) => {
             if (event.detail === 1) onToggle();
@@ -410,21 +443,38 @@ function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, readOn
           <span>{project.title}</span>
         </button>
       )}
-      {active && !editing ? (
-        <button
-          type="button"
-          className="project-new-chat project-new-chat--header"
-          onClick={(event) => {
-            event.stopPropagation();
-            onNewChat(project.id);
-          }}
-          disabled={readOnly}
-          aria-label="New chat"
-          title="New chat"
-        >
-          +
-        </button>
+      {!editing ? (
+        <div className="project-actions">
+          {active ? (
+            <button
+              type="button"
+              className="project-new-chat project-new-chat--header"
+              onClick={(event) => {
+                event.stopPropagation();
+                onNewChat(project.id);
+              }}
+              disabled={readOnly || busy}
+              aria-label="New chat"
+              title="New chat"
+            >
+              +
+            </button>
+          ) : null}
+          {!readOnly ? (
+            <button
+              type="button"
+              className="project-delete conv-action-btn conv-action-btn--danger"
+              aria-label={`프로젝트 삭제: ${project.title}`}
+              title={deletingDisabled ? "응답이 완료된 후 삭제할 수 있습니다." : "프로젝트 삭제"}
+              disabled={busy || deletingDisabled}
+              onClick={remove}
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
       ) : null}
+      {deleteError ? <p className="project-delete-error" role="alert">{deleteError}</p> : null}
     </div>
   );
 }
@@ -438,6 +488,7 @@ function Workspace({ user, onLogout }) {
   const [sending, setSending] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
   const [chatError, setChatError] = useState("");
+  const [newChatError, setNewChatError] = useState("");
   const [adminOpen, setAdminOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState("admin");
   const [stageOpen, setStageOpen] = useState(true);
@@ -496,14 +547,19 @@ function Workspace({ user, onLogout }) {
 
   async function newChat(projectId = activeProjectId) {
     if (!projectId) return;
-    const conv = await api.createConversation(projectId, "New Chat");
-    if (projectId === activeProjectId) await mutateConvs();
-    await mutateProjects();
-    setActiveProjectId(projectId);
-    setActiveId(conv.id);
+    setNewChatError("");
+    try {
+      const conv = await api.createConversation(projectId, "New Chat");
+      if (projectId === activeProjectId) await mutateConvs();
+      await mutateProjects();
+      setActiveProjectId(projectId);
+      setActiveId(conv.id);
+    } catch (err) {
+      setNewChatError(err?.message || "새 챗을 만들지 못했습니다. 다시 시도해 주세요.");
+    }
   }
 
-  async function sendMessage(text) {
+  async function sendMessage(text, route = null) {
     const message = text.trim();
     if (!message || !activeId || sending) return;
     setSending(true);
@@ -511,7 +567,7 @@ function Workspace({ user, onLogout }) {
     setChatError("");
     if (text === input) setInput("");
     try {
-      await api.chat(activeId, message, connectionId || null);
+      await api.chat(activeId, message, connectionId || null, route);
       await mutateConv();
       await mutateConvs();
       await swrMutate(storeKeys.stage(activeProjectId));
@@ -536,6 +592,26 @@ function Workspace({ user, onLogout }) {
     }
     await mutateConvs();
     await mutateProjects();
+  }
+
+  async function handleProjectDeleted(deletedId) {
+    const deletedConversations = deletedId === activeProjectId ? conversations || [] : [];
+    const deletedConversationKeys = new Set(deletedConversations.map((c) => storeKeys.conversation(c.id)));
+    const deletedKeys = new Set([storeKeys.conversations(deletedId), storeKeys.stage(deletedId)]);
+    setActiveProjectId((current) => current === deletedId ? null : current);
+    setActiveId((current) => (deletedId === activeProjectId && current === activeId) || deletedConversationKeys.has(storeKeys.conversation(current)) ? null : current);
+    if (deletedId === activeProjectId) {
+      setInput("");
+      setChatError("");
+      setNewChatError("");
+    }
+    await swrMutate(
+      (key) => deletedKeys.has(key) || deletedConversationKeys.has(key) ||
+        (typeof key === "string" && key.startsWith(`api:/projects/${deletedId}/`)),
+      undefined,
+      { revalidate: false }
+    );
+    await mutateProjects((current) => (current || []).filter((p) => p.id !== deletedId), { revalidate: false });
   }
 
   const activeTitle =
@@ -572,6 +648,8 @@ function Workspace({ user, onLogout }) {
                 }}
                 onRenamed={mutateProjects}
                 onNewChat={newChat}
+                onDeleted={handleProjectDeleted}
+                deletingDisabled={sending && project.id === activeProjectId}
                 readOnly={isViewer}
               />
               {project.id === activeProjectId ? (
@@ -642,6 +720,7 @@ function Workspace({ user, onLogout }) {
       </aside>
 
       <main className="chat-pane">
+        {newChatError ? <p className="error chat-send-error" role="alert">{newChatError}</p> : null}
         {!activeProjectId ? (
           <div className="chat-empty">
             <p className="chat-empty-title">프로젝트를 선택하세요.</p>
@@ -650,7 +729,7 @@ function Workspace({ user, onLogout }) {
           <div className="chat-empty">
             <p className="chat-empty-title">{activeProject?.title}</p>
             <p className="muted">이 프로젝트에 새 챗을 만들어 질문을 시작하세요.</p>
-            <button type="button" className="primary" onClick={newChat} disabled={isViewer}>
+            <button type="button" className="primary" onClick={() => newChat()} disabled={isViewer}>
               New chat
             </button>
           </div>
@@ -693,7 +772,8 @@ function Workspace({ user, onLogout }) {
                       artifact={m.artifact}
                       projectId={activeProjectId}
                       onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
-                      readOnly={isViewer}
+                      onChoose={(choice) => sendMessage(choice.message, choice.route)}
+                      readOnly={isViewer || sending}
                     />
                   )}
                 </div>

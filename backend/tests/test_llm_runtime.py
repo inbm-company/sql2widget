@@ -48,6 +48,8 @@ def test_repair_keeps_runtime_credentials(monkeypatch):
             raise ValueError("invalid SQL")
         return "ok", {"widgets": []}
 
+    monkeypatch.setattr(agent_service, "decide_route",
+        lambda *args, **kwargs: {"route": "data_query", "source": "similarity", "clarify": False})
     monkeypatch.setattr(agent_service, "plan_with_llm", plan)
     monkeypatch.setattr(agent_service, "_materialize_plan", materialize)
     _, _, meta = agent_service.run_agent("test", tenant_id="test", user_id="test",
@@ -64,6 +66,8 @@ def test_live_model_error_is_not_hidden_by_mock(monkeypatch):
     monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *args, **kwargs: ("db", "test", set()))
     monkeypatch.setattr(agent_service, "effective_provider", lambda: "mock")
     monkeypatch.setattr(agent_service, "_schema_text_for_connection", lambda *args, **kwargs: "schema")
+    monkeypatch.setattr(agent_service, "decide_route",
+        lambda *args, **kwargs: {"route": "data_query", "source": "similarity", "clarify": False})
     monkeypatch.setattr(
         agent_service,
         "plan_with_llm",
@@ -181,6 +185,8 @@ def test_local_repair_preserves_url_and_model(monkeypatch):
     calls = []
     monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *args, **kwargs: ("db", "test", set()))
     monkeypatch.setattr(agent_service, "_schema_text_for_connection", lambda *args, **kwargs: "schema")
+    monkeypatch.setattr(agent_service, "decide_route",
+        lambda *args, **kwargs: {"route": "data_query", "source": "similarity", "clarify": False})
     monkeypatch.setattr(agent_service, "plan_with_llm", lambda *args, **kwargs:
         calls.append(kwargs) or {"plan": {"widgets": []}, "provider": "local"})
     def materialize(*args, **kwargs):

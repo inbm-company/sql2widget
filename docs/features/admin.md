@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 관리자 패널 |
-| 기준일 | 2026-09-30 (구현 기준) |
+| 기준일 | 2026-10-01 (구현 기준) |
 | 관련 문서 | [chat.md](chat.md)(연결·권한·AI 설정이 실제로 쓰이는 곳) |
 | 관련 코드 | `backend/app/repositories/connections.py`, `backend/app/crypto.py`, `backend/app/main.py`(`/api/database-connections*`, `/api/table-permissions`), `frontend/src/AdminPanel.jsx`, `frontend/src/api.js`(`getAiSettings`/`setAiSettings`) |
 
@@ -11,11 +11,13 @@
 
 사이드바 하단에는 기존 `Admin` 버튼과 별도로 `AI 설정`, `DB 관리` 버튼이 있다. `Admin`은 기존 전체 설정을 유지한다. `AI 설정` 패널은 Provider별 AI 연결 설정만, `DB 관리` 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.
 
+드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.
+
 ---
 
 ## F-13 DB 연결 관리
 
-`DB 관리`와 전체 `Admin` 패널에는 **Graph RAG 데이터 소스**도 표시된다. 로컬 폴더·파일 경로를 등록하고 별도의 **적재** 버튼으로 문서 본문과 명시된 문서 링크를 Neo4j에 저장한다. [지원 범위·API·접근 제한](graph-rag-sources.md).
+`DB 관리`와 전체 `Admin` 패널에는 **Graph RAG 데이터 소스**도 표시된다. 폴더·파일을 업로드하고 별도의 **적재** 버튼으로 문서 본문과 명시된 문서 링크를 Neo4j에 저장한다. [지원 범위·API·접근 제한](graph-rag-sources.md).
 
 | API | 기능 | 권한 |
 |-----|------|------|

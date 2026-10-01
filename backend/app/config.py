@@ -40,6 +40,12 @@ LLM_API_KEY = env("LLM_API_KEY", "")
 LLM_BASE_URL = env("LLM_BASE_URL", "http://host.docker.internal:11434/v1" if LLM_PROVIDER == "local" else "https://api.openai.com/v1")
 LLM_MODEL = env("LLM_MODEL", "" if LLM_PROVIDER == "local" else "gpt-4o-mini")
 LLM_EMBEDDING_MODEL = env("LLM_EMBEDDING_MODEL", "")
+# 채팅 의도 라우팅(TypeSafe Jev). 키가 없으면 라우팅을 일반 LLM이 대신한다.
+TYPESAFE_API_KEY = env("TYPESAFE_API_KEY", "")
+TYPESAFE_BASE_URL = env("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
+TYPESAFE_MODEL = env("TYPESAFE_MODEL", "jev-latest")
+# 이 값 미만의 confidence는 되묻기로 처리한다. 실제 질문 데이터로 검증해 조정할 것.
+ROUTE_MIN_CONFIDENCE = float(env("ROUTE_MIN_CONFIDENCE", "0.5"))
 CORS_ORIGINS = [
     o.strip()
     for o in env(

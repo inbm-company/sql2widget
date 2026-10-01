@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from psycopg.errors import UniqueViolation
 from pydantic import BaseModel, Field
 
 from app import graph_ingestion, project_graph
@@ -38,16 +37,33 @@ def source_lock(source_id):
                 cur.execute('SELECT pg_advisory_unlock(hashtextextended(%s, 0))', (source_id,))
 
 
+class UploadFile(BaseModel):
+    path: str = Field(min_length=1, max_length=1000)
+    text: str = Field(max_length=graph_ingestion.MAX_FILE_BYTES)
+
+
 class GraphSourceIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
-    path: str = Field(min_length=1, max_length=2000)
+    files: list[UploadFile] = Field(min_length=1, max_length=20000)
+
+
+class GraphFilesIn(BaseModel):
+    files: list[UploadFile] = Field(min_length=1, max_length=20000)
+
+
+def validated_files(files: list[UploadFile]) -> tuple[dict[str, str], int]:
+    """Filter the upload and run the same checks as ingestion, so bad input fails before storing."""
+    try:
+        kept, excluded = graph_ingestion.filter_upload([f.model_dump() for f in files])
+        graph_ingestion.build_documents(kept)
+    except graph_ingestion.GraphSourceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return kept, excluded
 
 
 @router.get('/graph-sources')
 def list_sources(project_id: str, user=Depends(graph_admin)):
     return {'sources': repo.list_sources(user['tenant_id'], project_id),
-            'unassigned_sources': repo.list_unassigned(user['tenant_id'], user['id']),
-            'shared_root': graph_ingestion.HOST_ROOT,
             'supported_extensions': sorted(graph_ingestion.SUPPORTED_EXTENSIONS)}
 
 
@@ -55,29 +71,20 @@ def list_sources(project_id: str, user=Depends(graph_admin)):
 def register_source(project_id: str, body: GraphSourceIn, user=Depends(graph_admin)):
     if not body.name.strip():
         raise HTTPException(status_code=400, detail='이름을 입력하세요.')
-    try:
-        _, path = graph_ingestion.resolve_source_path(body.path)
-    except graph_ingestion.GraphSourceError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
-    return repo.register_source(tenant_id=user['tenant_id'], project_id=project_id,
-                                created_by=user['id'], name=body.name.strip(), path=path)
+    kept, excluded = validated_files(body.files)
+    source = repo.create_source(tenant_id=user['tenant_id'], project_id=project_id,
+                                created_by=user['id'], name=body.name.strip(), files=kept)
+    return {**source, 'excluded_count': excluded}
 
 
-@router.post('/graph-sources/{source_id}/assign')
-def assign_source(project_id: str, source_id: str, user=Depends(graph_admin)):
+@router.put('/graph-sources/{source_id}/files')
+def replace_source_files(project_id: str, source_id: str, body: GraphFilesIn, user=Depends(graph_admin)):
     with source_lock(source_id):
-        source = repo.get_unassigned(source_id, user['tenant_id'], user['id'])
+        kept, excluded = validated_files(body.files)
+        source = repo.replace_files(source_id, user['tenant_id'], project_id, kept)
         if not source:
-            raise HTTPException(status_code=404, detail='연결할 기존 소스를 찾을 수 없습니다.')
-        if any(item['path'] == source['path'] for item in repo.list_sources(user['tenant_id'], project_id)):
-            raise HTTPException(status_code=409, detail='이 프로젝트에 같은 경로가 이미 등록되어 있습니다.')
-        try:
-            project_graph.assign_graph_project(source_id, user['tenant_id'], project_id)
-            return repo.assign_source(source_id, user['tenant_id'], user['id'], project_id)
-        except UniqueViolation:
-            raise HTTPException(status_code=409, detail='이 프로젝트에 같은 경로가 이미 등록되어 있습니다.') from None
-        except graph_ingestion.GraphSourceError as exc:
-            raise HTTPException(status_code=502, detail=str(exc)) from None
+            raise HTTPException(status_code=404, detail='등록된 데이터 소스를 찾을 수 없습니다.')
+        return {**source, 'excluded_count': excluded}
 
 
 @router.post('/graph-sources/{source_id}/ingest')
@@ -88,13 +95,13 @@ def ingest_source(project_id: str, source_id: str, user=Depends(graph_admin)):
             raise HTTPException(status_code=404, detail='등록된 데이터 소스를 찾을 수 없습니다.')
         try:
             repo.mark_processing(source_id, user['tenant_id'], project_id)
-            counts = graph_ingestion.ingest(source)
+            counts = graph_ingestion.ingest(source, repo.get_files(source_id))
             return repo.mark_completed(source_id, user['tenant_id'], project_id, counts)
         except graph_ingestion.GraphSourceError as exc:
             repo.mark_failed(source_id, user['tenant_id'], project_id, str(exc))
             raise HTTPException(status_code=400, detail=str(exc)) from None
         except Exception:
-            message = '적재 중 오류가 발생했습니다. 저장된 경로를 확인하고 다시 실행하세요.'
+            message = '적재 중 오류가 발생했습니다. 다시 실행하세요.'
             repo.mark_failed(source_id, user['tenant_id'], project_id, message)
             raise HTTPException(status_code=500, detail=message) from None
 

@@ -75,3 +75,14 @@ def search_similar(
                 (Vector(embedding), tenant_id, Vector(embedding), limit),
             )
             return cur.fetchall()
+
+
+def delete_conversation_embeddings(tenant_id: str, conversation_ids: list[str]) -> None:
+    if not conversation_ids:
+        return
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM message_embeddings WHERE tenant_id = %s AND conversation_id = ANY(%s)",
+                (tenant_id, conversation_ids),
+            )

@@ -126,6 +126,8 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ title }),
     }),
+  deleteProject: (projectId) =>
+    request(`/api/projects/${projectId}`, { method: "DELETE" }),
   listConversations: (projectId) =>
     request(`/api/conversations?project_id=${encodeURIComponent(projectId)}`),
   createConversation: (projectId, title) =>
@@ -143,7 +145,7 @@ export const api = {
     request(`/api/conversations/${id}`, {
       method: "DELETE",
     }),
-  chat: (conversationId, message, connectionId) =>
+  chat: (conversationId, message, connectionId, route = null) =>
     request("/api/chat", {
       method: "POST",
       // Gemini can take up to 60s, and the backend may run one repair attempt.
@@ -152,6 +154,7 @@ export const api = {
         conversation_id: conversationId,
         message,
         connection_id: connectionId || null,
+        route,
       }),
     }),
   getStage: (projectId) => request(`/api/projects/${projectId}/stage`),
@@ -179,12 +182,17 @@ export const api = {
   registerGraphSource: (projectId, payload) => request(`/api/projects/${projectId}/graph-sources`, {
     method: "POST",
     body: JSON.stringify(payload),
+    timeoutMs: 300000,
+  }),
+  replaceGraphSourceFiles: (projectId, id, files) => request(`/api/projects/${projectId}/graph-sources/${id}/files`, {
+    method: "PUT",
+    body: JSON.stringify({ files }),
+    timeoutMs: 300000,
   }),
   ingestGraphSource: (projectId, id) => request(`/api/projects/${projectId}/graph-sources/${id}/ingest`, {
     method: "POST",
     timeoutMs: 300000,
   }),
-  assignGraphSource: (projectId, id) => request(`/api/projects/${projectId}/graph-sources/${id}/assign`, { method: "POST" }),
   getProjectGraph: (projectId) => request(`/api/projects/${projectId}/graph`),
   getGraphDocument: (projectId, id) => request(`/api/projects/${projectId}/graph/documents/${id}`),
   createConnection: (payload) =>

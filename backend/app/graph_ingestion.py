@@ -1,18 +1,17 @@
-"""Read local documents and preserve their text and explicit links in Neo4j."""
+"""Read uploaded documents and preserve their text and explicit links in Neo4j."""
 
 import hashlib
 import os
+import posixpath
 import re
 from collections import defaultdict
 from functools import lru_cache
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 from urllib.parse import unquote, urlsplit
 
 from neo4j import GraphDatabase
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
-SOURCE_ROOT = Path(os.getenv('GRAPH_RAG_SOURCE_ROOT', '/graph-rag-sources'))
-HOST_ROOT = os.getenv('GRAPH_RAG_HOST_PATH', './graph-rag-sources').rstrip('/')
 SUPPORTED_EXTENSIONS = {'.md', '.txt'}
 MAX_FILES = 1000
 MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -25,39 +24,29 @@ class GraphSourceError(ValueError):
     pass
 
 
-def resolve_source_path(value: str) -> tuple[Path, str]:
-    """Map a registered host path into the one read-only mounted source root."""
-    value = value.strip()
-    if not value or '\x00' in value:
-        raise GraphSourceError('폴더 또는 파일 경로를 입력하세요.')
-    candidate = PurePosixPath(value)
-    host = PurePosixPath(HOST_ROOT)
-    try:
-        if candidate.is_absolute():
-            if host.is_absolute() and candidate.is_relative_to(host):
-                relative = candidate.relative_to(host)
-            else:
-                relative = candidate.relative_to(PurePosixPath(str(SOURCE_ROOT)))
-        elif candidate.is_relative_to(host):
-            relative = candidate.relative_to(host)
-        else:
-            relative = candidate
-    except ValueError:
-        raise GraphSourceError('공유된 문서 폴더 안의 경로만 등록할 수 있습니다.') from None
-    root = SOURCE_ROOT.resolve()
-    try:
-        resolved = (root / str(relative)).resolve()
-        normalized = resolved.relative_to(root)
-    except (ValueError, OSError, RuntimeError):
-        raise GraphSourceError('공유 폴더 밖의 경로 또는 심볼릭 링크는 사용할 수 없습니다.') from None
-    if any(part.startswith('.') for part in normalized.parts):
-        raise GraphSourceError('숨김 파일과 설정 폴더는 적재 대상에서 제외합니다.')
-    if not resolved.exists():
-        raise GraphSourceError('경로가 존재하지 않습니다. 공유 폴더와 입력한 경로를 확인하세요.')
-    if not resolved.is_dir() and resolved.suffix.lower() not in SUPPORTED_EXTENSIONS:
-        raise GraphSourceError('현재 Markdown(.md)과 텍스트(.txt) 파일을 지원합니다.')
-    canonical = str(host / normalized)
-    return resolved, canonical
+def clean_upload_path(value) -> str:
+    """Normalize an uploaded relative path; reject empty, NUL and parent-directory paths."""
+    raw = str(value).replace('\\', '/').strip()
+    if not raw or '\x00' in raw:
+        raise GraphSourceError('파일 경로가 올바르지 않습니다.')
+    parts = [part for part in PurePosixPath(raw).parts if part not in ('/', '.')]
+    if not parts or '..' in parts:
+        raise GraphSourceError(f'허용되지 않는 파일 경로입니다: {raw}')
+    return PurePosixPath(*parts).as_posix()
+
+
+def filter_upload(files: list[dict]) -> tuple[dict[str, str], int]:
+    """Keep supported, non-hidden files as {path: text}; also return how many were left out."""
+    kept, excluded = {}, 0
+    for item in files:
+        path = PurePosixPath(clean_upload_path(item['path']))
+        if any(part.startswith('.') for part in path.parts) or path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            excluded += 1
+            continue
+        kept[path.as_posix()] = item['text']
+        if len(kept) > MAX_FILES:
+            raise GraphSourceError('한 번에 최대 1,000개 문서를 올릴 수 있습니다. 하위 폴더를 나눠 올리세요.')
+    return kept, excluded
 
 
 def chunks_for(text: str) -> list[dict]:
@@ -83,61 +72,37 @@ def document_references(text: str) -> list[tuple[str, bool]]:
     return refs
 
 
-def read_documents(path: Path) -> tuple[list[dict], dict]:
-    root = SOURCE_ROOT.resolve()
-    files = []
-    skipped = 0
-    if path.is_file():
-        files = [path]
-    else:
-        def walk_error(_error):
-            raise GraphSourceError('문서 폴더를 읽을 수 없습니다. 폴더 접근 권한을 확인하세요.')
-
-        for directory, folders, names in os.walk(path, followlinks=False, onerror=walk_error):
-            folders[:] = sorted(name for name in folders
-                                if not name.startswith('.') and not (Path(directory) / name).is_symlink())
-            for name in sorted(names):
-                if name.startswith('.'):
-                    continue
-                file = Path(directory) / name
-                if file.suffix.lower() in SUPPORTED_EXTENSIONS:
-                    files.append(file)
-                    if len(files) > MAX_FILES:
-                        raise GraphSourceError('한 번에 최대 1,000개 문서를 적재할 수 있습니다. 하위 폴더를 지정하세요.')
-                else:
-                    skipped += 1
+def build_documents(files: dict[str, str]) -> tuple[list[dict], dict]:
+    """Turn uploaded {path: text} files into chunked documents with resolved links."""
+    if len(files) > MAX_FILES:
+        raise GraphSourceError('한 번에 최대 1,000개 문서를 적재할 수 있습니다. 하위 폴더를 나눠 올리세요.')
     documents = []
+    skipped = 0
     total_bytes = 0
-    for file in sorted(files):
-        relative = file.relative_to(root).as_posix()
+    for relative in sorted(files):
+        text = files[relative]
         try:
-            if not file.resolve().is_relative_to(root):
-                raise GraphSourceError('공유 폴더 밖을 가리키는 파일은 적재할 수 없습니다.')
-            # Bound the actual read, including files that grow during ingestion.
-            with file.open('rb') as stream:
-                raw = stream.read(MAX_FILE_BYTES + 1)
-            if len(raw) > MAX_FILE_BYTES:
-                raise GraphSourceError(f'문서당 최대 2 MiB를 지원합니다: {relative}')
-            total_bytes += len(raw)
-            if total_bytes > MAX_TOTAL_BYTES:
-                raise GraphSourceError('한 번에 최대 20 MiB를 적재할 수 있습니다. 하위 폴더를 지정하세요.')
-            text = raw.decode('utf-8-sig')
-            if '\x00' in text:
-                raise GraphSourceError(f'텍스트 파일이 아닙니다: {relative}')
+            raw = text.encode('utf-8')
         except UnicodeError:
             raise GraphSourceError(f'UTF-8 텍스트 파일이 아닙니다: {relative}') from None
-        except OSError:
-            raise GraphSourceError(f'파일을 읽을 수 없습니다: {relative}') from None
+        if len(raw) > MAX_FILE_BYTES:
+            raise GraphSourceError(f'문서당 최대 2 MiB를 지원합니다: {relative}')
+        total_bytes += len(raw)
+        if total_bytes > MAX_TOTAL_BYTES:
+            raise GraphSourceError('한 번에 최대 20 MiB를 적재할 수 있습니다. 하위 폴더를 나눠 올리세요.')
+        if '\x00' in text:
+            raise GraphSourceError(f'텍스트 파일이 아닙니다: {relative}')
         if not text.strip():
             skipped += 1
             continue
-        heading = re.search(r'^#\s+(.+)$', text, flags=re.M) if file.suffix.lower() == '.md' else None
-        documents.append({'path': relative, 'title': heading.group(1).strip() if heading else file.stem,
+        path = PurePosixPath(relative)
+        markdown = path.suffix.lower() == '.md'
+        heading = re.search(r'^#\s+(.+)$', text, flags=re.M) if markdown else None
+        documents.append({'path': relative, 'title': heading.group(1).strip() if heading else path.stem,
                           'text': text, 'content_hash': hashlib.sha256(raw).hexdigest(),
-                          'chunks': chunks_for(text), 'references': document_references(text)
-                          if file.suffix.lower() == '.md' else []})
+                          'chunks': chunks_for(text), 'references': document_references(text) if markdown else []})
     if not documents:
-        raise GraphSourceError('적재할 문서가 없습니다. 공유 폴더에 내용이 있는 .md 또는 .txt 파일을 넣어주세요.')
+        raise GraphSourceError('적재할 문서가 없습니다. 내용이 있는 .md 또는 .txt 파일을 올려 주세요.')
     by_name = defaultdict(list)
     by_path = {doc['path']: doc for doc in documents}
     for doc in documents:
@@ -154,12 +119,11 @@ def read_documents(path: Path) -> tuple[list[dict], dict]:
             if suffix and suffix not in SUPPORTED_EXTENSIONS:
                 continue
             candidates = []
-            for base in (root / PurePosixPath(doc['path']).parent / target, root / target):
+            for base in (posixpath.join(PurePosixPath(doc['path']).parent.as_posix(), target), target):
                 for extension in ('', '.md', '.txt') if not suffix else ('',):
-                    try:
-                        candidates.append(Path(str(base) + extension).resolve().relative_to(root).as_posix())
-                    except (OSError, ValueError):
-                        continue
+                    key = posixpath.normpath(base + extension)
+                    if key != '..' and not key.startswith(('../', '/')):
+                        candidates.append(key)
             resolved = next((key for key in candidates if key in by_path), None)
             if not resolved and wiki:
                 names = by_name[PurePosixPath(target).stem]
@@ -241,11 +205,10 @@ def graph_driver():
                                 connection_timeout=10, max_transaction_retry_time=15)
 
 
-def ingest(source: dict) -> dict:
+def ingest(source: dict, files: dict[str, str]) -> dict:
     if not source.get('project_id'):
         raise GraphSourceError('먼저 데이터 소스를 프로젝트에 연결하세요.')
-    path, _ = resolve_source_path(source['path'])
-    documents, counts = read_documents(path)
+    documents, counts = build_documents(files)
     try:
         driver = graph_driver()
         driver.verify_connectivity()

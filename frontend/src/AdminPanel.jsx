@@ -170,7 +170,15 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
   if (!open) return null;
 
   return createPortal(
-    <div className="admin-drawer" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className="admin-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="admin-panel">
         <header>
           <h2>{title}</h2>

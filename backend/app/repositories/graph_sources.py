@@ -1,32 +1,62 @@
 import secrets
 
-from app.db import fetch_all, fetch_one
+from app.db import fetch_all, fetch_one, get_conn
+
+
+SOURCE_COLUMNS = ("s.*, (SELECT count(*) FROM graph_source_files f WHERE f.source_id = s.id)::int AS file_count")
 
 
 def list_sources(tenant_id: str, project_id: str) -> list[dict]:
     return fetch_all(
-        "SELECT * FROM graph_sources WHERE tenant_id = %s AND project_id = %s ORDER BY created_at",
+        f"SELECT {SOURCE_COLUMNS} FROM graph_sources s WHERE s.tenant_id = %s AND s.project_id = %s ORDER BY s.created_at",
         (tenant_id, project_id),
     )
 
 
 def get_source(source_id: str, tenant_id: str, project_id: str) -> dict | None:
     return fetch_one(
-        "SELECT * FROM graph_sources WHERE id = %s AND tenant_id = %s AND project_id = %s",
+        f"SELECT {SOURCE_COLUMNS} FROM graph_sources s WHERE s.id = %s AND s.tenant_id = %s AND s.project_id = %s",
         (source_id, tenant_id, project_id),
     )
 
 
-def register_source(*, tenant_id: str, project_id: str, created_by: str, name: str, path: str) -> dict:
-    return fetch_one(
-        """
-        INSERT INTO graph_sources (id, tenant_id, project_id, name, path, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        ON CONFLICT (tenant_id, project_id, path) DO UPDATE SET name = EXCLUDED.name
-        RETURNING *
-        """,
-        (f"gsource_{secrets.token_hex(8)}", tenant_id, project_id, name, path, created_by),
-    )
+def get_files(source_id: str) -> dict[str, str]:
+    rows = fetch_all("SELECT path, content FROM graph_source_files WHERE source_id = %s", (source_id,))
+    return {row['path']: row['content'] for row in rows}
+
+
+def _store_files(cur, source_id: str, files: dict[str, str]) -> None:
+    cur.execute("DELETE FROM graph_source_files WHERE source_id = %s", (source_id,))
+    cur.executemany("INSERT INTO graph_source_files (source_id, path, content) VALUES (%s, %s, %s)",
+                    [(source_id, path, text) for path, text in files.items()])
+
+
+def create_source(*, tenant_id: str, project_id: str, created_by: str, name: str, files: dict[str, str]) -> dict:
+    source_id = f"gsource_{secrets.token_hex(8)}"
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO graph_sources (id, tenant_id, project_id, name, path, created_by) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (source_id, tenant_id, project_id, name, f"upload:{source_id}", created_by),
+            )
+            _store_files(cur, source_id, files)
+    return get_source(source_id, tenant_id, project_id)
+
+
+def replace_files(source_id: str, tenant_id: str, project_id: str, files: dict[str, str]) -> dict | None:
+    """Swap the stored documents; the source must be ingested again to update the graph."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE graph_sources SET status = 'registered', error = NULL "
+                "WHERE id = %s AND tenant_id = %s AND project_id = %s RETURNING id",
+                (source_id, tenant_id, project_id),
+            )
+            if not cur.fetchone():
+                return None
+            _store_files(cur, source_id, files)
+    return get_source(source_id, tenant_id, project_id)
 
 
 def mark_processing(source_id: str, tenant_id: str, project_id: str) -> None:
@@ -60,26 +90,4 @@ def mark_completed(source_id: str, tenant_id: str, project_id: str, counts: dict
         """,
         (counts['document_count'], counts['chunk_count'], counts['link_count'],
          counts['skipped_count'], counts['unresolved_link_count'], source_id, tenant_id, project_id),
-    )
-
-
-def list_unassigned(tenant_id: str, user_id: str) -> list[dict]:
-    return fetch_all(
-        "SELECT * FROM graph_sources WHERE tenant_id = %s AND created_by = %s "
-        "AND project_id IS NULL ORDER BY created_at", (tenant_id, user_id),
-    )
-
-
-def get_unassigned(source_id: str, tenant_id: str, user_id: str) -> dict | None:
-    return fetch_one(
-        "SELECT * FROM graph_sources WHERE id = %s AND tenant_id = %s "
-        "AND created_by = %s AND project_id IS NULL", (source_id, tenant_id, user_id),
-    )
-
-
-def assign_source(source_id: str, tenant_id: str, user_id: str, project_id: str) -> dict | None:
-    return fetch_one(
-        "UPDATE graph_sources SET project_id = %s WHERE id = %s AND tenant_id = %s "
-        "AND created_by = %s AND project_id IS NULL RETURNING *",
-        (project_id, source_id, tenant_id, user_id),
     )

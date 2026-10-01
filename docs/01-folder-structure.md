@@ -3,10 +3,10 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 폴더 구조 문서 |
-| 기준일 | 2026-09-21 |
-| 관련 문서 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md)(공통 규칙), [docs/features/*.md](features)(기능별 상세, 작성 예정) |
+| 기준일 | 2026-10-01 |
+| 관련 문서 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md)(공통 규칙), [docs/features/*.md](features)(기능별 상세) |
 
-이 문서는 저장소의 폴더·파일이 각각 무엇을 하는지 설명한다. 함수 단위 설명은 다루지 않는다 — 그건 `docs/features/*.md`(작성 예정)와 코드 자체가 기준이다. 포트 번호, 환경변수 값 같은 구체 수치는 `docker-compose.yml` / `.env.example`이 원본이며, 여기서는 파일이 하는 역할만 적는다.
+이 문서는 저장소의 폴더·파일이 각각 무엇을 하는지 설명한다. 함수 단위 설명은 다루지 않는다 — 그건 `docs/features/*.md`와 코드 자체가 기준이다. 포트 번호, 환경변수 값 같은 구체 수치는 `docker-compose.yml` / `.env.example`이 원본이며, 여기서는 파일이 하는 역할만 적는다.
 
 ---
 
@@ -51,15 +51,20 @@ backend/
 
 | 파일 | 역할 |
 |------|------|
-| `main.py` | FastAPI 앱 엔트리포인트. 모든 `/api/*` 라우트 정의 (auth, projects, conversations, chat, database-connections, table-permissions, stage) |
+| `main.py` | FastAPI 앱 엔트리포인트. `/api/*` 라우트 정의 (auth, projects, conversations, chat, database-connections, 예상 질문, table-permissions, stage). 프로젝트 문서 그래프 라우트는 `graph_source_routes.py`를 include |
 | `config.py` | 환경변수 로드(`env()`), DB URL들, JWT 만료시간, `ALLOWED_COMPONENTS` 화이트리스트 정의 |
 | `auth.py` | 비밀번호 해시(argon2), JWT access/refresh 발급·검증, `get_current_user` 의존성 |
 | `contracts.py` | API 요청/응답 Pydantic 모델 (`LoginRequest`, `ChatRequest`, `StageWidgetIn` 등) |
 | `db.py` | 서비스 DB 커넥션 컨텍스트매니저, `fetch_one`/`fetch_all`/`execute` 헬퍼 |
 | `crypto.py` | `APP_SECRET` 기반 Fernet 암호화 — DB 연결 비밀번호 저장용 |
 | `query.py` | 고객 DB용 읽기 전용 SQL 검증·실행. `SELECT`/`WITH` 외 차단, 허용 테이블 검사, 결과 JSON 직렬화 |
-| `agent.py` | Mock 에이전트 — 키워드 매칭으로 SOC/Global 샘플 질문에 고정 Artifact 반환 |
-| `agent_service.py` | Mock/실LLM 경로를 조율하는 오케스트레이터. `run_agent()`가 `main.py`의 `/api/chat`에서 호출됨 |
+| `agent.py` | 위젯 Artifact 정리(`sanitize_artifact`) — 화이트리스트 밖 컴포넌트·키 제거. 예전 Mock 키워드 에이전트는 삭제됨 |
+| `agent_service.py` | 실 LLM 경로 오케스트레이터. `run_agent()`가 `main.py`의 `/api/chat`에서 호출되며 의도 라우팅 결과에 따라 데이터 조회/구조 답변/되묻기로 분기 |
+| `intent_router.py` | 채팅 의도 라우팅 — Jev Choice 분류(재시도 포함), 실패 시 채팅 LLM 판단, 낮은 확신은 되묻기 |
+| `question_similarity.py` | DB 전체 예상 질문 생성과 역할(테이블 권한) 안전한 유사도 검색 |
+| `graph_ingestion.py` | 업로드된 문서를 읽어 본문·명시된 문서 링크를 Neo4j에 적재(파일 수·크기 제한 포함) |
+| `project_graph.py` | 프로젝트 범위 Neo4j 그래프·문서 본문 조회, 기존 소스의 프로젝트 연결 |
+| `graph_source_routes.py` | 문서 소스 등록·연결·적재, 그래프·문서 조회 API 라우터 |
 | `llm.py` | 공통 AI 진입점 (`plan_with_llm`, `embed_text`, `embed_texts`), 오류·사용량 기록 |
 | `prompts.py` | SQL·위젯 계획 및 예상 질문 생성 공통 프롬프트 |
 | `providers/` | `__init__.py`: Provider 선택·설정, `openai.py`: OpenAI 호환 요청·응답, `gemini.py`: Gemini 설정, `local.py`: 로컬 요청·임베딩 차원 검사, `transport.py`: 공통 HTTP 전송 |
@@ -69,11 +74,13 @@ backend/
 
 | 파일 | 역할 |
 |------|------|
-| `projects.py` | `projects` 테이블 CRUD |
+| `projects.py` | `projects` 테이블 CRUD, 프로젝트 삭제(연관 대화·Stage 정리, 문서 소스는 미연결로 보존) |
 | `conversations.py` | `conversations` + `messages` CRUD, 제목 자동 갱신 |
 | `stages.py` | `stages` + `stage_widgets` CRUD, 컴포넌트 화이트리스트 검증 |
 | `connections.py` | `database_connections`(암호화 저장) + `table_permissions` CRUD, 연결 URL 조립 |
 | `message_embeddings.py` | 채팅 메시지 임베딩 저장/유사도 검색 (pgvector, 별도 `chat_vector` DB) |
+| `question_catalog.py` | DB별 예상 질문과 연결 SQL·위젯 정보 저장/검색(채팅 이력과 분리) |
+| `graph_sources.py` | 프로젝트별 Graph RAG 문서 소스(경로·업로드 파일·적재 상태) 저장 |
 
 ### 2.3 `backend/scripts/` — 운영/개발 스크립트
 
@@ -102,9 +109,12 @@ backend/
 | `skax_nms/` | SKAX NMS 샘플 DB | 복원된 전체 덤프(`cinamon` 스키마), 로컬 설정 스크립트 |
 | `chat_vector/` | 채팅 임베딩 DB | pgvector 확장, `message_embeddings` 테이블 |
 
+서비스 DB 마이그레이션은 `001_initial` ~ `007_graph_source_files`(프로젝트, 뷰어 역할, Graph RAG 소스·업로드 파일 포함)까지 있다.
+
 ### 2.5 나머지
 
-- `backend/tests/` — pytest. `test_agent.py`(Mock 매칭), `test_conversations.py`, `test_projects.py`, `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트).
+- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
+- `frontend/tests/` — Node 단위 테스트. `aiSettings.test.js`, `graphLayout.test.js`, `graphViewport.test.js`, `graphUpload.test.js`.
 - `backend/evals/questions.json` — 질문별 기대 Artifact 형태(컴포넌트, 최소 위젯 수)를 정의한 평가 데이터셋.
 - `backend/Dockerfile`, `backend/.dockerignore` — 백엔드 컨테이너 빌드.
 
@@ -126,10 +136,15 @@ frontend/
 | 파일 | 역할 |
 |------|------|
 | `main.jsx` | React 진입점. `BrowserRouter`로 `App`을 마운트 |
-| `App.jsx` | 워크스페이스 최상위 컴포넌트. 로그인, 사이드바, 채팅, 라우팅(`/`, `/p/:id/view`)을 모두 포함하는 가장 큰 파일 (803줄) |
+| `App.jsx` | 워크스페이스 최상위 컴포넌트. 로그인, 사이드바, 채팅(되묻기 선택지 포함), 라우팅(`/`, `/p/:id/view`)을 모두 포함하는 가장 큰 파일 |
 | `StageCanvas.jsx` | Stage 핀보드. `react-grid-layout` 기반 드래그·리사이즈·자동 저장, `addWidgetToStage` export |
 | `ViewerStagePage.jsx` | `/p/:projectId/view` 라우트. `StageCanvas`를 읽기 전용으로 감싸는 얇은 래퍼 |
 | `AdminPanel.jsx` | 관리자 드로어 — DB 연결 등록/테스트, AI 설정, 테이블 권한 |
+| `GraphSources.jsx` | DB 관리 패널의 Graph RAG 문서 소스 등록·업로드·적재 UI |
+| `ProjectGraph.jsx` | Stage의 프로젝트 문서 그래프·본문 조회 (Viewer 포함) |
+| `graphLayout.js` | 그래프 노드 배치(겹침 방지) 계산 |
+| `graphViewport.js` | 그래프 확대·축소 범위(10%~3200%)와 마우스 기준 줌 계산 |
+| `graphUpload.js` | 브라우저 폴더·파일 선택을 업로드 대상으로 정리 |
 | `widgets/WidgetRenderer.jsx` | 위젯 컴포넌트 렌더러. `component` 이름별로 Recharts 차트/표/KPI 등을 그림 |
 | `sqlHelpers.js` | 어떤 컴포넌트가 SQL 보기를 지원하는지(`canShowSql`), 위젯에서 실행 SQL을 뽑는 로직(`resolveWidgetSql`) |
 | `store.js` | 상태관리 3원칙의 구현부. `useStore`(SWR 캐시 기반 전역 슬롯), `storeKeys`(SWR 키 레지스트리) |

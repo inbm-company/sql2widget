@@ -53,6 +53,8 @@ def test_run_agent_passes_selected_connection_schema_to_llm(monkeypatch):
         calls.append(kwargs)
         return {"plan": {"widgets": []}, "provider": "gemini", "model": "test-model"}
 
+    monkeypatch.setattr(agent_service, "decide_route",
+        lambda *args, **kwargs: {"route": "data_query", "source": "jev", "clarify": False})
     monkeypatch.setattr(agent_service, "plan_with_llm", plan)
     monkeypatch.setattr(agent_service, "_materialize_plan", lambda *args, **kwargs: ("ok", {"widgets": []}))
 

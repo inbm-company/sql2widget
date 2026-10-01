@@ -3,9 +3,9 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 채팅/에이전트 |
-| 기준일 | 2026-09-30 (구현 기준) |
+| 기준일 | 2026-10-01 (구현 기준) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(Artifact 표시), [admin.md](admin.md)(연결·권한·AI 설정) |
-| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
+| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
 
 이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.
 
@@ -21,11 +21,32 @@
 
 | 항목 | 내용 |
 |------|------|
-| 입력 | `conversation_id`, `message`, `connection_id`(선택) |
+| 입력 | `conversation_id`, `message`, `connection_id`(선택), `route`(선택 — 되묻기 버튼으로 사용자가 고른 경로) |
 | 처리 | 1) user 메시지 저장 2) 첫 메시지로 대화 제목 갱신 3) 에이전트 실행 4) assistant 메시지 + artifact 저장 |
 | 출력 | `user_message`, `assistant_message`, `artifact`, `meta`, `related_messages`, `embedding_provider`, `embedding_error` |
 | UI | Enter 전송, Shift+Enter 줄바꿈. 실패 시 입력값 복원 + 오류 문구 |
 | 타임아웃 | 프론트 채팅 요청 150초 (`frontend/src/api.js` `timeoutMs: 150000`) — 실 LLM 응답 + SQL 재시도(최대 1회 repair) 여유 |
+
+### 의도 라우팅 (`intent_router.decide_route`)
+
+`run_agent`는 SQL 계획을 세우기 전에 메시지를 어떤 경로로 처리할지 먼저 정한다. 결과는 `meta.route`(`data_query` / `schema_qa` / `knowledge_qa` / `clarify`), `meta.route_source`(`user_choice` / `similarity` / `jev` / `llm_fallback`)로 응답에 남는다.
+
+| 순서 | 판단 | 비고 |
+|------|------|------|
+| 1 | 요청에 `route`가 있으면 그대로 사용 | 되묻기 버튼을 누른 경우. 모델 호출 없음 |
+| 2 | 예상 질문 유사도 검색이 `matched`면 `data_query` | 모델 호출 없음 |
+| 3 | TypeSafe **Jev** Choice 질문(`POST {TYPESAFE_BASE_URL}/v1/systemone`)으로 분류 | `TYPESAFE_API_KEY` 필요. 429/529/네트워크 오류는 최대 2회 재시도(0.5초·1초 백오프), 401/422 등은 재시도 없이 즉시 실패 |
+| 4 | Jev를 못 쓰면 채팅 LLM(`json_with_llm`)이 경로를 선택 | `meta.route_source = "llm_fallback"`, `meta.route_jev_error`에 사유 기록 — 숨기지 않는다 |
+| 5 | 그 LLM도 실패하면 `AgentRunError` → HTTP 502 | |
+
+Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과가 `other`면 **되묻기**(`clarify`)로 처리한다. 임계값은 실제 질문 데이터로 검증되지 않은 초기값이다.
+
+| 경로 | 동작 |
+|------|------|
+| `data_query` | 아래 "에이전트 실행 경로" 그대로(SQL + 위젯) |
+| `schema_qa` | 허용된 스키마 텍스트만으로 LLM이 테이블·컬럼 구조를 설명. SQL 실행 없음. `MarkdownBlock` 위젯 1개 |
+| `knowledge_qa` | 지식그래프 검색이 아직 채팅에 연결되지 않아 그렇게 안내하고 선택지를 제시 |
+| `clarify` | 위젯 없이 선택지 버튼(`artifact.type = "choices"`, `artifact.choices[{label, route, message}]`)을 반환. 버튼을 누르면 같은 메시지를 `route`와 함께 다시 전송하므로 대화에 사용자 메시지가 한 번 더 남는다. 선택지는 assistant 메시지의 artifact에 저장되어 새로고침 후에도 유지된다 |
 
 ### 에이전트 실행 경로 (`agent_service.run_agent`)
 

@@ -2,15 +2,34 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import { storeKeys, useSWR } from "./store";
 import { filterGraph, layoutGraph } from "./graphLayout";
+import { MIN_GRAPH_ZOOM, MAX_GRAPH_ZOOM, zoomGraph } from "./graphViewport";
 
 export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
   const graph = useMemo(() => layoutGraph(nodes, links), [nodes, links]);
   const center = { x: (Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + Math.max(...graph.nodes.map((n) => n.x), graph.width / 2)) / 2,
     y: (Math.min(...graph.nodes.map((n) => n.y), graph.height / 2) + Math.max(...graph.nodes.map((n) => n.y), graph.height / 2)) / 2 };
-  const width = Math.max(400, Math.max(...graph.nodes.map((n) => n.x), graph.width / 2) - Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + 160);
+  const width = Math.max(400, Math.max(...graph.nodes.map((n) => n.x), graph.width / 2) - Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + 280);
   const height = Math.max(280, Math.max(...graph.nodes.map((n) => n.y), graph.height / 2) - Math.min(...graph.nodes.map((n) => n.y), graph.height / 2) + 120);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [viewport, setViewport] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
+  const { zoom, pan } = viewport;
+  const svgRef = useRef(null);
+  function graphPoint(svg, event) {
+    const matrix = svg.getScreenCTM();
+    return matrix ? new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse()) : null;
+  }
+  useEffect(() => {
+    const svg = svgRef.current;
+    function wheel(event) {
+      event.preventDefault();
+      const point = graphPoint(svg, event);
+      if (!point) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
+      const delta = Math.max(-100, Math.min(100, event.deltaY * unit));
+      setViewport((current) => zoomGraph(current, current.zoom * Math.exp(-delta * 0.002), point, { x: center.x, y: center.y }));
+    }
+    svg.addEventListener("wheel", wheel, { passive: false });
+    return () => svg.removeEventListener("wheel", wheel);
+  }, [center.x, center.y]);
   const drag = useRef(null);
   const markerId = useId().replace(/:/g, "");
   const lookup = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -21,24 +40,33 @@ export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
   });
   function startPan(event) {
     if (event.button !== 0 || event.target.closest("[data-graph-node]")) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    drag.current = { x: event.clientX, y: event.clientY, pan, ratio: Math.max(width / rect.width, height / rect.height) };
+    const point = graphPoint(event.currentTarget, event);
+    if (!point) return;
+    drag.current = { point, pan };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function movePan(event) {
     if (!drag.current) return;
     const start = drag.current;
-    setPan({ x: start.pan.x + (event.clientX - start.x) * start.ratio, y: start.pan.y + (event.clientY - start.y) * start.ratio });
+    const point = graphPoint(event.currentTarget, event);
+    if (!point) return;
+    setViewport((current) => ({ ...current, pan: {
+      x: start.pan.x + point.x - start.point.x,
+      y: start.pan.y + point.y - start.point.y,
+    } }));
   }
   return <div className="graph-diagram-wrap">
     <div className="graph-zoom">
-      <button type="button" className="ghost" aria-label="그래프 축소" onClick={() => setZoom((z) => Math.max(0.3, z / 1.3))}>−</button>
+      <button type="button" className="ghost" aria-label="그래프 축소" disabled={zoom <= MIN_GRAPH_ZOOM} onClick={() => setViewport((current) => zoomGraph(current, current.zoom / 1.3, center, center))}>−</button>
       <span className="muted small">{Math.round(zoom * 100)}%</span>
-      <button type="button" className="ghost" aria-label="그래프 확대" onClick={() => setZoom((z) => Math.min(4, z * 1.3))}>+</button>
-      <button type="button" className="ghost" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}>전체 보기</button>
+      <button type="button" className="ghost" aria-label="그래프 확대" disabled={zoom >= MAX_GRAPH_ZOOM} onClick={() => setViewport((current) => zoomGraph(current, current.zoom * 1.3, center, center))}>+</button>
+      <button type="button" className="ghost" onClick={() => setViewport({ zoom: 1, pan: { x: 0, y: 0 } })}>전체 보기</button>
     </div>
-    <svg className="graph-diagram" viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`} role="group" aria-label="프로젝트 문서 그래프"
-      onPointerDown={startPan} onPointerMove={movePan} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
+    <svg ref={svgRef} className="graph-diagram" viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`} role="group" aria-label="프로젝트 문서 그래프"
+      onPointerDown={startPan} onPointerMove={movePan} onPointerUp={(event) => {
+        drag.current = null;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+      }} onPointerCancel={() => { drag.current = null; }} onLostPointerCapture={() => { drag.current = null; }}>
       <defs><marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" /></marker></defs>
       <g transform={`translate(${center.x + pan.x} ${center.y + pan.y}) scale(${zoom}) translate(${-center.x} ${-center.y})`}>
         {links.map((edge) => {
@@ -56,7 +84,7 @@ export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
         </g>)}
       </g>
     </svg>
-    <p className="muted small graph-hint">노드: 문서 · 화살표: 문서 링크 · 배경을 드래그해 이동하세요.</p>
+    <p className="muted small graph-hint">노드: 문서 · 화살표: 문서 링크 · 휠로 확대·축소하고 배경을 드래그해 이동하세요.</p>
   </div>;
 }
 

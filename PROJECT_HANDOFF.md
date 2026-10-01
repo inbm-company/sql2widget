@@ -57,10 +57,12 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 ## 3. 지금 동작하는 것
 
 - 로그인 JWT (access + refresh). admin / viewer.
-- 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문.
+- 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문. 프로젝트 삭제(연관 대화·Stage 정리, 문서 소스는 미연결로 보존).
+- 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → 예상 질문 유사도 → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로 `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 아직 채팅에 연결되지 않았다. 운영 `compose.production.yml`은 `TYPESAFE_*`를 넘기지 않아 운영에서는 Jev 없이 LLM 폴백으로 동작한다. 상세: `docs/features/chat.md`.
+- DB별 예상 질문 유사도 검색(`question_similarity.py`, `question_catalog.py`): 유사 질문이 있으면 연결된 SQL·위젯을 참조해 답한다. 상세: `docs/features/similarity-search-design.md`.
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
-- 프로젝트별 Graph RAG 문서 경로 등록·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 공통 소스는 미연결 상태로 보존하며 DB 관리에서 프로젝트에 연결한다. 채팅 내부 설정과 질문 검색 연동은 별도 협의 후 진행한다.
+- 프로젝트별 Graph RAG 문서 업로드(브라우저 폴더·파일 선택, 서비스 DB 보관)·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 경로 방식 소스는 문서를 다시 올려야 적재할 수 있다. 운영 `compose.production.yml`에는 아직 Neo4j가 없어 운영에서 적재하려면 서비스 추가가 필요하다. 채팅 내부 설정과 질문 검색 연동은 별도 협의 후 진행한다.
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
 - Viewer: 채팅·DnD 없음. `/p/:id/view` 읽기 전용.
 - SOC + Global Sales 샘플 DB (호스트 포트 5433, 5435). 서비스 DB 5434.
@@ -82,6 +84,8 @@ backend/app/main.py                 FastAPI
 backend/app/auth.py                 JWT
 backend/app/agent.py                위젯 화이트리스트 검증(sanitize_artifact)
 backend/app/agent_service.py        LLM 실행 경로 (에러 시 예외로 502)
+backend/app/intent_router.py        채팅 의도 라우팅(Jev → LLM 폴백 → 되묻기)
+backend/app/question_similarity.py  예상 질문 생성·유사도 검색
 backend/app/llm.py                  실모델 클라이언트
 backend/app/query.py                SQL 검증, 읽기 전용 실행
 backend/app/contracts.py            위젯 계약
@@ -92,8 +96,9 @@ backend/sql/sample_customer/        SOC 샘플
 backend/sql/stage_global/           Global Sales 샘플
 frontend/src/App.jsx                워크스페이스
 backend/app/graph_source_routes.py  프로젝트 소스·그래프 API
-backend/app/project_graph.py        프로젝트 범위 Neo4j 조회·기존 소스 연결
+backend/app/project_graph.py        프로젝트 범위 Neo4j 조회
 frontend/src/ProjectGraph.jsx       문서 그래프·본문 조회
+frontend/src/GraphSources.jsx       문서 소스 등록·업로드·적재 UI
 frontend/src/StageCanvas.jsx        Stage
 frontend/src/widgets/WidgetRenderer.jsx
 frontend/src/store.js               SWR 래퍼
@@ -148,6 +153,7 @@ POST /api/auth/login
 POST /api/auth/refresh
 GET  /api/auth/me
 GET/POST /api/projects
+PATCH/DELETE /api/projects/{id}
 GET  /api/conversations?project_id={id}
 POST /api/conversations
 GET/PATCH/DELETE /api/conversations/{id}
@@ -158,10 +164,15 @@ PATCH/DELETE /api/projects/{id}/stage/widgets/{widget_id}
 GET/POST /api/database-connections
 POST /api/database-connections/{id}/test
 GET  /api/database-connections/{id}/tables
+GET  /api/database-connections/{id}/questions
+POST /api/database-connections/{id}/questions/search
+POST /api/database-connections/{id}/questions/seed   (예상 질문, similarity-search-design.md)
 POST /api/database-connections/{id}/preview-sql   (admin)
 GET/PUT /api/table-permissions
 GET  /api/health
 ```
+
+프로젝트 문서 그래프 API(`graph-sources`, `graph`)는 `docs/features/graph-rag-sources.md`를 본다.
 
 ---
 
@@ -174,7 +185,7 @@ GET  /api/health
 3. Circle 게이지 조합 카탈로그 (ring × size × companion).
 4. Viewer에 남은 다크 Orion 자리표시 정리.
 5. ~~P2 실 LLM + Mock 폴백 hardening.~~ 완료(2026-09-22) — Mock 폴백은 hardening 대신 완전 삭제, 항상 실 LLM 호출 + 실패 시 에러 반환으로 정리됨.
-6. 실 RAG, 운영 배포 (HTTPS, 백업, 강한 `APP_SECRET`, 데모 계정 제거).
+6. 라우터 `knowledge_qa` 연결(지식그래프 검색), 실 RAG, 운영 배포 (HTTPS, 백업, 강한 `APP_SECRET`, 데모 계정 제거).
 
 ---
 

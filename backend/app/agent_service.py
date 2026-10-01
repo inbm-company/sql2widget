@@ -9,7 +9,9 @@ from app.agent import sanitize_artifact
 from app import question_similarity
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
-from app.llm import effective_provider, plan_with_llm
+from app.intent_router import RouteError, choices_for, decide_route
+from app.llm import effective_provider, json_with_llm, plan_with_llm
+from app.prompts import SCHEMA_QA_HINT
 from app.query import QueryError, execute_readonly
 from app.repositories import connections as conn_repo
 
@@ -288,6 +290,41 @@ def _materialize_plan(
     return summary, artifact
 
 
+def _clarify(
+    summary: str, message: str, probabilities: dict[str, float] | None,
+    meta: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Ask the user to pick a route instead of guessing. Stored with the message."""
+    choices = choices_for(message, probabilities)
+    return summary, {"type": "choices", "choices": choices, "widgets": []}, meta
+
+
+def _answer_schema(
+    message: str, schema_text: str, llm_context: dict[str, Any], meta: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Explain the permitted schema in text; no SQL is run."""
+    result = json_with_llm(
+        SCHEMA_QA_HINT, {"question": message, "schema": schema_text}, **llm_context,
+    )
+    answer = result.get("result") or {}
+    if not answer.get("markdown"):
+        raise AgentRunError(
+            f"{result.get('provider') or 'LLM'} request failed: "
+            f"{result.get('error') or 'schema answer was empty'}"
+        )
+    meta["provider"] = result.get("provider")
+    meta["model"] = result.get("model")
+    artifact = sanitize_artifact({
+        "artifact_id": _aid(),
+        "type": "report",
+        "widgets": [{
+            "widget_id": _wid(), "component": "MarkdownBlock",
+            "title": "테이블 구조", "props": {"markdown": answer["markdown"]},
+        }],
+    })
+    return answer.get("summary") or "테이블 구조를 설명했습니다.", artifact, meta
+
+
 def run_agent(
     message: str,
     *,
@@ -298,6 +335,7 @@ def run_agent(
     connection_id: str | None = None,
     llm_settings: dict[str, str] | None = None,
     embedding_result: dict[str, Any] | None = None,
+    forced_route: str | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
 
@@ -315,6 +353,40 @@ def run_agent(
             user_role=user_role, embedding_result=embedding_result,
         )
     meta["question_retrieval"] = retrieval
+
+    llm_context = {
+        "tenant_id": tenant_id, "user_id": user_id, "conversation_id": conversation_id,
+        "runtime_provider": runtime_llm.get("provider"),
+        "runtime_api_key": runtime_llm.get("api_key"),
+        "runtime_model": runtime_llm.get("model"),
+        "runtime_base_url": runtime_llm.get("base_url"),
+    }
+    try:
+        decision = decide_route(
+            message, tables=allowed or set(), forced_route=forced_route,
+            similar_matched=retrieval["status"] == "matched", llm_context=llm_context,
+        )
+    except RouteError as exc:
+        raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
+    meta["route"] = "clarify" if decision["clarify"] else decision["route"]
+    meta["route_source"] = decision["source"]
+    for key in ("confidence", "jev_error"):
+        if decision.get(key) is not None:
+            meta[f"route_{key}"] = decision[key]
+
+    if decision["clarify"]:
+        return _clarify(
+            "무엇을 원하시는지 확실하지 않아요. 어떤 방식으로 처리할까요?",
+            message, decision.get("probabilities"), meta,
+        )
+    if decision["route"] == "knowledge_qa":
+        return _clarify(
+            "문서(지식그래프) 검색은 아직 채팅에 연결되지 않았어요. 다른 방식으로 처리할까요?",
+            message, None, meta,
+        )
+    if decision["route"] == "schema_qa":
+        return _answer_schema(message, schema_text, llm_context, meta)
+
     # The current schema is already supplied separately. Keep references compact.
     references = [
         {"question": item["question"], "plan": item["plan"], "similarity": item["similarity"]}

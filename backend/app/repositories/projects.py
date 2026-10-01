@@ -1,6 +1,11 @@
 import secrets
 
-from app.db import fetch_all, fetch_one
+from app.db import fetch_all, fetch_one, get_conn
+from app.repositories import message_embeddings
+
+
+class ProjectBusyError(Exception):
+    pass
 
 
 def _id() -> str:
@@ -55,3 +60,41 @@ def update_project(
         """,
         (final_title, project_id, tenant_id, user_id),
     )
+
+
+def delete_project(project_id: str, tenant_id: str, user_id: str) -> bool:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id FROM projects
+                WHERE id = %s AND tenant_id = %s AND user_id = %s
+                FOR UPDATE
+                """,
+                (project_id, tenant_id, user_id),
+            )
+            if not cur.fetchone():
+                return False
+
+            # Use the ingestion/assignment lock so sources cannot be detached mid-job.
+            cur.execute(
+                "SELECT id FROM graph_sources WHERE project_id = %s ORDER BY id",
+                (project_id,),
+            )
+            for source in cur.fetchall():
+                cur.execute(
+                    "SELECT pg_try_advisory_xact_lock(hashtextextended(%s, 0)) AS locked",
+                    (source["id"],),
+                )
+                if not cur.fetchone()["locked"]:
+                    raise ProjectBusyError("문서 소스 작업이 진행 중입니다. 완료 후 다시 삭제해 주세요.")
+
+            # Conversations use RESTRICT; delete them before their parent, atomically.
+            cur.execute("SELECT id FROM conversations WHERE project_id = %s", (project_id,))
+            conversation_ids = [row["id"] for row in cur.fetchall()]
+            cur.execute("DELETE FROM conversations WHERE project_id = %s", (project_id,))
+            cur.execute("DELETE FROM projects WHERE id = %s", (project_id,))
+            # A vector-store failure rolls back service DB deletion, allowing a retry.
+            message_embeddings.delete_conversation_embeddings(tenant_id, conversation_ids)
+            # FKs cascade Stage/widgets/messages and preserve sources as unassigned.
+            return True

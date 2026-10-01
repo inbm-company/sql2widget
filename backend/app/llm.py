@@ -91,6 +91,54 @@ def embed_text(text: str, **settings) -> dict[str, Any]:
     return {**result, "embedding": vectors[0] if vectors else None}
 
 
+def json_with_llm(
+    system_hint: str,
+    user_content: dict[str, Any],
+    *,
+    tenant_id: str,
+    user_id: str,
+    conversation_id: str | None,
+    runtime_provider: str | None = None,
+    runtime_api_key: str | None = None,
+    runtime_model: str | None = None,
+    runtime_base_url: str | None = None,
+) -> dict[str, Any]:
+    """Ask the configured chat model for one JSON object and log the usage."""
+    provider = (runtime_provider or effective_provider()).lower()
+    adapter = None
+    try:
+        adapter = resolve_provider(
+            runtime_provider=runtime_provider, runtime_api_key=runtime_api_key,
+            runtime_model=runtime_model, runtime_base_url=runtime_base_url,
+        )
+    except ValueError as exc:
+        error = _error_message(exc, runtime_api_key or "")
+        log_usage(tenant_id=tenant_id, user_id=user_id, conversation_id=conversation_id,
+                  provider=provider, model=runtime_model, success=False, error=error)
+        return {"provider": provider, "result": None, "error": error}
+    provider, model = adapter.name, adapter.model
+    try:
+        result, usage = adapter.plan(system_hint, user_content)
+        log_usage(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            provider=provider,
+            model=model,
+            prompt_tokens=int(usage.get("prompt_tokens") or 0),
+            completion_tokens=int(usage.get("completion_tokens") or 0),
+            success=True,
+        )
+        return {"provider": provider, "result": result, "model": model}
+    except Exception as exc:
+        error = _error_message(exc, adapter.api_key)
+        log_usage(
+            tenant_id=tenant_id, user_id=user_id, conversation_id=conversation_id,
+            provider=provider, model=model, success=False, error=error,
+        )
+        return {"provider": provider, "result": None, "error": error}
+
+
 def plan_with_llm(
     message: str,
     *,
@@ -106,19 +154,6 @@ def plan_with_llm(
     matched_questions: list[dict[str, Any]] | None = None,
     catalog_seed: bool = False,
 ) -> dict[str, Any]:
-    provider = (runtime_provider or effective_provider()).lower()
-    adapter = None
-    try:
-        adapter = resolve_provider(
-            runtime_provider=runtime_provider, runtime_api_key=runtime_api_key,
-            runtime_model=runtime_model, runtime_base_url=runtime_base_url,
-        )
-    except ValueError as exc:
-        error = _error_message(exc, runtime_api_key or "")
-        log_usage(tenant_id=tenant_id, user_id=user_id, conversation_id=conversation_id,
-                  provider=provider, model=runtime_model, success=False, error=error)
-        return {"provider": provider, "plan": None, "error": error}
-    provider, model = adapter.name, adapter.model
     user_content = {
         "question": message,
         "schema": schema_text,
@@ -134,23 +169,11 @@ When none are relevant, plan using the supplied schema. Query current data.
 """
     if catalog_seed:
         system_hint = QUESTION_CATALOG_HINT
-    try:
-        plan, usage = adapter.plan(system_hint, user_content)
-        log_usage(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            conversation_id=conversation_id,
-            provider=provider,
-            model=model,
-            prompt_tokens=int(usage.get("prompt_tokens") or 0),
-            completion_tokens=int(usage.get("completion_tokens") or 0),
-            success=True,
-        )
-        return {"provider": provider, "plan": plan, "model": model}
-    except Exception as exc:
-        error = _error_message(exc, adapter.api_key)
-        log_usage(
-            tenant_id=tenant_id, user_id=user_id, conversation_id=conversation_id,
-            provider=provider, model=model, success=False, error=error,
-        )
-        return {"provider": provider, "plan": None, "error": error}
+    result = json_with_llm(
+        system_hint, user_content, tenant_id=tenant_id, user_id=user_id,
+        conversation_id=conversation_id, runtime_provider=runtime_provider,
+        runtime_api_key=runtime_api_key, runtime_model=runtime_model,
+        runtime_base_url=runtime_base_url,
+    )
+    plan = result.pop("result")
+    return {**result, "plan": plan}

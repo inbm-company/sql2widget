@@ -89,23 +89,3 @@ def _read(reader, *args):
             return session.execute_read(reader, *args)
     except (Neo4jError, ServiceUnavailable, OSError):
         raise GraphSourceError('Neo4j 그래프를 불러오지 못했습니다. 서버 상태와 접속 설정을 확인하세요.') from None
-
-
-def tag_source_project(tx, source_id: str, tenant_id: str, project_id: str):
-    tx.run('MATCH (s:GraphSource {id: $source, tenant_id: $tenant}) '
-           'SET s.project_id = $project', source=source_id, tenant=tenant_id, project=project_id).consume()
-    for label in ('GraphDocument', 'GraphChunk'):
-        tx.run(f'MATCH (n:{label} {{source_id: $source, tenant_id: $tenant}}) '
-               'SET n.project_id = $project', source=source_id, tenant=tenant_id, project=project_id).consume()
-    tx.run('MATCH (d:GraphDocument {source_id: $source, tenant_id: $tenant})-[r:LINKS_TO]->'
-           '(target:GraphDocument {source_id: $source, tenant_id: $tenant}) '
-           'SET r.project_id = $project, r.tenant_id = $tenant',
-           source=source_id, tenant=tenant_id, project=project_id).consume()
-
-
-def assign_graph_project(source_id: str, tenant_id: str, project_id: str):
-    try:
-        with graph_driver().session(database='neo4j') as session:
-            session.execute_write(tag_source_project, source_id, tenant_id, project_id)
-    except (Neo4jError, ServiceUnavailable, OSError):
-        raise GraphSourceError('기존 그래프의 프로젝트 연결에 실패했습니다. Neo4j 접속 상태를 확인하세요.') from None

@@ -132,6 +132,19 @@ def update_project(
     return project
 
 
+@app.delete("/api/projects/{project_id}")
+def delete_project(project_id: str, user=Depends(get_current_user)):
+    if user["role"] == "viewer":
+        raise HTTPException(status_code=403, detail="읽기 전용 사용자는 프로젝트를 삭제할 수 없습니다.")
+    try:
+        ok = project_repo.delete_project(project_id, user["tenant_id"], user["id"])
+    except project_repo.ProjectBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
+    if not ok:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"ok": True}
+
+
 @app.get("/api/conversations")
 def list_conversations(project_id: str, user=Depends(get_current_user)):
     if not project_repo.get_project(project_id, user["tenant_id"], user["id"]):
@@ -230,6 +243,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
             connection_id=body.connection_id,
             llm_settings=llm_settings,
             embedding_result=embed_result,
+            forced_route=body.route,
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

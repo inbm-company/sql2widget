@@ -319,7 +319,7 @@ button {
 
 .project-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 28px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   width: 100%;
   border-radius: var(--radius-sm);
@@ -337,6 +337,33 @@ button {
 .project-tree {
   border-left: 1px solid var(--border);
   margin: 0 0 4px 16px;
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+}
+
+.project-delete {
+  opacity: 0;
+}
+
+.project-header:hover .project-delete,
+.project-header:focus-within .project-delete,
+.project-header.active .project-delete {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .project-delete { opacity: 1; }
+}
+
+.project-delete-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--danger);
+  font-size: 11px;
 }
 
 .project-item,
@@ -371,6 +398,12 @@ button {
   font: inherit;
   font-size: 12px;
   font-weight: 600;
+}
+
+.project-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-new-chat {
@@ -1664,11 +1697,11 @@ button {
 .graph-zoom .ghost { padding: 4px 8px; }
 .graph-diagram { display: block; width: 100%; height: 360px; cursor: grab; touch-action: none; }
 .graph-diagram:active { cursor: grabbing; }
-.graph-edge { stroke: #bbc4cd; stroke-width: 1.5; color: #bbc4cd; fill: none; }
-.graph-edge.selected { stroke: var(--accent); color: var(--accent); stroke-width: 2; }
+.graph-edge { stroke: #bbc4cd; stroke-width: 1.5; color: #bbc4cd; fill: none; vector-effect: non-scaling-stroke; opacity: 0.45; }
+.graph-edge.selected { stroke: var(--accent); color: var(--accent); stroke-width: 2; opacity: 1; }
 .graph-node { cursor: pointer; outline: none; }
 .graph-node circle { fill: #e6edf5; stroke: #6484aa; stroke-width: 2; }
-.graph-node text { font-size: 12px; fill: var(--ink); user-select: none; }
+.graph-node text { font-size: 12px; fill: var(--ink); user-select: none; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .graph-node.selected circle, .graph-node:focus circle { fill: var(--accent); stroke: var(--accent); stroke-width: 3; }
 .graph-node.dimmed { opacity: 0.4; }
 .graph-hint { padding: 0 12px 8px; margin: 0; }
@@ -1678,4 +1711,7 @@ button {
 .graph-neighbors { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .graph-empty { padding: 32px 12px; text-align: center; }
 .graph-limit { color: var(--accent); }
-.graph-unassigned { margin-top: 16px; border-top: 1px solid var(--border); }
+.graph-upload-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.file-pick { display: inline-block; cursor: pointer; }
+.file-pick input { display: none; }
+.file-pick[aria-disabled="true"] { opacity: 0.45; cursor: default; pointer-events: none; }

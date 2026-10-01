@@ -32,6 +32,7 @@ APP_PORT=3003
 
 운영 초기 계정의 이메일은 `admin@example.com`, `viewer@example.com`이며,
 비밀번호는 위 환경 변수로만 초기화합니다. 기존 계정 비밀번호를 매번 덮어쓰지 않습니다.
+채팅 의도 라우팅에 쓰는 TypeSafe Jev 키(`TYPESAFE_API_KEY`)는 현재 `compose.production.yml`이 백엔드로 전달하지 않습니다. 따라서 운영에서는 Jev 없이 채팅 LLM이 경로를 판단합니다(`meta.route_source = llm_fallback`). Jev를 쓰려면 `.env`와 compose의 백엔드 `environment`에 `TYPESAFE_API_KEY`(선택: `TYPESAFE_BASE_URL`, `TYPESAFE_MODEL`, `ROUTE_MIN_CONFIDENCE`)를 추가해야 합니다.
 로그인 후 Admin → AI 연결에 Gemini API 키를 입력합니다.
 현재 API 키는 해당 브라우저 localStorage에 저장됩니다. 채팅 요청에만 전달되고,
 제공자별 고정 API 주소로 호출합니다. 사용자는 Gemini 모델을 직접 지정할 수 있습니다.

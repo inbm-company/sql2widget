@@ -22,3 +22,22 @@ test("layout remains finite and bounded for isolated nodes, loops and capped gra
   }
   assert.deepEqual(layoutGraph(nodes, links), layoutGraph([...nodes].reverse(), links));
 });
+
+test("dense graphs and high-degree hubs reserve separate node and title spaces", () => {
+  for (const size of [200, 500]) {
+    const input = Array.from({ length: size }, (_, i) => ({ id: `node-${i}`, title: "긴 문서 제목을 표시하는 노드입니다", path: `${i}.md` }));
+    const denseLinks = input.slice(1).flatMap((node, i) => [
+      { source: input[0].id, target: node.id },
+      { source: node.id, target: input[(i + 2) % size].id },
+    ]);
+    const graph = layoutGraph(input, denseLinks);
+    for (let i = 0; i < graph.nodes.length; i++) {
+      for (let j = i + 1; j < graph.nodes.length; j++) {
+        const a = graph.nodes[i], b = graph.nodes[j];
+        assert(Math.abs(a.x - b.x) >= 260 || Math.abs(a.y - b.y) >= 88,
+          `Nodes ${a.id} and ${b.id} must reserve distinct title slots`);
+      }
+    }
+    assert.deepEqual(graph, layoutGraph([...input].reverse(), denseLinks));
+  }
+});
