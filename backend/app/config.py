@@ -46,6 +46,8 @@ TYPESAFE_BASE_URL = env("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
 TYPESAFE_MODEL = env("TYPESAFE_MODEL", "jev-latest")
 # 이 값 미만의 confidence는 되묻기로 처리한다. 실제 질문 데이터로 검증해 조정할 것.
 ROUTE_MIN_CONFIDENCE = float(env("ROUTE_MIN_CONFIDENCE", "0.5"))
+# 허용 테이블이 이 개수를 넘으면 SQL 계획에 관련 테이블만 전달한다(작은 DB는 전부 전달).
+SCHEMA_LINK_MIN_TABLES = int(env("SCHEMA_LINK_MIN_TABLES", "20"))
 CORS_ORIGINS = [
     o.strip()
     for o in env(

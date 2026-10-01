@@ -60,9 +60,14 @@ backend/
 | `query.py` | 고객 DB용 읽기 전용 SQL 검증·실행. `SELECT`/`WITH` 외 차단, 허용 테이블 검사, 결과 JSON 직렬화 |
 | `agent.py` | 위젯 Artifact 정리(`sanitize_artifact`) — 화이트리스트 밖 컴포넌트·키 제거. 예전 Mock 키워드 에이전트는 삭제됨 |
 | `agent_service.py` | 실 LLM 경로 오케스트레이터. `run_agent()`가 `main.py`의 `/api/chat`에서 호출되며 의도 라우팅 결과에 따라 데이터 조회/구조 답변/되묻기로 분기 |
+| `schema_linking.py` | 큰 DB의 SQL 계획 스키마 줄이기 — 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체로 승격 |
 | `intent_router.py` | 채팅 의도 라우팅 — Jev Choice 분류(재시도 포함), 실패 시 채팅 LLM 판단, 낮은 확신은 되묻기 |
 | `question_similarity.py` | DB 전체 예상 질문 생성과 역할(테이블 권한) 안전한 유사도 검색 |
-| `graph_ingestion.py` | 업로드된 문서를 읽어 본문·명시된 문서 링크를 Neo4j에 적재(파일 수·크기 제한 포함) |
+| `graph_ingestion.py` | 업로드된 문서를 읽어 문단 우선 본문 조각·명시된 문서 링크를 Neo4j에 적재(파일 수·크기 제한 포함) |
+| `graph_schema.py` | 문서 그래프 엔티티 스키마 — 채팅 LLM 제안, 닫힌 타입 검증(이름 형식·개수·예약어) |
+| `graph_service.py` | 문서 소스 작업(적재·스키마 제안/승인·추출 시작/취소)의 공통 로직. REST 라우트와 채팅이 함께 사용 |
+| `graph_chat.py` | 채팅 `graph_build` 경로 — 스키마 협의·승인·추출을 대화로 진행하고 `graph_flow` 카드·버튼을 반환 |
+| `graph_extraction.py` | 승인된 스키마로 조각에서 엔티티·관계를 LLM 추출(근거 인용 검증)하고 Neo4j에 반영하는 백그라운드 작업 |
 | `project_graph.py` | 프로젝트 범위 Neo4j 그래프·문서 본문 조회, 기존 소스의 프로젝트 연결 |
 | `graph_source_routes.py` | 문서 소스 등록·연결·적재, 그래프·문서 조회 API 라우터 |
 | `llm.py` | 공통 AI 진입점 (`plan_with_llm`, `embed_text`, `embed_texts`), 오류·사용량 기록 |
@@ -109,11 +114,11 @@ backend/
 | `skax_nms/` | SKAX NMS 샘플 DB | 복원된 전체 덤프(`cinamon` 스키마), 로컬 설정 스크립트 |
 | `chat_vector/` | 채팅 임베딩 DB | pgvector 확장, `message_embeddings` 테이블 |
 
-서비스 DB 마이그레이션은 `001_initial` ~ `007_graph_source_files`(프로젝트, 뷰어 역할, Graph RAG 소스·업로드 파일 포함)까지 있다.
+서비스 DB 마이그레이션은 `001_initial` ~ `009_graph_source_extraction`(프로젝트, 뷰어 역할, Graph RAG 소스·업로드 파일·엔티티 스키마·추출 상태 포함)까지 있다.
 
 ### 2.5 나머지
 
-- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
+- `backend/tests/` — pytest. `test_conversations.py`, `test_projects.py`(삭제 포함), `test_query.py`(SQL 검증), `test_llm_runtime.py`(LLM 경로), `test_schema_context.py`(권한 테이블 → LLM 스키마 컨텍스트), `test_intent_router.py`(의도 라우팅), `test_schema_linking.py`(스키마 줄이기), `test_question_catalog.py`·`test_question_similarity.py`(예상 질문), `test_graph_sources.py`(문서 소스·그래프).
 - `frontend/tests/` — Node 단위 테스트. `aiSettings.test.js`, `graphLayout.test.js`, `graphViewport.test.js`, `graphUpload.test.js`.
 - `backend/evals/questions.json` — 질문별 기대 Artifact 형태(컴포넌트, 최소 위젯 수)를 정의한 평가 데이터셋.
 - `backend/Dockerfile`, `backend/.dockerignore` — 백엔드 컨테이너 빌드.

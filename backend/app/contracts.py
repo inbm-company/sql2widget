@@ -33,7 +33,8 @@ class ChatRequest(BaseModel):
     conversation_id: str
     message: str
     connection_id: str | None = None
-    route: Literal["data_query", "schema_qa", "knowledge_qa"] | None = None
+    route: Literal["data_query", "schema_qa", "knowledge_qa", "graph_build"] | None = None
+    graph_action: dict | None = None
 
 
 class QuestionWidgetIn(BaseModel):

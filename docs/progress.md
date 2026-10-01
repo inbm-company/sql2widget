@@ -41,6 +41,8 @@
 | 문서 체계 정비 — `AGENTS.md`/`CLAUDE.md`, `docs/01-folder-structure.md`, `docs/features/*.md`, 본 문서, `docs/dashboard.html`, `docs/kanban.html` | 이번 문서화 작업 1~5번 전체 완료 |
 | DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성 | [similarity-search-design.md](features/similarity-search-design.md) |
 | 채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지 | 단위 테스트와 실제 Jev 호출(2026-10-01, `jev-1.13.0`)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. `ROUTE_MIN_CONFIDENCE` 0.5는 아직 검증 전 초기값. [chat.md](features/chat.md) |
+| 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
+| 문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기(타입별 색·속성·관계·원문 근거) | Northwind 문서 1개로 브라우저 검증(Table 16·FK 13). 다른 문서 유형은 미검증, 같은 이름 노드는 문서 전체에서 한 노드로 합쳐지는 한계. [graph-rag-sources.md](features/graph-rag-sources.md) |
 
 ## 3. 진행중
 
@@ -48,7 +50,7 @@
 |------|------|
 | 채팅 메시지 임베딩·유사도 검색(pgvector, `chat_vector` DB) | 백엔드 저장·검색(`message_embeddings.py`)까지 완료, API가 `related_messages` 반환. **프론트 미표시** — `App.jsx`가 아직 렌더링 안 함 |
 | 실 LLM 경로 하드닝 | 기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) 5번 |
-| 운영 배포 파이프라인 | `compose.production.yml`, GitHub Actions(`deploy.yml`), `deployment/README.md` 절차는 있음. `deployment/README.md` 자체가 "GitHub Actions 첫 실행과 VPS 배포 결과는 완료 후 기록" 상태라고 명시 — 실제 운영 검증은 미완 |
+| 운영 배포 파이프라인 | `compose.production.yml, GitHub Actions(`deploy.yml`), `deployment/README.md` 절차는 있음. `deployment/README.md` 자체가 "GitHub Actions 첫 실행과 VPS 배포 결과는 완료 후 기록" 상태라고 명시 — 실제 운영 검증은 미완 |
 
 ## 4. 예정
 

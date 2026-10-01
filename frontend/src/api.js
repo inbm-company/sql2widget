@@ -145,7 +145,7 @@ export const api = {
     request(`/api/conversations/${id}`, {
       method: "DELETE",
     }),
-  chat: (conversationId, message, connectionId, route = null) =>
+  chat: (conversationId, message, connectionId, route = null, graphAction = null) =>
     request("/api/chat", {
       method: "POST",
       // Gemini can take up to 60s, and the backend may run one repair attempt.
@@ -155,6 +155,7 @@ export const api = {
         message,
         connection_id: connectionId || null,
         route,
+        graph_action: graphAction,
       }),
     }),
   getStage: (projectId) => request(`/api/projects/${projectId}/stage`),
@@ -194,6 +195,7 @@ export const api = {
     timeoutMs: 300000,
   }),
   getProjectGraph: (projectId) => request(`/api/projects/${projectId}/graph`),
+  getProjectEntities: (projectId) => request(`/api/projects/${projectId}/graph/entities`),
   getGraphDocument: (projectId, id) => request(`/api/projects/${projectId}/graph/documents/${id}`),
   createConnection: (payload) =>
     request("/api/database-connections", {

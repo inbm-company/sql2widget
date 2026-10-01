@@ -12,7 +12,7 @@ from app.llm import _error_message, json_with_llm
 from app.prompts import ROUTE_HINT
 from app.providers import transport
 
-ANSWER_ROUTES = ("data_query", "schema_qa", "knowledge_qa")
+ANSWER_ROUTES = ("data_query", "schema_qa", "knowledge_qa", "graph_build")
 # 되묻기 버튼으로 제공하는 경로. 지식그래프 검색이 연결되면 knowledge_qa를 추가한다.
 CHOICE_ROUTES = ("data_query", "schema_qa")
 ROUTE_LABELS = {
@@ -24,6 +24,8 @@ JEV_CRITERIA = {
     "data_query": "DB의 데이터를 숫자·표·차트로 조회해 달라는 요청",
     "schema_qa": "DB의 테이블·컬럼·관계 같은 구조에 대한 질문",
     "knowledge_qa": "업로드된 문서나 지식그래프의 내용에 대한 질문",
+    "graph_build": "업로드한 문서를 지식그래프(노드·관계)로 만들거나, 그 노드 종류·관계 구조(스키마)를 정하거나 고치려는 요청. "
+                   "pending_graph_flow가 참이면 직전에 제안된 그래프 스키마에 대한 답·수정 요청도 여기에 해당",
     "other": "위 어디에도 맞지 않거나 무엇을 원하는지 알 수 없는 입력",
 }
 MAX_RETRIES = 2  # 첫 시도 이후 재시도 횟수
@@ -102,6 +104,7 @@ def decide_route(
     similar_matched: bool,
     forced_route: str | None,
     llm_context: dict[str, Any],
+    pending_graph_flow: bool = False,
 ) -> dict[str, Any]:
     """Return {route, source, confidence, probabilities, clarify, jev_error?}.
 
@@ -114,7 +117,8 @@ def decide_route(
     if similar_matched:
         return {"route": "data_query", "source": "similarity", "clarify": False}
 
-    state = {"question": message, "tables": sorted(tables), "has_similar_question": False}
+    state = {"question": message, "tables": sorted(tables), "has_similar_question": False,
+             "pending_graph_flow": pending_graph_flow}
     jev_error = None
     if config.TYPESAFE_API_KEY:
         try:

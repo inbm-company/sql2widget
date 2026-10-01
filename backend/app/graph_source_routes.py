@@ -1,11 +1,8 @@
-from contextlib import contextmanager
-
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from app import graph_ingestion, project_graph
+from app import graph_ingestion, graph_schema, graph_service as service, project_graph
 from app.auth import get_current_user
-from app.db import get_conn
 from app.repositories import graph_sources as repo, projects
 
 router = APIRouter(prefix='/api/projects/{project_id}', tags=['graph-sources'])
@@ -23,18 +20,8 @@ def graph_admin(user=Depends(project_user)):
     return user
 
 
-@contextmanager
-def source_lock(source_id):
-    # Session locks also release if the process stops, allowing a safe retry.
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT pg_try_advisory_lock(hashtextextended(%s, 0)) AS locked', (source_id,))
-            if not cur.fetchone()['locked']:
-                raise HTTPException(status_code=409, detail='이 소스는 이미 작업 중입니다.')
-            try:
-                yield
-            finally:
-                cur.execute('SELECT pg_advisory_unlock(hashtextextended(%s, 0))', (source_id,))
+def http(exc: service.GraphServiceError) -> HTTPException:
+    return HTTPException(status_code=exc.status, detail=exc.message)
 
 
 class UploadFile(BaseModel):
@@ -79,31 +66,112 @@ def register_source(project_id: str, body: GraphSourceIn, user=Depends(graph_adm
 
 @router.put('/graph-sources/{source_id}/files')
 def replace_source_files(project_id: str, source_id: str, body: GraphFilesIn, user=Depends(graph_admin)):
-    with source_lock(source_id):
-        kept, excluded = validated_files(body.files)
-        source = repo.replace_files(source_id, user['tenant_id'], project_id, kept)
-        if not source:
-            raise HTTPException(status_code=404, detail='등록된 데이터 소스를 찾을 수 없습니다.')
-        return {**source, 'excluded_count': excluded}
+    try:
+        with service.source_lock(source_id):
+            service.reject_while_extracting(service.get_source(source_id, user['tenant_id'], project_id))
+            kept, excluded = validated_files(body.files)
+            source = repo.replace_files(source_id, user['tenant_id'], project_id, kept)
+            if not source:
+                raise HTTPException(status_code=404, detail='등록된 데이터 소스를 찾을 수 없습니다.')
+            return {**source, 'excluded_count': excluded}
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
 
 
 @router.post('/graph-sources/{source_id}/ingest')
 def ingest_source(project_id: str, source_id: str, user=Depends(graph_admin)):
-    with source_lock(source_id):
-        source = repo.get_source(source_id, user['tenant_id'], project_id)
-        if not source:
-            raise HTTPException(status_code=404, detail='등록된 데이터 소스를 찾을 수 없습니다.')
-        try:
-            repo.mark_processing(source_id, user['tenant_id'], project_id)
-            counts = graph_ingestion.ingest(source, repo.get_files(source_id))
-            return repo.mark_completed(source_id, user['tenant_id'], project_id, counts)
-        except graph_ingestion.GraphSourceError as exc:
-            repo.mark_failed(source_id, user['tenant_id'], project_id, str(exc))
-            raise HTTPException(status_code=400, detail=str(exc)) from None
-        except Exception:
-            message = '적재 중 오류가 발생했습니다. 다시 실행하세요.'
-            repo.mark_failed(source_id, user['tenant_id'], project_id, message)
-            raise HTTPException(status_code=500, detail=message) from None
+    try:
+        return service.ingest(source_id, user['tenant_id'], project_id)
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+
+
+class SchemaProposeIn(BaseModel):
+    instruction: str = Field(default='', max_length=1000)
+
+
+class SchemaIn(BaseModel):
+    schema_: dict = Field(alias='schema')
+
+
+def llm_settings(request: Request) -> dict:
+    """AI connection of the calling browser, sent the same way as for chat."""
+    return {'provider': request.headers.get('X-LLM-Provider', ''), 'api_key': request.headers.get('X-LLM-API-Key', ''),
+            'model': request.headers.get('X-LLM-Model', ''), 'base_url': request.headers.get('X-LLM-Base-URL', '')}
+
+
+@router.post('/graph-sources/{source_id}/schema/propose')
+def propose_schema(project_id: str, source_id: str, body: SchemaProposeIn, request: Request,
+                   user=Depends(graph_admin)):
+    """LLM proposes an entity schema from the stored documents; with an instruction it revises the draft."""
+    try:
+        return service.propose_schema(source_id, user['tenant_id'], project_id, user,
+                                      instruction=body.instruction, llm_settings=llm_settings(request))
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+
+
+@router.put('/graph-sources/{source_id}/schema')
+def edit_schema(project_id: str, source_id: str, body: SchemaIn, user=Depends(graph_admin)):
+    """Store a schema edited by the user; it must be approved again."""
+    try:
+        service.get_source(source_id, user['tenant_id'], project_id)
+        schema = graph_schema.validate_schema(body.schema_)
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+    except graph_ingestion.GraphSourceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    return repo.save_schema(source_id, user['tenant_id'], project_id, schema, 'proposed')
+
+
+@router.post('/graph-sources/{source_id}/schema/approve')
+def approve_schema(project_id: str, source_id: str, user=Depends(graph_admin)):
+    try:
+        return service.approve_schema(source_id, user['tenant_id'], project_id)
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+
+
+@router.post('/graph-sources/{source_id}/extract')
+def extract_entities(project_id: str, source_id: str, request: Request, user=Depends(graph_admin)):
+    """Start the background job that extracts entities with the approved schema from the ingested chunks."""
+    try:
+        return service.start_extraction(source_id, user['tenant_id'], project_id, user,
+                                        llm_settings=llm_settings(request))
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+
+
+@router.post('/graph-sources/{source_id}/extract/cancel')
+def cancel_extraction(project_id: str, source_id: str, user=Depends(graph_admin)):
+    try:
+        service.cancel_extraction(source_id, user['tenant_id'], project_id)
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+    return {'cancelling': True}
+
+
+@router.get('/graph-sources/{source_id}/entities')
+def get_entities(project_id: str, source_id: str, limit: int = Query(default=500, ge=1, le=2000),
+                 user=Depends(graph_admin)):
+    try:
+        service.get_source(source_id, user['tenant_id'], project_id)
+        return project_graph.source_entities(user['tenant_id'], project_id, source_id, limit)
+    except service.GraphServiceError as exc:
+        raise http(exc) from None
+    except graph_ingestion.GraphSourceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+
+
+@router.get('/graph/entities')
+def get_project_entities(project_id: str, limit: int = Query(default=500, ge=1, le=2000),
+                         user=Depends(project_user)):
+    """Active entities and relations of every source in the project (read-only, viewers included)."""
+    sources = repo.list_sources(user['tenant_id'], project_id)
+    try:
+        return project_graph.project_entities(user['tenant_id'], project_id, [s['id'] for s in sources], limit)
+    except graph_ingestion.GraphSourceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
 
 
 @router.get('/graph')

@@ -6,7 +6,7 @@ import secrets
 from typing import Any
 
 from app.agent import sanitize_artifact
-from app import question_similarity
+from app import graph_chat, question_similarity, schema_linking
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.intent_router import RouteError, choices_for, decide_route
@@ -336,8 +336,17 @@ def run_agent(
     llm_settings: dict[str, str] | None = None,
     embedding_result: dict[str, Any] | None = None,
     forced_route: str | None = None,
+    project_id: str | None = None,
+    graph_action: dict | None = None,
+    graph_flow_pending: bool = False,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
+    graph_user = {"id": user_id, "tenant_id": tenant_id, "role": user_role}
+
+    if forced_route == graph_chat.ROUTE and project_id:
+        meta["route_source"] = "user_choice"
+        return graph_chat.handle(message, user=graph_user, project_id=project_id,
+                                 llm_settings=llm_settings or {}, action=graph_action, meta=meta)
 
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
     meta["connection_id"] = used_conn
@@ -365,6 +374,7 @@ def run_agent(
         decision = decide_route(
             message, tables=allowed or set(), forced_route=forced_route,
             similar_matched=retrieval["status"] == "matched", llm_context=llm_context,
+            pending_graph_flow=graph_flow_pending,
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -384,6 +394,9 @@ def run_agent(
             "문서(지식그래프) 검색은 아직 채팅에 연결되지 않았어요. 다른 방식으로 처리할까요?",
             message, None, meta,
         )
+    if decision["route"] == graph_chat.ROUTE and project_id:
+        return graph_chat.handle(message, user=graph_user, project_id=project_id,
+                                 llm_settings=runtime_llm, action=None, meta=meta)
     if decision["route"] == "schema_qa":
         return _answer_schema(message, schema_text, llm_context, meta)
 
@@ -393,9 +406,16 @@ def run_agent(
         for item in retrieval["matches"]
     ]
 
+    link = schema_linking.link_schema(
+        message, retrieval["matches"], allowed or set(), tenant_id=tenant_id,
+        project_id=project_id, llm_context=llm_context)
+    meta["schema_link"] = {key: sorted(value) if key == "tables" else value for key, value in link.items()}
+    plan_schema = schema_text if link["source"] == "full" else _schema_text_for_connection(
+        tenant_id, used_conn, link["tables"])
+
     llm_result = plan_with_llm(
         message,
-        schema_text=schema_text,
+        schema_text=plan_schema,
         tenant_id=tenant_id,
         user_id=user_id,
         conversation_id=conversation_id,
@@ -420,6 +440,8 @@ def run_agent(
         meta["model"] = llm_result.get("model")
         return summary, artifact, meta
     except Exception as first_exc:  # noqa: BLE001
+        # The narrowed schema may have hidden a needed table: retry with the full one.
+        meta["schema_link"]["escalated_to_full"] = link["source"] != "full"
         repair = plan_with_llm(
             message,
             schema_text=schema_text,

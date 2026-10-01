@@ -18,6 +18,7 @@ import ViewerStagePage from "./ViewerStagePage.jsx";
 import { canShowSql, resolveWidgetSql } from "./sqlHelpers.js";
 import { storeKeys, useSWR } from "./store";
 import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
+import GraphFlowCard from "./GraphFlowCard.jsx";
 
 function LoginForm({ onSuccess }) {
   const [email, setEmail] = useState("admin@example.com");
@@ -179,11 +180,15 @@ function AssistantAnswer({ content, artifact, projectId, onAdded, onChoose, read
     <div className="assistant-block">
       {content ? <div className="msg-content">{content}</div> : null}
 
+      {artifact?.type === "graph_flow" && artifact.graph ? (
+        <GraphFlowCard graph={artifact.graph} projectId={projectId} />
+      ) : null}
+
       {artifact?.choices?.length ? (
         <div className="prompt-suggestions">
           {artifact.choices.map((choice) => (
             <button
-              key={choice.route}
+              key={`${choice.route}:${choice.action?.type || ""}:${choice.label}`}
               type="button"
               className="prompt-row"
               onClick={() => onChoose(choice)}
@@ -559,7 +564,7 @@ function Workspace({ user, onLogout }) {
     }
   }
 
-  async function sendMessage(text, route = null) {
+  async function sendMessage(text, route = null, graphAction = null) {
     const message = text.trim();
     if (!message || !activeId || sending) return;
     setSending(true);
@@ -567,7 +572,7 @@ function Workspace({ user, onLogout }) {
     setChatError("");
     if (text === input) setInput("");
     try {
-      await api.chat(activeId, message, connectionId || null, route);
+      await api.chat(activeId, message, connectionId || null, route, graphAction);
       await mutateConv();
       await mutateConvs();
       await swrMutate(storeKeys.stage(activeProjectId));
@@ -772,7 +777,7 @@ function Workspace({ user, onLogout }) {
                       artifact={m.artifact}
                       projectId={activeProjectId}
                       onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
-                      onChoose={(choice) => sendMessage(choice.message, choice.route)}
+                      onChoose={(choice) => sendMessage(choice.message, choice.route, choice.action || null)}
                       readOnly={isViewer || sending}
                     />
                   )}

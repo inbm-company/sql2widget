@@ -197,7 +197,7 @@
     <section class="kpis">
       <div class="kpi done">
         <div class="label">완료</div>
-        <div class="num">16</div>
+        <div class="num">18</div>
         <div class="sub">앱 기능 · DB 인프라 · 문서</div>
       </div>
       <div class="kpi wip">
@@ -207,8 +207,8 @@
       </div>
       <div class="kpi plan">
         <div class="label">예정</div>
-        <div class="num">6</div>
-        <div class="sub">HIGH 1 · MED 1 · LOW 2 · 미지정 2</div>
+        <div class="num">7</div>
+        <div class="sub">HIGH 1 · MED 1 · LOW 2 · 미지정 3</div>
       </div>
       <div class="kpi hold">
         <div class="label">보류</div>
@@ -220,7 +220,7 @@
     <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
     <section class="board">
       <div class="col done">
-        <div class="col-head"><span class="dot"></span>완료<span class="count">17</span></div>
+        <div class="col-head"><span class="dot"></span>완료<span class="count">19</span></div>
         <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
         <div class="card"><div class="t">프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·문서 소스 보존, New chat 생성 오류 수정</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
         <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
@@ -238,6 +238,8 @@
         <div class="card"><div class="t">DB별 예상 질문 유사도 DB</div><div class="n">전체 테이블 질문 생성 → 검색 결과 참조 답변 생성 · <a href="features/similarity-search-design.md">상세 문서</a></div></div>
         <div class="card"><div class="t">채팅 의도 라우팅</div><div class="n">Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지 · 실제 Jev 호출 확인(2026-10-01) · 임계값 0.5는 검증 전 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">문서 체계 정비</div><div class="n">AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, 본 대시보드</div></div>
+        <div class="card"><div class="t">큰 DB의 SQL 계획 스키마 줄이기</div><div class="n">허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달 · 실패 시 전체 스키마로 재시도 · Northwind 확인, 100개 이상 DB 미검증 · <a href="features/chat.md">chat.md</a></div></div>
+        <div class="card"><div class="t">문서 그래프 엔티티 구성</div><div class="n">LLM 스키마 제안 → 채팅 수정·승인 → 엔티티 추출·적재 → Stage ‘엔티티’ 보기 · Northwind 1개 브라우저 검증, 다른 유형 미검증 · <a href="features/graph-rag-sources.md">graph-rag-sources.md</a></div></div>
       </div>
 
       <div class="col wip">

@@ -1715,3 +1715,22 @@ button {
 .file-pick { display: inline-block; cursor: pointer; }
 .file-pick input { display: none; }
 .file-pick[aria-disabled="true"] { opacity: 0.45; cursor: default; pointer-events: none; }
+.graph-mode { margin-bottom: 10px; }
+.graph-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 8px; }
+.graph-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.graph-legend-item i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.graph-props { display: grid; gap: 4px; margin: 8px 0; }
+.graph-props div { display: flex; gap: 8px; }
+.graph-props dt { color: var(--muted); min-width: 110px; }
+.graph-props dd { margin: 0; overflow-wrap: anywhere; }
+.graph-evidence blockquote { margin: 6px 0; padding: 6px 10px; border-left: 3px solid var(--border); background: var(--surface-elevated); overflow-wrap: anywhere; }
+.graph-evidence cite { color: var(--muted); font-style: normal; }
+.graph-flow-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin: 10px 0; background: var(--surface); }
+.graph-flow-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.graph-flow-types { display: grid; gap: 8px; }
+.graph-flow-type { padding-left: 10px; border-left: 3px solid var(--accent-dim); }
+.graph-flow-relations { margin: 10px 0 0; padding-left: 18px; }
+.graph-flow-questions { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-dim); }
+.graph-flow-questions ul { margin: 4px 0 0; padding-left: 18px; }
+.graph-flow-status { margin-top: 10px; }
+.graph-flow-status progress { width: 100%; height: 8px; }

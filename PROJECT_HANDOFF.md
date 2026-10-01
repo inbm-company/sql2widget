@@ -58,11 +58,11 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 
 - 로그인 JWT (access + refresh). admin / viewer.
 - 대화 CRUD, 실 LLM 채팅 Artifact(키 필요), 샘플 질문. 프로젝트 삭제(연관 대화·Stage 정리, 문서 소스는 미연결로 보존).
-- 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → 예상 질문 유사도 → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로 `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 아직 채팅에 연결되지 않았다. 운영 `compose.production.yml`은 `TYPESAFE_API_KEY`만 넘기며(비면 LLM 폴백), 나머지 `TYPESAFE_*`·`ROUTE_MIN_CONFIDENCE`는 코드 기본값을 쓴다. 상세: `docs/features/chat.md`.
+- 채팅 의도 라우팅(`intent_router.py`): 요청의 `route` → 예상 질문 유사도 → TypeSafe Jev Choice(`TYPESAFE_API_KEY`) → 채팅 LLM 폴백 순으로 `data_query`/`schema_qa`/`clarify`를 정한다. 확신이 `ROUTE_MIN_CONFIDENCE`(기본 0.5, 미검증 초기값) 미만이면 선택지 버튼을 반환한다. `knowledge_qa`는 아직 채팅에 연결되지 않았다. 허용 테이블이 `SCHEMA_LINK_MIN_TABLES`(기본 20)를 넘는 DB는 `data_query`에서 유사 질문이 쓴 테이블, 없으면 프로젝트 문서 그래프의 `Table` 설명에서 채팅 LLM이 고른 테이블만 스키마로 전달하고(`schema_linking.py`, `meta.schema_link`), 실패 시 복구 재시도는 전체 스키마로 한다. 운영 `compose.production.yml`은 `TYPESAFE_API_KEY`만 넘기며(비면 LLM 폴백), 나머지 `TYPESAFE_*`·`ROUTE_MIN_CONFIDENCE`는 코드 기본값을 쓴다. 상세: `docs/features/chat.md`.
 - DB별 예상 질문 유사도 검색(`question_similarity.py`, `question_catalog.py`): 유사 질문이 있으면 연결된 SQL·위젯을 참조해 답한다. 상세: `docs/features/similarity-search-design.md`.
 - Recharts 위젯 렌더 (KPI, 표, 순위, 막대/선/파이, PieTable, BarTable 등).
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
-- 프로젝트별 Graph RAG 문서 업로드(브라우저 폴더·파일 선택, 서비스 DB 보관)·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 경로 방식 소스는 문서를 다시 올려야 적재할 수 있다. 운영 `compose.production.yml`에는 아직 Neo4j가 없어 운영에서 적재하려면 서비스 추가가 필요하다. 채팅 내부 설정과 질문 검색 연동은 별도 협의 후 진행한다.
+- 프로젝트별 Graph RAG 문서 업로드(브라우저 폴더·파일 선택, 서비스 DB 보관)·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 경로 방식 소스는 문서를 다시 올려야 적재할 수 있다. 운영 `compose.production.yml`에는 아직 Neo4j가 없어 운영에서 적재하려면 서비스 추가가 필요하다. 본문 조각은 4,000자·겹침 400자·문단 경계 우선(헤딩은 메타데이터만)이며 기존 소스는 재적재해야 반영된다. 문서 그래프 엔티티 구성은 채팅에서 진행한다: 의도 `graph_build`(`backend/app/graph_chat.py`) → LLM 스키마 제안 → 채팅으로 수정 → 승인 → 백그라운드 스레드가 LLM으로 엔티티 추출·Neo4j 적재(`X-LLM-*` 헤더) → Stage 그래프 ‘엔티티’ 보기. 핵심 로직은 `graph_service.py`를 REST와 채팅이 공유한다. Northwind 문서 1개로 실제 LLM 검증을 했고(Table 16·FK 13 추출), 같은 이름의 Column이 테이블 구분 없이 합쳐지는 한계가 있다. 채팅 내부 설정과 질문 검색 연동은 별도 협의 후 진행한다.
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
 - Viewer: 채팅·DnD 없음. `/p/:id/view` 읽기 전용.
 - SOC + Global Sales 샘플 DB (호스트 포트 5433, 5435). 서비스 DB 5434.
@@ -95,7 +95,9 @@ backend/sql/migrations/             서비스 DB
 backend/sql/sample_customer/        SOC 샘플
 backend/sql/stage_global/           Global Sales 샘플
 frontend/src/App.jsx                워크스페이스
-backend/app/graph_source_routes.py  프로젝트 소스·그래프 API
+backend/app/graph_source_routes.py  프로젝트 소스·그래프·엔티티 스키마 API
+backend/app/graph_schema.py         엔티티 스키마 LLM 제안·검증
+backend/app/graph_extraction.py     스키마대로 엔티티·관계 LLM 추출·Neo4j 반영(백그라운드)
 backend/app/project_graph.py        프로젝트 범위 Neo4j 조회
 frontend/src/ProjectGraph.jsx       문서 그래프·본문 조회
 frontend/src/GraphSources.jsx       문서 소스 등록·업로드·적재 UI

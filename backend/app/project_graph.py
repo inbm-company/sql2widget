@@ -1,5 +1,7 @@
 """Read only the active graph whose sources belong to the authorized project."""
 
+import json
+
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
 from app.graph_ingestion import GraphSourceError, graph_driver
@@ -75,6 +77,56 @@ def project_graph(tenant_id: str, project_id: str, source_ids: list[str], limit:
                 'source_count': 0, 'link_count': 0}, 'truncated': False,
                 'node_limit': limit, 'link_limit': MAX_LINKS}
     return _read(read_graph, tenant_id, project_id, source_ids, limit)
+
+
+def read_entities(tx, tenant_id: str, project_id: str, source_ids: list[str], limit: int) -> dict:
+    scope = {'tenant': tenant_id, 'project': project_id, 'sources': source_ids}
+    entities = [dict(r) for r in tx.run('''
+        MATCH (e:Entity {tenant_id: $tenant, project_id: $project, active: true})
+        WHERE e.source_id IN $sources
+        OPTIONAL MATCH (e)-[f:FROM_CHUNK {active: true}]->(c:GraphChunk {active: true})
+        WITH e, collect(DISTINCT {evidence: f.evidence, heading: c.heading})[..3] AS evidence
+        RETURN e.id AS id, e.type AS type, e.name AS name, e.props AS properties, e.source_id AS source_id,
+               evidence
+        ORDER BY type, name LIMIT $limit
+        ''', limit=limit, **scope)]
+    for entity in entities:
+        entity['properties'] = json.loads(entity['properties'] or '{}')
+    ids = [e['id'] for e in entities]
+    relations = [dict(r) for r in tx.run('''
+        MATCH (a:Entity)-[r]->(b:Entity)
+        WHERE a.id IN $ids AND b.id IN $ids AND r.active = true AND r.source_id IN $sources
+        RETURN a.id AS source, type(r) AS type, b.id AS target, r.evidence AS evidence
+        ORDER BY type, source, target LIMIT $limit
+        ''', ids=ids, limit=limit * 4, **scope)]
+    return {'entities': entities, 'relations': relations, 'truncated': len(entities) >= limit}
+
+
+def read_table_catalog(tx, tenant_id: str, project_id: str) -> dict[str, str]:
+    """Documented `Table` entities of the project: lowercase name -> one-line description."""
+    catalog: dict[str, str] = {}
+    for record in tx.run('''
+        MATCH (e:Entity {type: 'Table', tenant_id: $tenant, project_id: $project, active: true})
+        RETURN e.name AS name, e.props AS properties ORDER BY name
+        ''', tenant=tenant_id, project=project_id):
+        properties = json.loads(record['properties'] or '{}')
+        text = ' · '.join(str(properties[k]) for k in ('category', 'description') if properties.get(k))
+        catalog.setdefault(record['name'].lower(), text)
+    return catalog
+
+
+def project_table_catalog(tenant_id: str, project_id: str) -> dict[str, str]:
+    return _read(read_table_catalog, tenant_id, project_id)
+
+
+def source_entities(tenant_id: str, project_id: str, source_id: str, limit: int) -> dict:
+    return _read(read_entities, tenant_id, project_id, [source_id], limit)
+
+
+def project_entities(tenant_id: str, project_id: str, source_ids: list[str], limit: int) -> dict:
+    if not source_ids:
+        return {'entities': [], 'relations': [], 'truncated': False}
+    return _read(read_entities, tenant_id, project_id, source_ids, limit)
 
 
 def project_document(tenant_id: str, project_id: str, source_ids: list[str], document_id: str) -> dict | None:

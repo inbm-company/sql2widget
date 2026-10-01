@@ -33,8 +33,17 @@ Classify the user's chat message. Return ONLY JSON: {"route": "<name>"} where
 - data_query: wants data from the database shown as numbers, tables or charts
 - schema_qa: asks about the database structure (tables, columns, relations)
 - knowledge_qa: asks about the content of uploaded documents or the knowledge graph
+- graph_build: wants to turn uploaded documents into a knowledge graph, or to decide or change its node
+  types and relations (also when pending_graph_flow is true and the message answers or edits a proposed schema)
 - other: none of the above fits, or the intent is unclear
-The user prompt contains only the question and the tables it may use.
+The user prompt contains the question, the tables it may use and whether a graph schema is awaiting review.
+"""
+
+TABLE_PICK_HINT = """
+Pick the database tables needed to answer the question. Return ONLY JSON: {"tables": ["name", ...]}.
+Choose only names listed in `tables`. The question may be Korean while names are English; use each
+description to match meaning. Pick every table the answer needs, but as few as possible; include a table
+only if its columns are needed.
 """
 
 SCHEMA_QA_HINT = """

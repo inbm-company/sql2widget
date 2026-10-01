@@ -18,6 +18,7 @@ MAX_FILE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_BYTES = 20 * 1024 * 1024
 CHUNK_SIZE = 4000
 CHUNK_OVERLAP = 400
+HEADING = re.compile(r'#{1,6}[ \t]+(\S.*)')
 
 
 class GraphSourceError(ValueError):
@@ -49,15 +50,44 @@ def filter_upload(files: list[dict]) -> tuple[dict[str, str], int]:
     return kept, excluded
 
 
-def chunks_for(text: str) -> list[dict]:
-    chunks = []
-    start = 0
+def heading_positions(text: str) -> list[tuple[int, str]]:
+    """Return (offset, title) for Markdown headings outside fenced code blocks."""
+    found, fence, offset = [], None, 0
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        marker = stripped[:3] if stripped[:3] in ('```', '~~~') else None
+        if marker and fence is None:
+            fence = marker
+        elif marker and marker == fence:
+            fence = None
+        elif fence is None and (match := HEADING.match(line.rstrip('\r\n'))):
+            found.append((offset, match.group(1).strip().rstrip('#').strip()))
+        offset += len(line)
+    return found
+
+
+def chunks_for(text: str, markdown: bool = False) -> list[dict]:
+    """Split text into chunks of at most CHUNK_SIZE that overlap by up to CHUNK_OVERLAP.
+
+    Cuts prefer a blank line, then a line break; chunks begin at a line start when the overlap allows.
+    Markdown headings are recorded as `heading` metadata only and never decide where to cut.
+    """
+    headings = heading_positions(text) if markdown else []
+    chunks, start = [], 0
     while start < len(text):
         end = min(start + CHUNK_SIZE, len(text))
-        chunks.append({'index': len(chunks), 'start': start, 'end': end, 'text': text[start:end]})
+        if end < len(text):
+            end = next((cut + len(sep) for sep in ('\n\n', '\n')
+                        if (cut := text.rfind(sep, start + CHUNK_SIZE // 2, end)) != -1), end)
+        current = [title for offset, title in headings if offset <= start]
+        inside = [title for offset, title in headings if start < offset < end]
+        chunks.append({'index': len(chunks), 'start': start, 'end': end,
+                       'heading': (current or inside or [None])[-1 if current else 0], 'text': text[start:end]})
         if end == len(text):
             break
         start = end - CHUNK_OVERLAP
+        line = text.find('\n', start, end)
+        start = line + 1 if line != -1 else start
     return chunks
 
 
@@ -100,7 +130,7 @@ def build_documents(files: dict[str, str]) -> tuple[list[dict], dict]:
         heading = re.search(r'^#\s+(.+)$', text, flags=re.M) if markdown else None
         documents.append({'path': relative, 'title': heading.group(1).strip() if heading else path.stem,
                           'text': text, 'content_hash': hashlib.sha256(raw).hexdigest(),
-                          'chunks': chunks_for(text), 'references': document_references(text) if markdown else []})
+                          'chunks': chunks_for(text, markdown), 'references': document_references(text) if markdown else []})
     if not documents:
         raise GraphSourceError('적재할 문서가 없습니다. 내용이 있는 .md 또는 .txt 파일을 올려 주세요.')
     by_name = defaultdict(list)
@@ -175,7 +205,8 @@ def write_graph(tx, source: dict, documents: list[dict]) -> None:
         MATCH (d:GraphDocument {id: row.document_id})
         MERGE (c:GraphChunk {id: row.id})
         SET c.source_id = $source, c.tenant_id = $tenant, c.project_id = $project, c.text = row.text,
-            c.position = row.index, c.start = row.start, c.end = row.end, c.active = true
+            c.position = row.index, c.start = row.start, c.end = row.end, c.heading = row.heading,
+            c.active = true
         MERGE (d)-[:HAS_CHUNK]->(c)
         ''', chunks=chunks, source=source['id'], tenant=source['tenant_id'], project=source['project_id']).consume()
     tx.run('''

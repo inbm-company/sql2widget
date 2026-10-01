@@ -5,7 +5,7 @@
 | 문서명 | 기능 문서 — 채팅/에이전트 |
 | 기준일 | 2026-10-01 (구현 기준) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(Artifact 표시), [admin.md](admin.md)(연결·권한·AI 설정) |
-| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
+| 관련 코드 | `backend/app/main.py`(`/api/chat`), `backend/app/intent_router.py`, `backend/app/schema_linking.py`, `backend/app/agent_service.py`, `backend/app/agent.py`, `backend/app/llm.py`, `backend/app/query.py`, `backend/app/documents.py`, `backend/app/repositories/message_embeddings.py`, `frontend/src/App.jsx`(`Workspace.sendMessage`) |
 
 이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.
 
@@ -29,7 +29,7 @@
 
 ### 의도 라우팅 (`intent_router.decide_route`)
 
-`run_agent`는 SQL 계획을 세우기 전에 메시지를 어떤 경로로 처리할지 먼저 정한다. 결과는 `meta.route`(`data_query` / `schema_qa` / `knowledge_qa` / `clarify`), `meta.route_source`(`user_choice` / `similarity` / `jev` / `llm_fallback`)로 응답에 남는다.
+`run_agent`는 SQL 계획을 세우기 전에 메시지를 어떤 경로로 처리할지 먼저 정한다. 결과는 `meta.route`(`data_query` / `schema_qa` / `knowledge_qa` / `graph_build` / `clarify`), `meta.route_source`(`user_choice` / `similarity` / `jev` / `llm_fallback`)로 응답에 남는다.
 
 | 순서 | 판단 | 비고 |
 |------|------|------|
@@ -46,7 +46,28 @@ Jev의 `confidence`가 `ROUTE_MIN_CONFIDENCE`(기본 0.5) 미만이거나 결과
 | `data_query` | 아래 "에이전트 실행 경로" 그대로(SQL + 위젯) |
 | `schema_qa` | 허용된 스키마 텍스트만으로 LLM이 테이블·컬럼 구조를 설명. SQL 실행 없음. `MarkdownBlock` 위젯 1개 |
 | `knowledge_qa` | 지식그래프 검색이 아직 채팅에 연결되지 않아 그렇게 안내하고 선택지를 제시 |
+| `graph_build` | 업로드한 문서를 지식그래프로 만드는 협의·승인·추출 흐름(관리자 전용, DB 연결 불필요). `graph_action`이 있으면 버튼 동작으로 바로 처리. 자세한 동작은 [graph-rag-sources.md](graph-rag-sources.md) 채팅 연동 절 |
 | `clarify` | 위젯 없이 선택지 버튼(`artifact.type = "choices"`, `artifact.choices[{label, route, message}]`)을 반환. 버튼을 누르면 같은 메시지를 `route`와 함께 다시 전송하므로 대화에 사용자 메시지가 한 번 더 남는다. 선택지는 assistant 메시지의 artifact에 저장되어 새로고침 후에도 유지된다 |
+
+### 스키마 줄이기 (`schema_linking.link_from_matches`)
+
+허용 테이블이 많은 DB는 전체 컬럼을 프롬프트에 넣으면 크고 느려진다(Northwind 기준 테이블당 약 320자 → 100개면 약 3.2만 자). `data_query`는 SQL 계획 전에 **관련 테이블만** 스키마로 넘긴다. 1순위는 유사 질문, 없으면 프로젝트 문서 그래프의 테이블 설명이다(`schema_linking.link_schema`).
+
+| 조건 | 계획용 스키마 | `meta.schema_link` |
+|------|---------------|--------------------|
+| 허용 테이블 ≤ `SCHEMA_LINK_MIN_TABLES`(기본 20) | 전체 | `{source: "full", reason: "small_schema"}` |
+| 매칭된 질문의 SQL(`FROM`/`JOIN`)에서 허용 테이블을 찾음 | 매칭 질문들의 테이블 합집합만. 모델 호출 없음 | `{source: "similarity", tables: [...], total: N}` |
+| 위가 아니고, 프로젝트 문서 그래프에 설명된 `Table` 엔티티가 있음 | 채팅 LLM이 "이름+설명" 목록에서 고른 테이블만 | `{source: "graph", tables: [...], total: N}` |
+| 그래프도 쓸 수 없음 | 전체 | `{source: "full", reason, error?}` — `reason`: `no_project`(프로젝트 없음) / `graph_unavailable`(Neo4j 오류, `error`에 사유) / `no_documented_tables`(설명된 테이블 없음) / `no_tables_picked`(고른 결과가 비었거나 허용 밖, 호출 실패 시 `error`) |
+
+- **그래프 경로**: 허용 테이블 전체의 이름을 목록으로 주고(문서에 없는 테이블은 설명 없이 이름만), 목록의 이름만 고르게 한다. 목록은 고정 Cypher(`project_graph.project_table_catalog`, 테넌트·프로젝트 범위 고정)로 읽으며 LLM이 Cypher를 쓰지 않는다. 결과는 허용 테이블로 다시 제한한다. 한국어 질문과 영어 테이블명은 설명으로 이어진다.
+- 컬럼·타입은 문서가 아니라 **실제 DB 메타데이터**에서 만든다(문서는 낡았을 수 있음). FK 이웃 확장은 하지 않는다(Northwind 실험에서 정확도 이득 없이 스키마만 2배).
+- 줄인 스키마로 SQL이 실패하면 1회 복구 재시도는 **전체 스키마**로 한다(`escalated_to_full: true`).
+- CTE 이름과 역할이 읽을 수 없는 테이블은 제외한다.
+- `schema_qa`는 항상 전체 스키마를 쓴다(구조 질문이므로).
+- Northwind(15개 테이블, 임계값을 5로 낮춘 실행)로 확인: 유사 질문 경로 2개 질문, 그래프 경로 5개 질문(유사 질문 검색만 이 프로세스에서 끔)이 모두 재시도 없이 성공. 사전 비교 실험(10개 질문)에서는 시드만 쓴 결과가 전체 스키마 결과와 모두 일치했고 스키마 크기는 평균 23%였다.
+- 100개 이상 DB(SKAX NMS)는 그래프 소스가 없어 미검증. 목록 크기는 100개일 때 약 8천 자로 추정.
+- **알려진 문제(이번 변경과 무관)**: SQL 검증기가 `EXTRACT(YEAR FROM AGE(...))`의 `FROM AGE`를 테이블로 오인해 `Table not permitted: AGE`로 거부한다. 전체 스키마에서도 재현되며, 복구 재시도로 넘어가는 경우가 있다.
 
 ### 에이전트 실행 경로 (`agent_service.run_agent`)
 

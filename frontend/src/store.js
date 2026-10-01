@@ -78,6 +78,7 @@ export const storeKeys = {
   connections: "api:/database-connections",
   graphSources: (projectId) => (projectId ? `api:/projects/${projectId}/graph-sources` : null),
   projectGraph: (projectId) => (projectId ? `api:/projects/${projectId}/graph` : null),
+  projectEntities: (projectId) => (projectId ? `api:/projects/${projectId}/graph/entities` : null),
   graphDocument: (projectId, id) => (projectId && id ? `api:/projects/${projectId}/graph/documents/${id}` : null),
   questions: (connectionId) => (connectionId ? `api:/database-connections/${connectionId}/questions` : null),
 };

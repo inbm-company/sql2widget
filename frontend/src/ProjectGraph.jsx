@@ -4,7 +4,7 @@ import { storeKeys, useSWR } from "./store";
 import { filterGraph, layoutGraph } from "./graphLayout";
 import { MIN_GRAPH_ZOOM, MAX_GRAPH_ZOOM, zoomGraph } from "./graphViewport";
 
-export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
+export function GraphDiagram({ nodes, links, selectedId, onSelect, colorOf = null, label = "문서" }) {
   const graph = useMemo(() => layoutGraph(nodes, links), [nodes, links]);
   const center = { x: (Math.min(...graph.nodes.map((n) => n.x), graph.width / 2) + Math.max(...graph.nodes.map((n) => n.x), graph.width / 2)) / 2,
     y: (Math.min(...graph.nodes.map((n) => n.y), graph.height / 2) + Math.max(...graph.nodes.map((n) => n.y), graph.height / 2)) / 2 };
@@ -62,7 +62,7 @@ export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
       <button type="button" className="ghost" aria-label="그래프 확대" disabled={zoom >= MAX_GRAPH_ZOOM} onClick={() => setViewport((current) => zoomGraph(current, current.zoom * 1.3, center, center))}>+</button>
       <button type="button" className="ghost" onClick={() => setViewport({ zoom: 1, pan: { x: 0, y: 0 } })}>전체 보기</button>
     </div>
-    <svg ref={svgRef} className="graph-diagram" viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`} role="group" aria-label="프로젝트 문서 그래프"
+    <svg ref={svgRef} className="graph-diagram" viewBox={`${center.x - width / 2} ${center.y - height / 2} ${width} ${height}`} role="group" aria-label={`프로젝트 ${label} 그래프`}
       onPointerDown={startPan} onPointerMove={movePan} onPointerUp={(event) => {
         drag.current = null;
         if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -78,17 +78,17 @@ export function GraphDiagram({ nodes, links, selectedId, onSelect }) {
           return <line key={`${edge.source}:${edge.target}`} className={`graph-edge ${selected ? "selected" : ""}`} x1={from.x + dx / distance * 13} y1={from.y + dy / distance * 13} x2={to.x - dx / distance * 16} y2={to.y - dy / distance * 16} markerEnd={`url(#${markerId})`} />;
         })}
         {graph.nodes.map((node) => <g key={node.id} data-graph-node={node.id} className={`graph-node ${selectedId === node.id ? "selected" : ""} ${selectedId && !neighbors.has(node.id) ? "dimmed" : ""}`}
-          transform={`translate(${node.x} ${node.y})`} role="button" tabIndex={0} aria-label={`문서 ${node.title}`} aria-pressed={selectedId === node.id}
+          transform={`translate(${node.x} ${node.y})`} role="button" tabIndex={0} aria-label={`${label} ${node.title}`} aria-pressed={selectedId === node.id}
           onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } }}>
-          <title>{`${node.title}\n${node.path}`}</title><circle r="12" /><text y="29" textAnchor="middle">{node.title.length > 20 ? `${node.title.slice(0, 20)}…` : node.title}</text>
+          <title>{`${node.title}\n${node.path}`}</title><circle r="12" style={colorOf && selectedId !== node.id ? { fill: colorOf(node), stroke: colorOf(node) } : undefined} /><text y="29" textAnchor="middle">{node.title.length > 20 ? `${node.title.slice(0, 20)}…` : node.title}</text>
         </g>)}
       </g>
     </svg>
-    <p className="muted small graph-hint">노드: 문서 · 화살표: 문서 링크 · 휠로 확대·축소하고 배경을 드래그해 이동하세요.</p>
+    <p className="muted small graph-hint">노드: {label} · 화살표: {label === "문서" ? "문서 링크" : "관계"} · 휠로 확대·축소하고 배경을 드래그해 이동하세요.</p>
   </div>;
 }
 
-export default function ProjectGraph({ projectId }) {
+function DocumentGraph({ projectId }) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(storeKeys.projectGraph(projectId), () => api.getProjectGraph(projectId));
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
@@ -101,7 +101,7 @@ export default function ProjectGraph({ projectId }) {
   useEffect(() => { if (selectedId && !selectedNode) setSelectedId(null); }, [selectedId, selectedNode]);
   const related = selectedNode ? filtered.links.filter((link) => link.source === selectedId || link.target === selectedId) : [];
   const neighbors = [...new Set(related.map((link) => link.source === selectedId ? link.target : link.source))];
-  return <section className="project-graph" aria-label="Stage 그래프">
+  return <div>
     <div className="graph-toolbar">
       <input type="search" aria-label="그래프 문서 검색" placeholder="문서 제목 또는 경로 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
       <button type="button" className="ghost" disabled={isValidating} onClick={() => mutate()}>{isValidating ? "불러오는 중…" : "새로고침"}</button>
@@ -120,5 +120,67 @@ export default function ProjectGraph({ projectId }) {
       {documentError ? <p role="alert" className="admin-status">{documentError.message}</p> : null}
       {document ? <><pre className="graph-document-content">{document.content}</pre>{document.content_truncated ? <p className="muted small">본문은 처음 100,000자까지 표시합니다.</p> : null}</> : null}
     </div> : filtered.nodes.length ? <p className="muted small">문서 노드를 선택하면 본문과 연결된 문서를 확인할 수 있습니다.</p> : null}
+  </div>;
+}
+
+const TYPE_COLORS = ["#4e79a7", "#f28e2b", "#59a14f", "#e15759", "#b07aa1", "#76b7b2", "#edc948", "#9c755f"];
+
+function EntityGraph({ projectId }) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(storeKeys.projectEntities(projectId), () => api.getProjectEntities(projectId));
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const types = useMemo(() => [...new Set((data?.entities || []).map((entity) => entity.type))].sort(), [data]);
+  const colorOf = (node) => TYPE_COLORS[types.indexOf(node.path) % TYPE_COLORS.length];
+  const counts = useMemo(() => Object.fromEntries(types.map((type) => [type, (data?.entities || []).filter((e) => e.type === type).length])), [data, types]);
+  const graph = useMemo(() => {
+    const search = query.trim().toLocaleLowerCase();
+    const nodes = (data?.entities || []).filter((e) => !search || `${e.name} ${e.type}`.toLocaleLowerCase().includes(search))
+      .map((e) => ({ id: e.id, title: e.name, path: e.type }));
+    const ids = new Set(nodes.map((node) => node.id));
+    return { nodes, links: (data?.relations || []).filter((r) => ids.has(r.source) && ids.has(r.target)) };
+  }, [data, query]);
+  const entity = (data?.entities || []).find((item) => item.id === selectedId);
+  useEffect(() => { if (selectedId && !graph.nodes.some((node) => node.id === selectedId)) setSelectedId(null); }, [selectedId, graph]);
+  const names = new Map((data?.entities || []).map((item) => [item.id, item.name]));
+  const related = entity ? (data.relations || []).filter((rel) => rel.source === entity.id || rel.target === entity.id) : [];
+  const properties = entity?.properties && typeof entity.properties === "object" ? entity.properties : {};
+  return <div>
+    <div className="graph-toolbar">
+      <input type="search" aria-label="엔티티 검색" placeholder="엔티티 이름 또는 타입 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
+      <button type="button" className="ghost" disabled={isValidating} onClick={() => mutate()}>{isValidating ? "불러오는 중…" : "새로고침"}</button>
+    </div>
+    {data ? <p className="muted small">엔티티 {data.entities.length}개 · 관계 {data.relations.length}개</p> : null}
+    {types.length ? <div className="graph-legend" aria-label="엔티티 타입 범례">
+      {types.map((type) => <span key={type} className="graph-legend-item small"><i style={{ background: colorOf({ path: type }) }} />{type} {counts[type]}</span>)}
+    </div> : null}
+    {isLoading ? <p className="muted" role="status">엔티티를 불러오고 있습니다…</p> : null}
+    {error ? <p className="admin-status" role="alert">{error.message}</p> : null}
+    {data && !data.entities.length ? <div className="graph-empty"><strong>아직 추출된 엔티티가 없습니다.</strong><p className="muted small">채팅에서 “문서를 그래프로 만들어줘”라고 요청해 스키마를 정하고 추출하세요.</p></div> : null}
+    {data?.truncated ? <p className="graph-limit small" role="status">엔티티가 많아 일부만 표시합니다.</p> : null}
+    {data?.entities.length && !graph.nodes.length ? <p className="muted small">검색한 엔티티가 없습니다.</p> : null}
+    {graph.nodes.length ? <GraphDiagram nodes={graph.nodes} links={graph.links} selectedId={selectedId} onSelect={setSelectedId} colorOf={colorOf} label="엔티티" /> : null}
+    {entity ? <div className="graph-document">
+      <h3>{entity.name}</h3>
+      <p className="muted small">타입 {entity.type}</p>
+      {Object.keys(properties).length ? <dl className="graph-props small">{Object.entries(properties).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value)}</dd></div>)}</dl> : null}
+      {related.length ? <div className="graph-neighbors"><span className="muted small">관계</span>{related.map((rel) => {
+        const out = rel.source === entity.id, other = out ? rel.target : rel.source;
+        return <button type="button" className="ghost" key={`${rel.type}:${rel.source}:${rel.target}`} title={rel.evidence} onClick={() => setSelectedId(other)}>{out ? `${rel.type} → ` : `← ${rel.type} `}{names.get(other)}</button>;
+      })}</div> : null}
+      {entity.evidence?.filter((item) => item.evidence).length ? <div className="graph-evidence small"><span className="muted">원문 근거</span>
+        {entity.evidence.filter((item) => item.evidence).map((item, index) => <blockquote key={index}>{item.evidence}{item.heading ? <cite> — {item.heading}</cite> : null}</blockquote>)}
+      </div> : null}
+    </div> : graph.nodes.length ? <p className="muted small">엔티티 노드를 선택하면 속성·관계·원문 근거를 확인할 수 있습니다.</p> : null}
+  </div>;
+}
+
+export default function ProjectGraph({ projectId }) {
+  const [mode, setMode] = useState("documents");
+  return <section className="project-graph" aria-label="Stage 그래프">
+    <div className="segmented graph-mode" role="group" aria-label="그래프 종류">
+      <button type="button" className={mode === "documents" ? "active" : ""} onClick={() => setMode("documents")}>문서</button>
+      <button type="button" className={mode === "entities" ? "active" : ""} onClick={() => setMode("entities")}>엔티티</button>
+    </div>
+    {mode === "documents" ? <DocumentGraph projectId={projectId} /> : <EntityGraph projectId={projectId} />}
   </section>;
 }
