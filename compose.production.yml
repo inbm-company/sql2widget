@@ -39,6 +39,22 @@ services:
       interval: 3s
       timeout: 5s
       retries: 30
+  db-skax-nms:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: agent4any
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: agent4any_skax_nms
+    volumes:
+      - pg_skax_nms_data:/var/lib/postgresql/data
+      - ./backend/sql/skax_nms:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U agent4any -d agent4any_skax_nms']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
   backend:
     image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE}
     restart: unless-stopped
@@ -50,6 +66,7 @@ services:
       DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db:5432/agent4any
       DEMO_CUSTOMER_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-customer:5432/agent4any_customer_demo
       STAGE_GLOBAL_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-stage-global:5432/agent4any_stage_global
+      SKAX_NMS_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-skax-nms:5432/agent4any_skax_nms
       LLM_PROVIDER: mock
       TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
       CORS_ORIGINS: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
@@ -57,9 +74,11 @@ services:
       db: {condition: service_healthy}
       db-customer: {condition: service_healthy}
       db-stage-global: {condition: service_healthy}
+      db-skax-nms: {condition: service_healthy}
     command: >-
       sh -c "python scripts/migrate.py && python scripts/migrate_customer.py &&
       python scripts/migrate_stage_global.py && python scripts/seed_dev.py &&
+      python scripts/seed_skax_nms.py &&
       uvicorn app.main:app --host 0.0.0.0 --port 8000"
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
@@ -77,3 +96,4 @@ volumes:
   pg_data:
   pg_customer_data:
   pg_stage_global_data:
+  pg_skax_nms_data:

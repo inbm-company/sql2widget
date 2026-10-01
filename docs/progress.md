@@ -31,7 +31,7 @@
 | Viewer 읽기 전용 화면(`/p/:id/view`) | [viewer.md](features/viewer.md) |
 | Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기 | [admin.md](features/admin.md) |
 | SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성 | `docker-compose.yml` |
-| 로컬 일반 스키마 데모용 Northwind, SKAX NMS 샘플 DB 시드 | `backend/scripts/seed_northwind_recent.py`, `seed_skax_nms.py` |
+| Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록 | `backend/scripts/seed_northwind_recent.py`, `seed_skax_nms.py` |
 | Graph RAG 준비용 Neo4j 로컬 설치 | Community `2026.09.0`, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck. [설치 방법](../README.md#neo4j-로컬-설치-graph-rag-준비) |
 | 프로젝트별 문서 업로드·수동 Neo4j 적재 | 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 `knowledge_qa`로 완료. [graph-rag-sources.md](features/graph-rag-sources.md) |
 | Stage 프로젝트 문서 그래프·본문 조회 | 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회. [graph-rag-sources.md](features/graph-rag-sources.md) |
@@ -45,6 +45,7 @@
 | 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
 | 문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기(타입별 색·속성·관계·원문 근거) | Northwind 문서 1개로 브라우저 검증(Table 16·FK 13). 다른 문서 유형은 미검증, 같은 이름 노드는 문서 전체에서 한 노드로 합쳐지는 한계. 추출은 조각을 최대 4개 동시·호출 제한 180초로 처리(52조각 11.3분, 실패 0건; 이전 순차·60초일 때 약 50분 추정). [graph-rag-sources.md](features/graph-rag-sources.md) |
 | 채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, 그래프 전체/조회/모델 전달 수, 모델이 보고한 사용 엔티티와 원문 근거, SQL 테이블 선택·유사 질문 참조 | `messages.meta` 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. [chat.md](features/chat.md) |
+| 운영 배포 파이프라인 | 2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. [deployment/README.md](../deployment/README.md) |
 
 ## 3. 진행중
 
@@ -52,7 +53,6 @@
 |------|------|
 | 채팅 메시지 임베딩·유사도 검색(pgvector, `chat_vector` DB) | 백엔드 저장·검색(`message_embeddings.py`)까지 완료, API가 `related_messages` 반환. **프론트 미표시** — `App.jsx`가 아직 렌더링 안 함 |
 | 실 LLM 경로 하드닝 | 기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) 5번 |
-| 운영 배포 파이프라인 | `compose.production.yml, GitHub Actions(`deploy.yml`), `deployment/README.md` 절차는 있음. `deployment/README.md` 자체가 "GitHub Actions 첫 실행과 VPS 배포 결과는 완료 후 기록" 상태라고 명시 — 실제 운영 검증은 미완 |
 
 ## 4. 예정
 

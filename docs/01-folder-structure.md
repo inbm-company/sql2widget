@@ -105,6 +105,7 @@ backend/
 | `smoke_chat_e2e.py` | 실행 중인 API에 대한 채팅 E2E 스모크 |
 | `smoke_eval.py` | 로그인 + SOC 샘플 질문 스모크. 기본은 실모델 위젯 생성, `--expect-ai-error`는 AI 미설정 HTTP 502 검증 (evals/questions.json과 별개의 빠른 점검) |
 | `smoke_stage.py` | Stage 위젯 추가/조회 스모크 |
+| `smoke_skax_nms.py` | 등록된 SKAX 연결의 읽기 전용 접속·cinamon 테이블/뷰·역할별 권한 확인. 운영 배포 완료 전 실행 |
 
 ### 2.4 `backend/sql/` — DB별 SQL 원본
 
@@ -170,7 +171,7 @@ frontend/
 | 경로 | 역할 |
 |------|------|
 | `docker-compose.yml` | 로컬 개발 스택 (frontend, backend, 서비스 DB, 샘플 고객 DB들) |
-| `compose.production.yml` | 운영 스택. DB/API는 외부 포트를 열지 않고 프런트만 리버스 프록시로 노출 |
+| `compose.production.yml` | 운영 스택. SKAX 스냅샷을 별도 DB·영속 볼륨으로 복원·등록. DB/API는 외부 포트를 열지 않고 프런트만 리버스 프록시로 노출 |
 | `deployment/README.md` | 운영 배포 절차, 필요한 시크릿·환경변수, 서버 초기 설정 |
 | `deployment/sql2widget.crudy.cloud.conf` | 운영 도메인용 Nginx reverse proxy 설정 |
 | `.github/workflows/deploy.yml` | CI/CD — PR/main 테스트, GHCR 이미지 게시, VPS 배포, 실패 시 이전 이미지로 복구 |

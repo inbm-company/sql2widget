@@ -207,7 +207,7 @@
       <tr><td><a href="#admin">관리자</a></td><td>DB 연결/테이블 권한/브라우저별 AI 설정</td></tr>
     </tbody>
   </table>
-  <p>데모 데이터셋은 두 개이며 동등하게 취급한다: <code>dbconn_demo</code>(SOC 보안), <code>dbconn_global</code>(Global Sales). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다.</p>
+  <p>데모 데이터셋은 두 개이며 동등하게 취급한다: <code>dbconn_demo</code>(SOC 보안), <code>dbconn_global</code>(Global Sales). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(<code>cinamon</code>, <code>dbconn_skax_nms</code>)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.</p>
 
   <h2>공통 확정 규칙</h2>
   <h3>제품 규칙</h3>
@@ -711,6 +711,8 @@ stage_widgets(
   </table>
   <p>비밀번호는 <code>APP_SECRET</code> 기반 Fernet 암호화로 저장, 조회 응답에는 절대 포함하지 않는다.</p>
 
+  <p>SKAX NMS는 로컬·운영에서 <code>SKAX NMS DB</code>(<code>dbconn_skax_nms</code>) 연결로 자동 등록한다. 운영은 별도 <code>db-skax-nms</code> 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 <code>cinamon</code> 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. <a href="../deployment/README.md#skax-nms-cinamon-운영-db">운영 절차</a>.</p>
+
   <h2>F-14 테이블 권한</h2>
   <p><code>PUT /api/table-permissions</code> <code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체를 delete-then-insert로 교체한다. 현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능.</p>
 
@@ -890,7 +892,7 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
   <h1 class="page">작업 진행 상황</h1>
   <p class="doc-meta">기준일 2026-10-01 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
 
-  <p><span class="badge done">완료 21</span><span class="badge wip">진행중 3</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
+  <p><span class="badge done">완료 22</span><span class="badge wip">진행중 2</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
 
   <h2>요약</h2>
   <ul>
@@ -910,7 +912,8 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
     <li>Viewer 읽기 전용 화면 — <a href="#viewer">viewer</a></li>
     <li>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기 — <a href="#admin">admin</a></li>
     <li>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</li>
-    <li>Northwind, SKAX NMS 샘플 DB 시드</li>
+    <li>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</li>
+    <li>운영 배포 파이프라인 — 2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함 — <a href="../deployment/README.md">운영 절차</a></li>
     <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
     <li>프로젝트별 문서 업로드·수동 Neo4j 적재 — 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 knowledge_qa로 완료 — <a href="#graph-rag-sources">상세 문서</a></li>
     <li>Stage 프로젝트 문서 그래프·본문 조회 — 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회 — <a href="#graph-rag-sources">상세 문서</a></li>
@@ -930,7 +933,6 @@ graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)
   <ul>
     <li>채팅 메시지 임베딩·유사도 검색 — 백엔드 저장·검색 완료, <strong>프론트 미표시</strong></li>
     <li>실 LLM 경로 하드닝 — 재시도 1회 한정, 레이트리밋/서킷브레이커 없음</li>
-    <li>운영 배포 파이프라인 — Compose·Actions는 있음, VPS 실배포 검증 미완</li>
   </ul>
 
   <h2><span class="badge plan">예정</span></h2>

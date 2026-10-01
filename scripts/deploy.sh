@@ -13,12 +13,13 @@ if test -f .release; then
   previous_backend=$(sed -n '1p' .release)
   previous_frontend=$(sed -n '2p' .release)
 fi
-if docker compose -f compose.production.yml up -d --wait --wait-timeout 180; then
+if docker compose -f compose.production.yml up -d --wait --wait-timeout 300 &&
+  docker compose -f compose.production.yml exec -T backend python scripts/smoke_skax_nms.py; then
   printf '%s\n%s\n' "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > .release
 else
   if test -n "$previous_backend" && test -n "$previous_frontend"; then
     BACKEND_IMAGE=$previous_backend FRONTEND_IMAGE=$previous_frontend \
-      docker compose -f compose.production.yml up -d --wait --wait-timeout 180
+      docker compose -f compose.production.yml up -d --wait --wait-timeout 300
   fi
   exit 1
 fi

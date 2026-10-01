@@ -4,12 +4,28 @@
 운영은 `compose.production.yml`로 별도 구성합니다. DB/API는 외부 포트를 열지 않으며,
 프런트만 `127.0.0.1:3003`에서 정적 화면과 `/api` 프록시를 제공합니다.
 
+## SKAX NMS (`cinamon`) 운영 DB
+
+운영 스택에는 `db-skax-nms`를 별도 PostgreSQL 서비스로 실행합니다.
+Actions가 저장소의 `backend/sql/skax_nms/001_full_dump.sql.gz`와
+`002_local_settings.sh`를 서버의 같은 상대 경로에 업로드합니다.
+처음 생성하는 `pg_skax_nms_data` 볼륨에 전체 스냅샷(`cinamon` 및 의존하는 `etc` 스키마)을
+복원하고, TCP healthcheck가 통과한 뒤 백엔드를 시작합니다. DB 포트는 외부에 공개하지 않습니다.
+
+백엔드는 기존 운영 `POSTGRES_PASSWORD`로 접속하고, `seed_skax_nms.py`가
+`SKAX NMS DB`(`dbconn_skax_nms`) 연결 및 admin/user/viewer의 `cinamon` 테이블·뷰 권한을 등록합니다.
+배포 스크립트는 `smoke_skax_nms.py`로 등록된 연결의 읽기 전용 접속과 역할별 권한을 확인한 뒤
+배포 완료를 기록합니다. 고객 데이터 행이나 비밀번호는 출력하지 않습니다.
+
+재배포는 기존 볼륨을 재사용합니다. 스냅샷 파일 업로드만으로 기존 DB가 덮어써지지 않으며,
+기존 서비스·SOC·Global DB 볼륨도 유지합니다. 스냅샷을 갱신하기 위해 볼륨을 삭제하지 마세요.
+
 ## GitHub Actions
 
 `.github/workflows/deploy.yml`:
 1. PR 및 main push: 프런트 빌드, PostgreSQL·Neo4j를 포함한 백엔드 테스트, 로그인/채팅 smoke.
 2. main push 또는 수동 실행: frontend/backend의 amd64 이미지를 GHCR에 커밋 SHA 태그로 게시.
-3. production 환경의 VPS에 배포 파일 업로드, 이미지 pull, health 확인.
+3. production 환경의 VPS에 배포 파일·SKAX 스냅샷 업로드, 이미지 pull, health 및 SKAX 연결·권한 확인.
 4. 배포 실패 시 직전 이미지로 복구. DB 마이그레이션은 자동 되돌리지 않습니다.
 
 테스트 job은 체크아웃 직후 `.env.example`을 `.env`로 복사하고, 매 실행마다
@@ -58,5 +74,7 @@ Nginx는 해당 도메인을 `http://127.0.0.1:3003`으로 전달하고 응답 �
 
 2026-10-01 격리된 새 Docker 환경에서 백엔드 전체 테스트 124개와
 로그인·AI 미설정 오류 smoke 4개를 통과했습니다.
+SKAX 운영 Compose도 격리 환경에서 초기 복원·API 연결 목록/연결 테스트·역할별 권한과
+백엔드 재생성 후 동일 테이블·뷰 118개 유지까지 확인했습니다.
 실제 LLM 위젯 생성은 유효한 사용자 키로 추가 확인해야 합니다.
 GitHub Actions의 테스트·이미지 빌드·VPS 배포 결과는 각 실행 로그에서 확인합니다.

@@ -189,7 +189,7 @@
     <section class="thesis">
       <p>
         질문은 위젯이 되고, 위젯은 프로젝트마다 하나인 Stage에 핀된다.
-        로컬 데모 골격은 <em>완료</em>, 실 LLM·채팅 임베딩·운영 배포는 <em>진행중</em>이다.
+        로컬 데모 골격과 운영 배포는 <em>완료</em>, 실 LLM 하드닝·채팅 임베딩은 <em>진행중</em>이다.
         남은 결정은 유사도 하니스, Circle 카탈로그, 그리고 대시보드 템플릿을 넣을지다.
       </p>
     </section>
@@ -197,13 +197,13 @@
     <section class="kpis">
       <div class="kpi done">
         <div class="label">완료</div>
-        <div class="num">21</div>
+        <div class="num">22</div>
         <div class="sub">앱 기능 · DB 인프라 · 문서</div>
       </div>
       <div class="kpi wip">
         <div class="label">진행중</div>
-        <div class="num">3</div>
-        <div class="sub">채팅 임베딩·LLM 하드닝·배포 검증</div>
+        <div class="num">2</div>
+        <div class="sub">채팅 임베딩·LLM 하드닝</div>
       </div>
       <div class="kpi plan">
         <div class="label">예정</div>
@@ -220,7 +220,7 @@
     <h2>진행 상황 칸반 <span class="hint">docs/progress.md 2~5절 그대로</span></h2>
     <section class="board">
       <div class="col done">
-        <div class="col-head"><span class="dot"></span>완료<span class="count">21</span></div>
+        <div class="col-head"><span class="dot"></span>완료<span class="count">22</span></div>
         <div class="card"><div class="t">로그인/세션, 역할 분리</div><div class="n">JWT access+refresh · admin/user/viewer · <a href="features/auth.md">auth.md</a></div></div>
         <div class="card"><div class="t">프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·문서 소스 보존, New chat 생성 오류 수정</div><div class="n"><a href="features/projects-conversations.md">projects-conversations.md</a></div></div>
         <div class="card"><div class="t">Artifact 위젯 렌더 + SQL 미리보기</div><div class="n"><a href="features/widgets-artifact.md">widgets-artifact.md</a></div></div>
@@ -228,7 +228,7 @@
         <div class="card"><div class="t">Viewer 읽기 전용 화면</div><div class="n"><span class="mono">/p/:id/view</span> · <a href="features/viewer.md">viewer.md</a></div></div>
         <div class="card"><div class="t">Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기</div><div class="n"><a href="features/admin.md">admin.md</a></div></div>
         <div class="card"><div class="t">샘플 DB 구성</div><div class="n">SOC + Global Sales + 서비스 DB, Docker Compose</div></div>
-        <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">로컬 일반 스키마 데모용</div></div>
+        <div class="card"><div class="t">Northwind · SKAX NMS 시드</div><div class="n">Northwind 로컬 시드 · SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</div></div>
         <div class="card"><div class="t">Graph RAG 준비용 Neo4j 로컬 설치</div><div class="n">Community 2026.09.0 · 독립 Compose 서비스 · 로컬 전용 Browser/Bolt · 인증·영속 볼륨·healthcheck · <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></div></div>
         <div class="card"><div class="t">프로젝트별 문서 업로드·수동 Neo4j 적재</div><div class="n">프로젝트 소유자·테넌트 분리 · 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체 · 적재 상태 · Markdown/텍스트 본문·문서 링크 · 재적재 중복 방지. 질문 연동은 knowledge_qa로 완료 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
         <div class="card"><div class="t">Stage 프로젝트 문서 그래프·본문 조회</div><div class="n">위젯/그래프 전환 · 문서 노드·링크 · 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지 · 본문·연결 문서 조회 · Viewer 조회 · <a href="features/graph-rag-sources.md">상세 문서</a></div></div>
@@ -242,13 +242,13 @@
         <div class="card"><div class="t">큰 DB의 SQL 계획 스키마 줄이기</div><div class="n">허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달 · 실패 시 전체 스키마로 재시도 · Northwind 확인, 100개 이상 DB 미검증 · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">문서 그래프 엔티티 구성</div><div class="n">LLM 스키마 제안 → 채팅 수정·승인 → 엔티티 추출·적재 → Stage ‘엔티티’ 보기 · Northwind 1개 브라우저 검증, 다른 유형 미검증 · 추출 4개 동시·호출 180초(52조각 11.3분, 이전 약 50분 추정) · <a href="features/graph-rag-sources.md">graph-rag-sources.md</a></div></div>
         <div class="card"><div class="t">채팅 처리 내역 표시·저장</div><div class="n">선택 경로·분류 방식 · 그래프 전체/조회/모델 전달 수 · 모델이 보고한 엔티티와 원문 근거 · SQL 테이블 선택·유사 질문 참조 · 새로고침 후 유지, 과거 답변은 기록 없음 · <a href="features/chat.md">chat.md</a></div></div>
+        <div class="card"><div class="t">운영 배포 파이프라인</div><div class="n">2026-10-01 Actions 테스트·GHCR·VPS 실배포 성공 확인 · SKAX 운영 스냅샷 복원·연결·권한 등록과 읽기 전용 검사 · <a href="../deployment/README.md">운영 절차</a></div></div>
       </div>
 
       <div class="col wip">
-        <div class="col-head"><span class="dot"></span>진행중<span class="count">3</span></div>
+        <div class="col-head"><span class="dot"></span>진행중<span class="count">2</span></div>
         <div class="card"><div class="t">채팅 메시지 임베딩</div><div class="n">pgvector 저장·검색 완료, <b>프론트 미표시</b> · <a href="features/chat.md">chat.md</a></div></div>
         <div class="card"><div class="t">실 LLM 경로 하드닝</div><div class="n">재시도 1회 한정, 레이트리밋·서킷브레이커 없음</div></div>
-        <div class="card"><div class="t">운영 배포 파이프라인</div><div class="n">Compose·Actions는 있음, VPS 실배포 검증 미완</div></div>
       </div>
 
       <div class="col plan">

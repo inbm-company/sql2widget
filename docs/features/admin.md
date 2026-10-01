@@ -31,6 +31,7 @@
 - `connection_url()`이 요청 시점에 복호화해 `postgresql://user:pass@host:port/db?sslmode=...` 형태로 조립.
 - 새 연결 등록 폼 기본값은 로컬 SOC 데모 DB 접속정보(`db-customer` / `agent4any_customer_demo` / …) — 그대로 저장하면 로컬 컨테이너를 가리키므로 운영에서는 반드시 바꿔야 한다.
 - `preview-sql`도 일반 채팅과 같은 읽기 전용 검증(`query.execute_readonly`)을 거친다 — admin이라고 DML이 뚫리지는 않는다.
+- SKAX NMS는 로컬·운영에서 `SKAX NMS DB`(`dbconn_skax_nms`) 연결로 자동 등록한다. 운영은 별도 `db-skax-nms` 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 `cinamon` 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. [운영 절차](../../deployment/README.md#skax-nms-cinamon-운영-db).
 
 ## F-14 테이블 권한
 

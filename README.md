@@ -57,6 +57,8 @@ Full Northwind sample questions (Gemini key required for generic schema reasonin
 
 SKAX NMS는 관리자 연결 목록의 `SKAX NMS DB`를 선택해 사용한다. 이 데이터베이스도
 실제 AI 연결 설정(키)이 있어야 자연어 스키마 추론이 동작한다.
+운영 배포에도 저장소의 SKAX 스냅샷을 별도 DB·영속 볼륨으로 복원하고 연결을 자동 등록한다.
+초기 복원·재배포·검증 절차는 [운영 배포 문서](deployment/README.md#skax-nms-cinamon-운영-db)를 본다.
 
 ## State rules
 

@@ -66,6 +66,7 @@ PROJECT_HANDOFF.md와 저장소를 먼저 확인하고, 기존 설계 결정을 
 - Stage 드래그·이동·리사이즈·자동 저장·복원.
 - 프로젝트별 Graph RAG 문서 업로드(브라우저 폴더·파일 선택, 서비스 DB 보관)·수동 Neo4j 적재, Stage 그래프·본문 조회. Neo4j는 한 서버에서 논리 분리한다. 이전 경로 방식 소스는 문서를 다시 올려야 적재할 수 있다. 운영 `compose.production.yml`에는 아직 Neo4j가 없어 운영에서 적재하려면 서비스 추가가 필요하다. 본문 조각은 4,000자·겹침 400자·문단 경계 우선(헤딩은 메타데이터만)이며 기존 소스는 재적재해야 반영된다. 문서 그래프 엔티티 구성은 채팅에서 진행한다: 의도 `graph_build`(`backend/app/graph_chat.py`) → LLM 스키마 제안 → 채팅으로 수정 → 승인 → 백그라운드 스레드가 LLM으로 엔티티 추출·Neo4j 적재(`X-LLM-*` 헤더) → Stage 그래프 ‘엔티티’ 보기. 핵심 로직은 `graph_service.py`를 REST와 채팅이 공유한다. Northwind 문서 1개로 실제 LLM 검증을 했고(Table 16·FK 13 추출), 같은 이름의 Column이 테이블 구분 없이 합쳐지는 한계가 있다. 질문으로 엔티티를 조회해 답하는 연동은 `knowledge_qa`로 완료됐다(`graph_answer.py`, `docs/features/chat.md`).
 - Admin: 연결 등록·테스트, 역할별 테이블 권한.
+- SKAX NMS 운영 DB: `compose.production.yml`의 `db-skax-nms`와 `pg_skax_nms_data`. Actions가 `backend/sql/skax_nms`의 덤프·설정 파일을 서버에 올리고 최초 볼륨에서만 복원한다. `seed_skax_nms.py`로 연결·권한 등록, `smoke_skax_nms.py`로 배포 후 읽기 전용 접속·권한 확인. 재배포로 기존 DB를 덮어쓰거나 볼륨을 삭제하지 않는다. 상세: `deployment/README.md`.
 - Viewer: 채팅·DnD 없음. `/p/:id/view` 읽기 전용.
 - SOC + Global Sales 샘플 DB (호스트 포트 5433, 5435). 서비스 DB 5434.
 - `llm_usage` 기록 골격.

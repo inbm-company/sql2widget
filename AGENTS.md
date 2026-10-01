@@ -33,7 +33,7 @@
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |
 | 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정 | [admin.md](docs/features/admin.md) |
 
-데모 데이터셋은 두 개이며 동등하게 취급한다: `dbconn_demo`(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), `dbconn_global`(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다.
+데모 데이터셋은 두 개이며 동등하게 취급한다: `dbconn_demo`(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), `dbconn_global`(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(`cinamon`, `dbconn_skax_nms`)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.
 
 ---
 
