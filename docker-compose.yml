@@ -78,7 +78,8 @@ services:
       - pg_skax_nms_data:/var/lib/postgresql/data
       - ./backend/sql/skax_nms:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent4any} -d ${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}"]
+      # The temporary init server only accepts Unix sockets while restoring the dump.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-agent4any} -d ${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}"]
       interval: 3s
       timeout: 5s
       retries: 20
