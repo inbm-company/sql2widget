@@ -1,4 +1,4 @@
-"""Orchestrate mock/LLM planning, SQL execution, and document grounding."""
+"""Orchestrate live LLM planning, SQL execution, and fixed SOC demo sources."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import secrets
 from typing import Any
 
 from app.agent import sanitize_artifact
-from app import graph_answer, graph_chat, question_similarity, schema_linking
+from app import question_similarity, schema_linking
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.intent_router import RouteError, choices_for, decide_route
@@ -337,17 +337,8 @@ def run_agent(
     embedding_result: dict[str, Any] | None = None,
     forced_route: str | None = None,
     project_id: str | None = None,
-    graph_action: dict | None = None,
-    graph_flow_pending: bool = False,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
-    graph_user = {"id": user_id, "tenant_id": tenant_id, "role": user_role}
-
-    if forced_route == graph_chat.ROUTE and project_id:
-        meta["route_source"] = "user_choice"
-        return graph_chat.handle(message, user=graph_user, project_id=project_id,
-                                 llm_settings=llm_settings or {}, action=graph_action, meta=meta)
-
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
     meta["connection_id"] = used_conn
 
@@ -364,8 +355,6 @@ def run_agent(
     try:
         decision = decide_route(
             message, tables=allowed or set(), forced_route=forced_route, llm_context=llm_context,
-            pending_graph_flow=graph_flow_pending,
-            has_document_graph=graph_answer.has_entities(tenant_id, project_id),
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -382,15 +371,6 @@ def run_agent(
             "무엇을 원하시는지 확실하지 않아요. 어떤 방식으로 처리할까요?",
             message, decision.get("probabilities"), meta,
         )
-    if decision["route"] == "knowledge_qa":
-        try:
-            return graph_answer.handle(message, user=graph_user, project_id=project_id,
-                                       llm_context=llm_context, meta=meta)
-        except graph_answer.KnowledgeError as exc:
-            raise AgentRunError(f"문서 그래프로 답하지 못했습니다: {exc}") from exc
-    if decision["route"] == graph_chat.ROUTE and project_id:
-        return graph_chat.handle(message, user=graph_user, project_id=project_id,
-                                 llm_settings=runtime_llm, action=None, meta=meta)
     if decision["route"] == "schema_qa":
         return _answer_schema(message, schema_text, llm_context, meta)
 

@@ -32,6 +32,7 @@ def _now() -> datetime:
 
 def create_access_token(user_id: str, tenant_id: str, role: str) -> str:
     payload = {
+        "iss": config.JWT_ISSUER,
         "sub": user_id,
         "tenant_id": tenant_id,
         "role": role,
@@ -102,7 +103,7 @@ def get_current_user(
     if not creds:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     try:
-        payload = jwt.decode(creds.credentials, config.APP_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(creds.credentials, config.APP_SECRET, algorithms=["HS256"], issuer=config.JWT_ISSUER)
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
         user = fetch_one(

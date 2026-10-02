@@ -1,6 +1,6 @@
 # sql2widget 운영 배포
 
-로컬은 기존 `docker compose up --build`를 사용합니다.
+로컬은 `docker compose --env-file .env.local up --build`를 사용합니다. `.env.local` 준비는 루트 README를 참고합니다.
 운영은 `compose.production.yml`로 별도 구성합니다. DB/API는 외부 포트를 열지 않으며,
 프런트만 `127.0.0.1:3003`에서 정적 화면과 `/api` 프록시를 제공합니다.
 
@@ -23,17 +23,12 @@ Actions가 저장소의 `backend/sql/skax_nms/001_full_dump.sql.gz`와
 ## GitHub Actions
 
 `.github/workflows/deploy.yml`:
-1. PR 및 main push: 프런트 빌드, PostgreSQL·Neo4j를 포함한 백엔드 테스트, 로그인/채팅 smoke.
+1. PR 및 main push: 프런트 빌드, 서비스/고객 PostgreSQL·pgvector를 포함한 백엔드 테스트, 로그인/채팅 smoke.
 2. main push 또는 수동 실행: frontend/backend의 amd64 이미지를 GHCR에 커밋 SHA 태그로 게시.
 3. production 환경의 VPS에 배포 파일·SKAX 스냅샷 업로드, 이미지 pull, health 및 SKAX 연결·권한 확인.
 4. 배포 실패 시 직전 이미지로 복구. DB 마이그레이션은 자동 되돌리지 않습니다.
 
-테스트 job은 체크아웃 직후 `.env.example`을 `.env`로 복사하고, 매 실행마다
-임시 `NEO4J_PASSWORD`를 생성해 채웁니다. 생성한 값은 Actions 로그에서 마스킹합니다.
-Neo4j를 실행 대상으로 지정하지 않아도 Compose는 전체 설정의 필수 변수를 검증하므로,
-환경 기동·테스트·정리 단계 모두 같은 `.env`를 사용합니다.
-로컬 및 운영 서버의 비밀번호는 변경하지 않습니다.
-CI는 Neo4j의 healthcheck가 통과할 때까지 기다린 뒤 백엔드 테스트를 실행합니다.
+테스트 job은 체크아웃 직후 `.env.example`을 `.env.local`로 복사합니다. 환경 기동·테스트·정리는 모두 `--env-file .env.local`을 사용하며, Neo4j 서비스는 실행하지 않습니다. 로컬 및 운영 서버의 비밀번호는 변경하지 않습니다.
 SKAX 샘플 DB의 healthcheck는 `127.0.0.1` TCP 접속을 검사해, 덤프 복원 중인 임시
 Unix 소켓 서버를 준비 완료로 취급하지 않습니다. API 준비 대기가 실패하면 컨테이너 상태와
 백엔드 최근 로그를 출력한 뒤 실패 처리합니다.
@@ -78,3 +73,7 @@ SKAX 운영 Compose도 격리 환경에서 초기 복원·API 연결 목록/연�
 백엔드 재생성 후 동일 테이블·뷰 118개 유지까지 확인했습니다.
 실제 LLM 위젯 생성은 유효한 사용자 키로 추가 확인해야 합니다.
 GitHub Actions의 테스트·이미지 빌드·VPS 배포 결과는 각 실행 로그에서 확인합니다.
+
+## 2026-10-02 기능 분리 반영
+
+DB 앱에서 문서 그래프 라우터·기능·마이그레이션을 제거했고 최소 그래프 기반은 기본 미사용이다. 문서 앱은 doc2graph의 별도 운영 Compose를 사용한다. A 운영 구성에는 기존 SQL 채팅 임베딩/예상 질문에 필요한 db-chat-vector와 마이그레이션 명령을 포함했다. 운영 도메인·배포 경로·기존 볼륨은 이번 로컬 작업에서 변경하거나 재기동하지 않았다. 로컬 .env.local·sql2widget-local 실행은 운영 .env와 별개다. 기존 계정 토큰은 issuer 검증 추가에 따라 다시 로그인해야 한다.

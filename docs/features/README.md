@@ -2,7 +2,7 @@
 
 | 문서명 | 기준일 | 관련 문서 |
 |--------|--------|-----------|
-| 기능 문서 색인 (본 문서) | 2026-09-21 | [AGENTS.md](../../AGENTS.md), [01-folder-structure.md](../01-folder-structure.md) |
+| 기능 문서 색인 (본 문서) | 2026-10-02 | [AGENTS.md](../../AGENTS.md), [01-folder-structure.md](../01-folder-structure.md) |
 
 `docs/기능명세서.md`(F-01~F-15 통합본)를 기능 단위로 쪼개어 대체한다. 구현 기준으로 작성했으며, 코드와 다르면 코드가 맞다.
 
@@ -16,7 +16,7 @@
 | [viewer.md](viewer.md) | F-12 | `/p/{id}/view` 읽기 전용 화면 |
 | [admin.md](admin.md) | F-13, F-14 | DB 연결 관리, 테이블 권한, AI 연결 설정 |
 | [similarity-search-design.md](similarity-search-design.md) | — | DB별 예상 질문 유사도 검색, 전체 테이블의 다양한 예상 질문 생성 |
-| [graph-rag-sources.md](graph-rag-sources.md) | — | 프로젝트별 문서 업로드·수동 Neo4j 적재, Stage 그래프·본문 조회 |
+| [graph-rag-sources.md](graph-rag-sources.md) | — | 문서 기능은 doc2graph로 이동, sql2widget의 선택적 최소 그래프 기반 안내 |
 
 F-15(헬스체크)는 별도 문서 없이 [auth.md](auth.md)의 API 표에 포함했다.
 

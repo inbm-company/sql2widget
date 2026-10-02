@@ -1,174 +1,47 @@
-# agent4any
+# sql2widget
 
-자연어로 **SOC 보안 데이터**를 조회하고, 차트·리스트 위젯을 **대화별 스테이지**에 배치하는 에이전트 MVP.
+고객 PostgreSQL에 자연어로 질문하고, 결과를 표·차트·KPI로 받아 프로젝트별 Stage에 배치하는 앱이다. 문서 업로드·엔티티 추출·문서 지식그래프 채팅은 별개 프로젝트 `doc2graph`로 분리했다. 두 앱은 같은 기본 UI를 사용하고 계정·설정·데이터는 독립 관리한다.
 
-기획: [docs/PLAN.md](docs/PLAN.md) · UI: [docs/UI_BRIEF.md](docs/UI_BRIEF.md)
-
-## Quick start (Docker)
-
-```powershell
-Copy-Item .env.example .env
-```
-
-`.env`의 `NEO4J_PASSWORD`에 임의의 비밀번호(최소 8자)를 설정한 뒤 실행한다.
-기존 `.env`가 있으면 복사로 덮어쓰지 않고 이 항목만 추가한다.
-
-```powershell
-docker compose up --build
-```
-
-고객 DB 스키마를 바꾼 뒤 기존 볼륨이 남아 있으면:
-
-```powershell
-docker compose down -v
-docker compose up --build
-```
-
-- Frontend: http://127.0.0.1:5173
-- API: http://127.0.0.1:8001/api/health (host `8000` 충돌 시 `8001` 사용)
-- Service DB host port: `5434` (container `5432`; host `5432`가 이미 쓰이면 충돌 방지)
-- Sample customer DB host port: `5436` (if `5433` is already used)
-- Full Northwind sample DB host port: `5437` (operational date fields are recentized across 2026-08-01 to 2026-09-10)
-- SKAX NMS snapshot DB host port: `5438` (`cinamon` schema, including table data)
-
-Login:
-
-```text
-admin@example.com
-demo-password
-```
-
-## Sample questions (SOC)
-
-1. 지난달 공격당한 서버들의 공격 순위, 방법, 해결 방안을 보여줘.
-2. 공격 유형별 비중을 보여줘.
-3. 심각도별 공격 현황을 보여줘.
-4. 자산별 위험도 순위를 보여줘.
-5. 최근 7일 공격 추이를 보여줘.
-6. 열린 취약점 목록을 보여줘.
-7. 차단된 IP 목록을 보여줘.
-8. SOC 보안 현황을 보고서 형태로 만들어줘.
-
-Full Northwind sample questions (Gemini key required for generic schema reasoning):
-
-1. 고객별 총 주문 금액 순위를 보여줘.
-2. 카테고리별 매출 비중을 보여줘.
-3. 월별 주문 매출 추이를 보여줘.
-
-SKAX NMS는 관리자 연결 목록의 `SKAX NMS DB`를 선택해 사용한다. 이 데이터베이스도
-실제 AI 연결 설정(키)이 있어야 자연어 스키마 추론이 동작한다.
-운영 배포에도 저장소의 SKAX 스냅샷을 별도 DB·영속 볼륨으로 복원하고 연결을 자동 등록한다.
-초기 복원·재배포·검증 절차는 [운영 배포 문서](deployment/README.md#skax-nms-cinamon-운영-db)를 본다.
-
-## State rules
-
-1. Server fetch → `useSWR`
-2. Global UI slots → `useStore` (no Provider / `SWRConfig`)
-3. Immediate local UI → `useState`
-
-## LLM
-
-채팅은 항상 실모델 호출로만 응답한다:
-
-```env
-LLM_PROVIDER=openai
-LLM_API_KEY=sk-...
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o-mini
-```
-
-클라우드 키가 없거나 요청이 실패하면 추측해서 대신 답하지 않고 에러를 그대로 화면에 표시한다(HTTP 502). 사용량은 `llm_usage` 테이블에 기록.
-
-브라우저 Admin의 Gemini 기본 모델은 `gemini-3.6-flash`다. 이전 `gemini-2.5-flash` 설정은 신규 Gemini API 사용자에게 제공되지 않아 앱이 자동으로 `3.6`으로 마이그레이션한다.
-
-AI 설정 패널은 Gemini / OpenAI 호환 / 로컬 모델을 지원하며 Provider별로 모델·API 키·URL을 따로 저장한다. 백엔드 요청 처리는 `backend/app/providers/`, 공통 프롬프트는 `backend/app/prompts.py`에 있다.
-
-로컬 모델은 별도로 실행한 **OpenAI 호환 API 서버**에 연결한다. AI 설정에서 로컬 모델을 선택하고 Base URL과 서버에 설치된 채팅 모델 이름을 입력한 뒤 저장한다. API 키는 선택 사항이다. Docker Desktop 백엔드에서 호스트의 Ollama 서버에 연결하는 URL 예시는 `http://host.docker.internal:11434/v1`; 백엔드를 직접 실행하면 `http://localhost:11434/v1`을 사용한다. 다른 서버의 포트는 직접 지정한다. 모델 설치나 서버 실행을 앱이 대신하지 않는다. [Ollama 호환 API](https://docs.ollama.com/api/openai-compatibility).
-
-서버 환경변수로 설정할 수도 있다:
-
-```env
-LLM_PROVIDER=local
-LLM_BASE_URL=http://host.docker.internal:11434/v1
-LLM_MODEL=설치된-채팅-모델-이름
-LLM_API_KEY=
-LLM_EMBEDDING_MODEL=설치된-임베딩-모델-이름
-```
-
-### 채팅 라우팅·스키마 줄이기 환경변수
-
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `TYPESAFE_API_KEY` | (없음) | 채팅 의도 라우팅에 쓰는 TypeSafe Jev 키. 비우면 채팅 LLM이 대신 판단하고 응답 `meta.route_jev_error`에 사유가 남는다 |
-| `TYPESAFE_BASE_URL` / `TYPESAFE_MODEL` | `https://api.typesafe.ai` / `jev-latest` | Jev 호출 대상 |
-| `ROUTE_MIN_CONFIDENCE` | `0.5` | 이 값 미만의 Jev 확신은 선택지(되묻기)로 처리. 실제 질문 데이터로 검증되지 않은 초기값 |
-| `SCHEMA_LINK_MIN_TABLES` | `20` | 허용 테이블이 이 개수를 넘으면 SQL 계획에 관련 테이블만 전달 |
-| `EXTRACT_CONCURRENCY` | `4` | 문서 엔티티 추출에서 동시에 LLM에 보내는 조각 수. 올리면 빨라지지만 AI 제공자의 요청 제한(429)에 걸릴 수 있다 |
-| `EXTRACT_TIMEOUT_SECONDS` | `180` | 엔티티 추출 LLM 호출 1회의 제한 시간(초) |
-
-`LLM_EMBEDDING_MODEL` 또는 로컬 패널의 Embedding model은 선택 사항이다. 비워 두면 유사도 검색 없이 채팅을 사용할 수 있다. 예상 질문 생성·저장에는 임베딩 모델이 필요하며 벡터 차원은 기존 `CHAT_EMBEDDING_DIM`(기본 1536)과 일치해야 한다. 설정 변경을 위해 기존 벡터 DB 차원을 임의로 바꾸지 않는다.
-
-## 채팅 처리 내역
-
-답변의 **처리 내역**을 펼치면 선택 경로·분류 방식과 지식그래프 전체/조회/모델 전달 개수, 모델이 사용했다고 보고한 엔티티·원문 근거를 확인한다. 기록은 대화와 함께 저장되며 기존 답변은 기록 없음으로 표시한다. 기존 실행 환경은 `docker compose exec -T backend python scripts/migrate.py`로 `010_message_meta.sql`을 적용한다. [상세 동작](docs/features/chat.md#채팅-처리-내역-새로고침-후-유지).
-
-## Smoke
-
-```powershell
-docker compose exec backend pytest -q
-docker compose exec backend python scripts/smoke_eval.py
-docker compose exec backend python scripts/smoke_stage.py
-```
-
-위 채팅 스모크는 실제 AI 연결 설정이 필요하다. AI 키가 없는 CI에서는 아래 명령으로
-로그인 성공과 채팅의 AI 미설정 오류(HTTP 502)를 검증한다. 다른 원인의 502는 통과하지 않는다.
-
-```bash
-docker compose exec backend python scripts/smoke_eval.py --expect-ai-error
-```
-
-## 예상 질문 유사도 DB
-
-사용자 질문 → 선택한 DB의 유사 예상 질문 검색 → 연결된 SQL·위젯 정보를 참고해 답변을 생성합니다. 관리자에서 AI 설정 후 DB를 선택해 **예상 질문 생성**을 누르면 모든 테이블을 순회하며 질문을 생성합니다. 역할 선택이나 고정 생성 개수는 없습니다. 기존 실행 환경에는 `docker compose exec backend python scripts/migrate_chat_vector.py`를 적용합니다. [생성 절차·저장 구조·API](docs/features/similarity-search-design.md).
-
-## Neo4j 로컬 설치 (Graph RAG 준비)
-
-Neo4j Community `2026.09.0`을 독립 서비스로 실행한다. 설치·인증·영속 저장에 더해 아래의 로컬 문서 등록·적재 기능이 동작한다. 질문에서 그래프를 검색하는 연동과 LLM 개체·관계 추출은 아직 구현하지 않았다. 연결에는 공식 Python 드라이버 `neo4j==6.3.1`을 사용하며, 추가 Neo4j 플러그인은 설치하지 않는다.
-
-`.env`에 `NEO4J_PASSWORD`를 설정한 뒤 기존 앱을 재시작하지 않고 Neo4j만 기동할 수 있다.
+## 로컬 실행
 
 ```sh
-docker compose config --quiet
-docker compose up -d --no-deps --wait --wait-timeout 300 neo4j
-docker compose ps neo4j
+# 파일이 없을 때만 생성. 기존 설정을 덮어쓰지 않는다.
+cp -n .env.example .env.local
+docker compose --env-file .env.local up -d --build
 ```
 
-- Neo4j Browser: http://127.0.0.1:7474/browser/
-- 호스트 Bolt 주소: `bolt://127.0.0.1:7687`
-- 같은 Compose 네트워크에서의 Bolt 주소: `bolt://neo4j:7687`
-- 사용자 이름: `neo4j`, 비밀번호: 로컬 `.env`의 `NEO4J_PASSWORD`
-- 두 호스트 포트는 `127.0.0.1`에만 바인딩한다.
-- 데이터는 `neo4j_data` → `/data`, 로그는 `neo4j_logs` → `/logs` named volume에 보관한다.
-- 로컬 메모리 설정: 초기 heap 256 MiB, 최대 heap 512 MiB, page cache 256 MiB. 실제 데이터 적재 규모에 따라 다음 단계에서 조정한다.
+- UI: http://127.0.0.1:5175
+- API: http://127.0.0.1:8011/api/health
+- 기본 개발 로그인: `admin@example.com` / `demo-password`.
+- 새 Compose 이름은 `sql2widget-local`이다. 이전 `sql2widget_*` 볼륨을 삭제하거나 이전하지 않고 새 로컬 데이터로 시작한다.
+- 서비스 DB 5544, SOC 5546, Global 5547, Northwind 5548, SKAX NMS 5549, pgvector 5550. 포트는 Compose의 `*_PORT` 변수로 조정할 수 있다.
+- `.env.local`은 A 전용이며 B 설정을 공유하지 않는다. 운영 파일은 별도의 강한 비밀번호·APP_SECRET과 이미지명을 요구한다.
 
-인증된 Bolt 연결은 노드 생성 없이 다음 명령으로 확인한다. Compose healthcheck도 같은 방식으로 `RETURN 1`을 실행한다.
+## 기능과 설정
+
+DB 연결·테이블 권한·예상 질문·DB 조회/구조 질문·위젯·Stage·Viewer를 제공한다. SOC와 Global Sales는 동등한 데모이고 Northwind·SKAX NMS 샘플도 준비한다. 고객 DB는 읽기 전용 SELECT만 실행한다.
+
+AI 설정에서 Gemini/OpenAI 호환/로컬 모델을 지정하거나 `.env.local`의 LLM_PROVIDER/API_KEY/BASE_URL/MODEL을 설정한다. 로컬 서버는 OpenAI 호환 API를 별도로 제공해야 한다. 키가 없거나 호출이 실패하면 오류를 반환한다. 기존 메시지 임베딩과 예상 질문용 pgvector는 유지한다.
+
+SQL 테이블 선택은 유사 예상 질문을 사용하고 매칭이 없으면 전체 허용 스키마를 전달한다. 문서 그래프를 조회하지 않는다. 기존 SOC 고정 데모 출처 보조 기능은 유지한다.
+
+최소 그래프 연결·읽기 기반은 `backend/app/graph_backend.py`에 남겼다. 기본 `GRAPH_ENABLED=false`이고 서버 시작/DB 채팅에서 Neo4j에 접속하지 않는다. 그래프 UI·문서 API·문서 적재 기능은 없다.
+
+상태관리: 서버 fetch는 useSWR, 전역 UI 슬롯은 useStore, 입력·드래그 로컬 상태는 useState. React JavaScript/FastAPI/psycopg 순수 SQL을 사용한다.
+
+## 검증
 
 ```sh
-docker compose exec -T neo4j sh -c 'cypher-shell -a bolt://localhost:7687 -u neo4j -p "${NEO4J_AUTH#*/}" "RETURN 1 AS connected;"'
+docker compose --env-file .env.local exec -T backend pytest -q
+docker compose --env-file .env.local exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py --expect-ai-error
+# 실모델 응답이 설정된 경우에만 질문부터 Stage까지 검증
+docker compose --env-file .env.local exec -T backend python scripts/smoke_stage.py
+cd frontend
+npm ci
+node --test tests/*.test.js
+npm run build
 ```
 
-`docker compose restart neo4j` 또는 컨테이너 재생성 시 named volume은 유지된다. `docker compose down -v`는 Neo4j를 포함한 모든 Compose DB 볼륨을 삭제하므로 데이터를 보존해야 할 때는 사용하지 않는다. 초기 비밀번호는 빈 데이터 볼륨에서만 적용된다. 기존 볼륨의 비밀번호는 `.env` 값 변경만으로 바뀌지 않는다.
+실모델이 설정된 상태의 스모크는 `--expect-ai-error` 없이 수행한다. 이번 분리 검증의 모델 응답은 키 미설정 오류 경로 및 테스트 대역으로 확인했다. `smoke_stage.py`는 모델 응답을 필요로 하므로 키 미설정 상태에서 실패했다. 별도 API 검사로 실제 고객 DB SELECT·DML 거부와 Stage 추가/배치 수정/재조회/삭제를 확인했다.
 
-설치 기준: [Neo4j 공식 Docker 문서](https://neo4j.com/docs/operations-manual/current/docker/introduction/), [Docker 환경변수 설정](https://neo4j.com/docs/operations-manual/current/docker/configuration/).
-
-## 문서 업로드·적재
-
-사이드바에서 **프로젝트를 선택**한 뒤 **DB 관리 → Graph RAG 데이터 소스**에서 이름을 입력하고 **폴더 선택**(하위 폴더 포함) 또는 **파일 선택**으로 문서를 고른 뒤 **문서 올리기**를 누른다. 서버 경로나 공유 폴더 설정은 없으며, 어느 컴퓨터에서 접속해도 같은 방식으로 동작한다. 올린 문서는 서비스 DB에 보관되고, 업로드만으로는 적재하지 않는다. 목록의 **적재** 버튼을 눌러 Neo4j에 저장한다. 문서를 고쳤다면 **폴더/파일 다시 올리기**로 교체한 뒤 다시 적재한다. 상태·마지막 적재 결과는 테넌트·프로젝트별로 서비스 DB에 저장해 새로고침 후에도 유지한다.
-
-현재 대상은 UTF-8 `.md`·`.txt`다. 숨김 파일·폴더(`.git`, `.obsidian` 등)와 이미지·PDF 등 미지원 파일은 올리지 않고 제외 개수를 표시한다. 빈 문서는 적재 결과에 제외 개수로 표시한다. 문서당 2 MiB, 한 번에 1,000개·20 MiB까지 지원한다. 운영 nginx는 이 업로드 API 경로에 한해 요청 본문 32 MB를 허용한다.
-
-Neo4j에는 문서·본문 조각(최대 4,000자, 겹침 400자, 문단 경계 우선)과 Obsidian `[[문서]]`·Markdown 상대 링크를 저장한다. 실제 적재된 문서 사이의 명시된 링크만 관계로 만든다. 재적재 시 기존 노드를 갱신하고 이전 본문 조각·링크·누락 문서는 `active=false`로 유지한다. 기존 그래프 기록을 삭제하지 않는다.
-
-Stage 헤더의 **그래프**를 누르면 현재 프로젝트의 문서 노드·링크를 볼 수 있다. 노드를 선택하면 본문과 연결된 문서를 확인하고, 제목·경로 검색과 확대·이동도 가능하다. 기본 최대 200개 문서·1,000개 링크, 본문 처음 100,000자를 표시한다. Neo4j 서버는 하나이며 프로젝트별 데이터를 논리적으로 분리한다. 채팅 내부 설정과 질문 검색 연결은 다음 협의 대상이다.
-
-[기능·API·저장 구조](docs/features/graph-rag-sources.md) · [공식 Python 드라이버 연결](https://neo4j.com/docs/python-manual/current/connect/)
+[분리 설계와 결정 기록](docs/project-separation-proposal.md) · [기능 명세](docs/features/README.md) · [운영 배포](deployment/README.md)

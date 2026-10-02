@@ -36,11 +36,9 @@ from app.contracts import (
 from app.db import fetch_one
 from app.llm import effective_provider, embed_text
 from app.query import execute_readonly
-from app.graph_source_routes import router as graph_source_router
-from app.graph_ingestion import close_graph_driver
+from app.graph_backend import close_graph_driver
 from app.repositories import connections as conn_repo
 from app.repositories import conversations as conv_repo
-from app.repositories import graph_sources as graph_source_repo
 from app.repositories import message_embeddings as embed_repo
 from app.repositories import projects as project_repo
 from app.repositories import question_catalog
@@ -50,17 +48,12 @@ from app.repositories import stages as stage_repo
 @asynccontextmanager
 async def graph_connection_lifespan(_app):
     try:
-        graph_source_repo.fail_interrupted_extractions()
-    except Exception:
-        logging.getLogger(__name__).warning('could not reset interrupted graph extractions at startup')
-    try:
         yield
     finally:
         close_graph_driver()
 
 
-app = FastAPI(title="agent4any", version="0.1.0", lifespan=graph_connection_lifespan)
-app.include_router(graph_source_router)
+app = FastAPI(title="sql2widget", version="0.1.0", lifespan=graph_connection_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -209,12 +202,6 @@ def delete_conversation(conversation_id: str, user=Depends(get_current_user)):
     return {"ok": True}
 
 
-def _graph_flow_pending(conv: dict) -> bool:
-    """True when the latest assistant message is an unfinished graph-building card."""
-    messages = [m for m in conv.get("messages", []) if m.get("role") == "assistant"]
-    return bool(messages and (messages[-1].get("artifact") or {}).get("type") == "graph_flow")
-
-
 @app.post("/api/chat")
 def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     conv = conv_repo.get_conversation(body.conversation_id, user["tenant_id"], user["id"])
@@ -268,8 +255,6 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
             embedding_result=embed_result,
             forced_route=body.route,
             project_id=conv.get("project_id"),
-            graph_action=body.graph_action,
-            graph_flow_pending=_graph_flow_pending(conv),
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

@@ -8,7 +8,7 @@ from app import db
 from app.auth import get_current_user
 from app.db import execute, fetch_one
 from app.main import app
-from app.repositories import conversations, graph_sources, message_embeddings, stages
+from app.repositories import conversations, message_embeddings, stages
 from app.repositories import projects as project_repo
 
 
@@ -35,7 +35,7 @@ def project_tree(monkeypatch):
             with conn.transaction():
                 yield conn
 
-        for module in (db, project_repo, conversations, stages, graph_sources):
+        for module in (db, project_repo, conversations, stages):
             monkeypatch.setattr(module, "get_conn", transaction)
         project = project_repo.create_project("tenant_demo", "user_admin", "삭제 테스트")
         other = project_repo.create_project("tenant_demo", "user_admin", "유지 테스트")
@@ -45,18 +45,14 @@ def project_tree(monkeypatch):
         widget = stages.add_widget(stage["id"], {
             "component": "DataTable", "title": "테스트 위젯", "props": {}, "layout": {},
         })
-        source = graph_sources.create_source(
-            tenant_id="tenant_demo", project_id=project["id"], created_by="user_admin",
-            name="보존 소스", files={"note.md": "# 보존 문서"},
-        )
         try:
-            yield project, other, chat, message, stage, widget, source, original
+            yield project, other, chat, message, stage, widget, original
         finally:
             conn.rollback()
 
 
-def test_delete_project_cascades_and_preserves_sources(project_tree):
-    project, other, chat, message, stage, widget, source, _ = project_tree
+def test_delete_project_cascades(project_tree):
+    project, other, chat, message, stage, widget, _ = project_tree
     assert project_repo.delete_project(project["id"], "tenant_demo", "user_admin") is True
     for table, record in (
         ("projects", project), ("conversations", chat), ("messages", message),
@@ -64,9 +60,6 @@ def test_delete_project_cascades_and_preserves_sources(project_tree):
     ):
         assert fetch_one(f"SELECT id FROM {table} WHERE id = %s", (record["id"],)) is None
     assert project_repo.get_project(other["id"], "tenant_demo", "user_admin")
-    preserved = fetch_one("SELECT * FROM graph_sources WHERE id = %s", (source["id"],))
-    assert preserved["project_id"] is None
-    assert preserved["path"] == source["path"]
     assert project_repo.delete_project(project["id"], "tenant_demo", "user_admin") is False
 
 
@@ -75,18 +68,6 @@ def test_delete_project_rejects_other_owner_and_tenant(project_tree):
     assert project_repo.delete_project(project["id"], "tenant_demo", "user_viewer") is False
     assert project_repo.delete_project(project["id"], "other_tenant", "user_admin") is False
     assert project_repo.get_project(project["id"], "tenant_demo", "user_admin")
-
-
-def test_delete_project_during_source_job_is_atomic(project_tree):
-    project, _, chat, _, _, _, source, original = project_tree
-    with original() as lock_conn:
-        with lock_conn.cursor() as cur:
-            cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (source["id"],))
-            with pytest.raises(project_repo.ProjectBusyError):
-                project_repo.delete_project(project["id"], "tenant_demo", "user_admin")
-    assert project_repo.get_project(project["id"], "tenant_demo", "user_admin")
-    assert conversations.get_conversation(chat["id"], "tenant_demo", "user_admin")
-    assert project_repo.delete_project(project["id"], "tenant_demo", "user_admin") is True
 
 
 def test_delete_project_removes_vector_messages(project_tree):

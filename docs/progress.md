@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 작업 진행 상황 |
-| 기준일 | 2026-10-01 |
+| 기준일 | 2026-10-02 |
 | 관련 문서 | [AGENTS.md](../AGENTS.md), [docs/features/](features/README.md), [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
 
 상태 라벨은 4종 고정: `완료` / `진행중` / `예정` / `보류`. 이 문서는 `docs/현황.html`(2026-09-03 스냅샷)을 대체한다 — 이전 스냅샷 수치는 6절에 남겨둔다.
@@ -16,7 +16,6 @@
 - 2026-09-03 스냅샷 이후 **프로젝트 계층**(대화 여러 개를 프로젝트 하나로 묶고, Stage를 프로젝트당 1개로)이 새로 들어왔다 — 당시 문서의 `/c/:id/view`는 지금 `/p/:projectId/view`로 바뀌었다.
 - 실 LLM 경로(OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도)도 스냅샷 이후 상당히 진전됐다.
 - 채팅 메시지 임베딩(pgvector 유사도 검색)은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작하고 프론트는 아직 안 붙었다.
-- Graph RAG 준비용 Neo4j 로컬 설치와 프로젝트별 문서 업로드·수동 적재·Stage 그래프 조회는 **완료**. 문서 본문과 명시된 문서 링크를 저장하며, 채팅 질문으로 엔티티를 조회해 답하는 연동(`knowledge_qa`)도 **완료**.
 
 ---
 
@@ -25,43 +24,39 @@
 | 항목 | 비고 |
 |------|------|
 | 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer) | [auth.md](features/auth.md) |
-| 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·문서 소스 보존, New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |
+| 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |
 | Artifact 위젯 렌더 + SQL 미리보기 | [widgets-artifact.md](features/widgets-artifact.md) |
 | Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 | [stage.md](features/stage.md) |
 | Viewer 읽기 전용 화면(`/p/:id/view`) | [viewer.md](features/viewer.md) |
 | Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기 | [admin.md](features/admin.md) |
 | SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성 | `docker-compose.yml` |
 | Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록 | `backend/scripts/seed_northwind_recent.py`, `seed_skax_nms.py` |
-| Graph RAG 준비용 Neo4j 로컬 설치 | Community `2026.09.0`, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck. [설치 방법](../README.md#neo4j-로컬-설치-graph-rag-준비) |
-| 프로젝트별 문서 업로드·수동 Neo4j 적재 | 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 `knowledge_qa`로 완료. [graph-rag-sources.md](features/graph-rag-sources.md) |
-| Stage 프로젝트 문서 그래프·본문 조회 | 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회. [graph-rag-sources.md](features/graph-rag-sources.md) |
 | 실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제) | [chat.md](features/chat.md) |
 | Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select) | [admin.md](features/admin.md) |
 | `llm_usage` 사용량 기록 골격(테이블 적재) | [admin.md](features/admin.md) 데이터 모델 |
 | 문서 체계 정비 — `AGENTS.md`/`CLAUDE.md`, `docs/01-folder-structure.md`, `docs/features/*.md`, 본 문서, `docs/dashboard.html`, `docs/kanban.html` | 이번 문서화 작업 1~5번 전체 완료 |
 | DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성 | [similarity-search-design.md](features/similarity-search-design.md) |
 | 채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지 | 단위 테스트와 실제 Jev 호출(2026-10-01, `jev-1.13.0`)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. `ROUTE_MIN_CONFIDENCE` 0.5는 아직 검증 전 초기값. [chat.md](features/chat.md) |
-| 문서 그래프 기반 답변(`knowledge_qa`) — "문서에서 …" 질문에 프로젝트의 엔티티·관계·근거로 답하고 근거 엔티티·관계 표·출처 위젯을 반환. 엔티티가 없으면 안내와 선택지 | 단위 테스트와 Northwind 문서 1개(엔티티 44개)로 실제 확인. 다른 문서 유형·500개 초과 그래프는 미검증. [chat.md](features/chat.md) |
-| 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
-| 문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기(타입별 색·속성·관계·원문 근거) | Northwind 문서 1개로 브라우저 검증(Table 16·FK 13). 다른 문서 유형은 미검증, 같은 이름 노드는 문서 전체에서 한 노드로 합쳐지는 한계. 추출은 조각을 최대 4개 동시·호출 제한 180초로 처리(52조각 11.3분, 실패 0건; 이전 순차·60초일 때 약 50분 추정). [graph-rag-sources.md](features/graph-rag-sources.md) |
-| 채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, 그래프 전체/조회/모델 전달 수, 모델이 보고한 사용 엔티티와 원문 근거, SQL 테이블 선택·유사 질문 참조 | `messages.meta` 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. [chat.md](features/chat.md) |
+| 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
+| 채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조 | `messages.meta` 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. [chat.md](features/chat.md) |
 | 운영 배포 파이프라인 | 2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. [deployment/README.md](../deployment/README.md) |
+| DB/문서 프로젝트 분리 및 독립 실행 | sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 운영 전환·실모델 유료 호출은 미실행 |
 
 ## 3. 진행중
 
 | 항목 | 비고 |
 |------|------|
 | 채팅 메시지 임베딩·유사도 검색(pgvector, `chat_vector` DB) | 백엔드 저장·검색(`message_embeddings.py`)까지 완료, API가 `related_messages` 반환. **프론트 미표시** — `App.jsx`가 아직 렌더링 안 함 |
-| 실 LLM 경로 하드닝 | 기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) 5번 |
+| 실 LLM 경로 하드닝 | 기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
 
 ## 4. 예정
 
 | 항목 | 우선순위 | 비고 |
 |------|----------|------|
-| 질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증 | HIGH | [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) 1번, 2026-09-03 스냅샷 #7과 동일 항목, 미착수 |
+| 질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증 | HIGH | [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md), 2026-09-03 스냅샷 #7과 동일 항목, 미착수 |
 | Circle 게이지 조합 카탈로그 (ring × size × companion) | MED | 스냅샷 #9와 동일, `ALLOWED_COMPONENTS`에 아직 없음 |
 | Viewer에 남은 다크 Orion 자리표시(CSS `variant="orion"`) 정리 | LOW | [DESIGN.md](../DESIGN.md)가 "정식 토큰 아님"으로 명시. [viewer.md](features/viewer.md) 참고 |
-| 실 RAG(문서 검색) 고도화 — 현재 `DocumentProvider`는 Mock 고정 문서만 | LOW | [chat.md](features/chat.md) 문서 근거 보강 절 |
+| 실 RAG(문서 검색) 고도화 — 현재 `DocumentProvider`는 Mock 고정 문서만 | LOW | 고정 SOC 데모 출처 보조 기능. 사용자 업로드 문서 그래프는 doc2graph 소유 |
 | LLM 사용량(`llm_usage`) 조회 UI | 미지정 | 기록만 되고 화면에서 보여주지 않음. [admin.md](features/admin.md) |
 | Stage 쓰기 API에 role 기반 서버측 검사 추가 여부 | 미지정 | 현재는 소유자 검사만 있고 `readOnly`는 프론트 전용. [stage.md](features/stage.md) 주의 항목 — 취약점이 아니라 설계 확인 필요 항목으로 분류 |
 

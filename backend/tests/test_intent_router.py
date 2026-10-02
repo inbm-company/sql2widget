@@ -116,7 +116,7 @@ def test_both_models_failing_raises(monkeypatch):
 
 def test_choices_put_the_likeliest_route_first():
     choices = router.choices_for("질문", {"schema_qa": 0.6, "data_query": 0.3})
-    assert [c["route"] for c in choices] == ["schema_qa", "data_query", "knowledge_qa"]
+    assert [c["route"] for c in choices] == ["schema_qa", "data_query"]
     assert all(c["message"] == "질문" for c in choices)
 
 
@@ -145,39 +145,3 @@ def test_schema_route_answers_from_schema_only(monkeypatch):
     assert summary == "요약"
     assert artifact["widgets"][0]["component"] == "MarkdownBlock"
     assert meta["route"] == "schema_qa"
-
-
-def test_knowledge_route_is_answered_from_the_document_graph(monkeypatch):
-    seen = {}
-
-    def handle(message, **kwargs):
-        seen.update(kwargs)
-        return "문서 답변", {"type": "report", "widgets": []}, kwargs["meta"]
-
-    monkeypatch.setattr(agent_service.graph_answer, "handle", handle)
-    run = agent_with(monkeypatch, {"route": "knowledge_qa", "source": "jev", "clarify": False})
-    summary, artifact, meta = run()
-    assert summary == "문서 답변" and meta["route"] == "knowledge_qa"
-    assert seen["user"]["tenant_id"] == "t" and seen["llm_context"]["tenant_id"] == "t"
-
-
-def test_knowledge_failure_becomes_agent_error(monkeypatch):
-    def handle(message, **kwargs):
-        raise agent_service.graph_answer.KnowledgeError("Neo4j down")
-
-    monkeypatch.setattr(agent_service.graph_answer, "handle", handle)
-    run = agent_with(monkeypatch, {"route": "knowledge_qa", "source": "jev", "clarify": False})
-    with pytest.raises(agent_service.AgentRunError, match="Neo4j down"):
-        run()
-
-
-def test_route_failure_becomes_agent_error(monkeypatch):
-    monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *a, **k: ("db", "test", set()))
-    monkeypatch.setattr(agent_service, "_schema_text_for_connection", lambda *a, **k: "schema")
-
-    def fail(*a, **k):
-        raise router.RouteError("boom")
-
-    monkeypatch.setattr(agent_service, "decide_route", fail)
-    with pytest.raises(agent_service.AgentRunError, match="boom"):
-        agent_service.run_agent("질문", tenant_id="t", user_id="u")

@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 관리자 패널 |
-| 기준일 | 2026-10-01 (구현 기준) |
+| 기준일 | 2026-10-02 (구현 기준) |
 | 관련 문서 | [chat.md](chat.md)(연결·권한·AI 설정이 실제로 쓰이는 곳) |
 | 관련 코드 | `backend/app/repositories/connections.py`, `backend/app/crypto.py`, `backend/app/local_models.py`, `backend/app/main.py`(`/api/ai/local-models`, `/api/database-connections*`, `/api/table-permissions`), `frontend/src/AdminPanel.jsx`, `frontend/src/api.js`(`getAiSettings`/`setAiSettings`) |
 
@@ -17,7 +17,6 @@
 
 ## F-13 DB 연결 관리
 
-`DB 관리`와 전체 `Admin` 패널에는 **Graph RAG 데이터 소스**도 표시된다. 폴더·파일을 업로드하고 별도의 **적재** 버튼으로 문서 본문과 명시된 문서 링크를 Neo4j에 저장한다. [지원 범위·API·접근 제한](graph-rag-sources.md).
 
 | API | 기능 | 권한 |
 |-----|------|------|
@@ -47,7 +46,7 @@
 
 ## AI 연결 설정 (브라우저 로컬)
 
-Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 `localStorage`(`agent4any_ai_settings`)에 `{ provider, profiles: { gemini, openai, local } }` 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, **AI 설정 저장**을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.
+Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 `localStorage`(`sql2widget_ai_settings`)에 `{ provider, profiles: { gemini, openai, local } }` 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, **AI 설정 저장**을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.
 
 | 필드 | 동작 |
 |------|------|

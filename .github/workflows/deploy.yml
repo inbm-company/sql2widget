@@ -21,33 +21,31 @@ jobs:
       - uses: actions/checkout@v6
       - name: Prepare CI environment
         run: |
-          ci_neo4j_password="$(openssl rand -hex 24)"
-          echo "::add-mask::$ci_neo4j_password"
-          sed "s/^NEO4J_PASSWORD=.*/NEO4J_PASSWORD=$ci_neo4j_password/" .env.example > .env
+          cp .env.example .env.local
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci && npm run build
+      - run: npm ci && node --test tests/*.test.js && npm run build
         working-directory: frontend
       - name: Start integration environment
         run: |
-          docker compose up -d --build --wait --wait-timeout 300 db db-customer db-stage-global neo4j backend
+          docker compose --env-file .env.local up -d --build --wait --wait-timeout 300 db db-customer db-stage-global db-chat-vector backend
           for attempt in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:8010/api/health; then exit 0; fi
+            if curl -fsS http://127.0.0.1:8011/api/health; then exit 0; fi
             sleep 3
           done
-          docker compose ps -a
-          docker compose logs --no-color --tail 100 backend
+          docker compose --env-file .env.local ps -a
+          docker compose --env-file .env.local logs --no-color --tail 100 backend
           exit 1
       - name: Backend tests
-        run: docker compose exec -T backend pytest -q
+        run: docker compose --env-file .env.local exec -T backend pytest -q
       - name: Login and chat smoke
-        run: docker compose exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py --expect-ai-error
+        run: docker compose --env-file .env.local exec -T -e SMOKE_API_BASE=http://127.0.0.1:8000 backend python scripts/smoke_eval.py --expect-ai-error
       - name: Clean up
         if: always()
-        run: docker compose down
+        run: docker compose --env-file .env.local down
   build:
     if: github.event_name != 'pull_request'
     needs: test

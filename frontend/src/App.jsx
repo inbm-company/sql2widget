@@ -18,7 +18,6 @@ import ViewerStagePage from "./ViewerStagePage.jsx";
 import { canShowSql, resolveWidgetSql } from "./sqlHelpers.js";
 import { storeKeys, useSWR } from "./store";
 import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
-import GraphFlowCard from "./GraphFlowCard.jsx";
 import ChatTrace from "./ChatTrace.jsx";
 
 function LoginForm({ onSuccess }) {
@@ -55,7 +54,7 @@ function LoginForm({ onSuccess }) {
               <span className="widget-drag-handle" aria-hidden="true">
                 ⋮⋮
               </span>
-              <h1 className="widget-title">agent4any</h1>
+              <h1 className="widget-title">sql2widget</h1>
             </div>
             <div className="widget-body login-pin-body">
               <p className="lede">질문을 위젯으로 받고, Stage에 꽂습니다.</p>
@@ -182,9 +181,6 @@ function AssistantAnswer({ content, artifact, meta, projectId, onAdded, onChoose
       {content ? <div className="msg-content">{content}</div> : null}
       <ChatTrace meta={meta} />
 
-      {artifact?.type === "graph_flow" && artifact.graph ? (
-        <GraphFlowCard graph={artifact.graph} projectId={projectId} />
-      ) : null}
 
       {artifact?.choices?.length ? (
         <div className="prompt-suggestions">
@@ -398,7 +394,7 @@ function ProjectHeader({ project, active, onToggle, onRenamed, onNewChat, onDele
 
   async function remove() {
     if (busy || readOnly || deletingDisabled) return;
-    if (!window.confirm(`“${project.title}” 프로젝트를 삭제할까요?\n\n모든 대화·메시지와 Stage 위젯이 함께 삭제되며 복구할 수 없습니다.\n문서 소스는 미연결 상태로 보존됩니다.`)) return;
+    if (!window.confirm(`“${project.title}” 프로젝트를 삭제할까요?\n\n모든 대화·메시지와 Stage 위젯이 함께 삭제되며 복구할 수 없습니다.`)) return;
     setBusy(true);
     setDeleteError("");
     try {
@@ -566,7 +562,7 @@ function Workspace({ user, onLogout }) {
     }
   }
 
-  async function sendMessage(text, route = null, graphAction = null) {
+  async function sendMessage(text, route = null) {
     const message = text.trim();
     if (!message || !activeId || sending) return;
     setSending(true);
@@ -574,7 +570,7 @@ function Workspace({ user, onLogout }) {
     setChatError("");
     if (text === input) setInput("");
     try {
-      await api.chat(activeId, message, connectionId || null, route, graphAction);
+      await api.chat(activeId, message, connectionId || null, route);
       await mutateConv();
       await mutateConvs();
       await swrMutate(storeKeys.stage(activeProjectId));
@@ -636,7 +632,7 @@ function Workspace({ user, onLogout }) {
     <div ref={workspaceRef} style={{ "--chat-share": `${chatShare}fr`, "--stage-share": `${1 - chatShare}fr` }} className={`workspace ${stageOpen && canEdit ? "" : "stage-collapsed"}`}>
       <aside className="sidebar">
         <div className="sidebar-top">
-          <div className="brand">agent4any</div>
+          <div className="brand">sql2widget</div>
           <button type="button" className="sidebar-new" onClick={newProject} title="New project" disabled={isViewer}>
             <span className="sidebar-new-icon">+</span>
             New project
@@ -780,7 +776,7 @@ function Workspace({ user, onLogout }) {
                       meta={m.meta}
                       projectId={activeProjectId}
                       onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
-                      onChoose={(choice) => sendMessage(choice.message, choice.route, choice.action || null)}
+                      onChoose={(choice) => sendMessage(choice.message, choice.route)}
                       readOnly={isViewer || sending}
                     />
                   )}

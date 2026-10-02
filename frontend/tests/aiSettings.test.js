@@ -10,7 +10,7 @@ globalThis.localStorage = {
 beforeEach(() => values.clear());
 
 test("legacy credentials remain in their original provider profile", () => {
-  localStorage.setItem("agent4any_ai_settings", JSON.stringify({ provider: "gemini", model: "saved-model", apiKey: "test-gemini-key" }));
+  localStorage.setItem("sql2widget_ai_settings", JSON.stringify({ provider: "gemini", model: "saved-model", apiKey: "test-gemini-key" }));
   assert.equal(getAiSettings().model, "saved-model");
   assert.equal(getAiSettings("openai").apiKey, "");
   assert.equal(getAiSettings("local").apiKey, "");
@@ -30,9 +30,9 @@ test("provider profiles keep separate models keys and URLs", () => {
 
 test("empty or corrupt storage does not override server settings", () => {
   assert.deepEqual(getAiSettings(), {});
-  localStorage.setItem("agent4any_ai_settings", "null");
+  localStorage.setItem("sql2widget_ai_settings", "null");
   assert.deepEqual(getAiSettings(), {});
-  localStorage.setItem("agent4any_ai_settings", "invalid");
+  localStorage.setItem("sql2widget_ai_settings", "invalid");
   assert.deepEqual(getAiSettings(), {});
 });
 

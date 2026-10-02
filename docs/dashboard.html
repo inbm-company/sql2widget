@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>agent4any · 문서</title>
+<title>sql2widget · 문서 대시보드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 <style>
@@ -159,451 +159,919 @@
   <button class="menu-btn" id="menuBtn" aria-label="목차 열기">☰</button>
   <div class="shell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="name">agent4any</span><span class="sub">sql2widget 문서</span></div>
+      <div class="brand"><span class="name">sql2widget</span><span class="sub">프로젝트 문서</span></div>
       <div class="search-box"><input type="text" id="tocSearch" placeholder="문서 검색…" /></div>
-      <nav class="toc" id="toc">
-        <div class="group-label">시작하기</div>
-        <a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a>
-        <a href="../AGENTS.md" class="external">AGENTS.md 원문 ↗</a>
-        <a href="01-folder-structure.md" class="external">폴더 구조 문서 ↗</a>
-
-        <div class="group-label">기능</div>
-        <a href="#auth" data-id="auth">로그인/세션 <span class="fcode">F-01,02</span></a>
-        <a href="#projects-conversations" data-id="projects-conversations">프로젝트·대화 <span class="fcode">F-03~06</span></a>
-        <a href="#chat" data-id="chat">채팅(에이전트) <span class="fcode">F-07,08</span></a>
-        <a href="#widgets-artifact" data-id="widgets-artifact">Artifact/위젯 카탈로그 <span class="fcode">F-09</span></a>
-        <a href="#stage" data-id="stage">Stage <span class="fcode">F-10,11</span></a>
-        <a href="#viewer" data-id="viewer">Viewer 화면 <span class="fcode">F-12</span></a>
-        <a href="#admin" data-id="admin">관리자 <span class="fcode">F-13,14</span></a>
-        <a href="#graph-rag-sources" data-id="graph-rag-sources">Graph RAG 데이터 소스</a>
-
-        <div class="group-label">운영</div>
-        <a href="#progress" data-id="progress">진행 상황</a>
-        <a href="kanban.html" class="external">칸반 보드 ↗</a>
-      </nav>
+      <nav class="toc" id="toc"><div class="group-label">시작하기</div><a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a><a href="../README.md">실행 안내 ↗</a><a href="01-folder-structure.md">폴더 구조 ↗</a><div class="group-label">기능</div><a href="#auth" data-id="auth">기능: 로그인/세션</a><a href="#projects-conversations" data-id="projects-conversations">기능: 프로젝트 · 대화</a><a href="#chat" data-id="chat">기능: DB 채팅</a><a href="#widgets-artifact" data-id="widgets-artifact">기능: Artifact / 위젯 카탈로그</a><a href="#stage" data-id="stage">기능: Stage (핀보드)</a><a href="#viewer" data-id="viewer">기능: Viewer 화면</a><a href="#admin" data-id="admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a><a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a><a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a><div class="group-label">운영</div><a href="#progress" data-id="progress">진행 상황</a><a href="kanban.html">칸반 보드 ↗</a></nav>
     </aside>
 
-    <main id="main">
-
-<section id="overview">
-  <div class="doc-title">시작하기</div>
-  <h1 class="page">개요 &amp; 공통 규칙</h1>
-  <p class="doc-meta">기준일 2026-10-01 · 원문 <code>AGENTS.md</code> / <code>CLAUDE.md</code>(루트, 코딩 에이전트 자동 로드)</p>
-
-  <p>비기술 사용자가 자연어로 고객 DB(SOC 보안 / Global Sales)를 조회하고, 결과를 허용된 위젯(차트·표·KPI 등)으로 받은 뒤, <strong>프로젝트마다 1개</strong>인 Stage(핀보드)에 배치·저장하는 에이전트 MVP다. 완성된 공유 대시보드 템플릿을 자동 생성하는 것은 목표가 아니다.</p>
-
-  <h2>주요 기능 개요</h2>
-  <table>
-    <thead><tr><th>기능</th><th>한 줄 설명</th></tr></thead>
-    <tbody>
-      <tr><td><a href="#auth">로그인/세션</a></td><td>이메일·비밀번호 로그인, JWT access+refresh, <code>admin</code>/<code>viewer</code> 역할 구분</td></tr>
-      <tr><td><a href="#projects-conversations">프로젝트·대화</a></td><td>프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제</td></tr>
-      <tr><td><a href="#chat">채팅(에이전트)</a></td><td>자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환</td></tr>
-            <tr><td><a href="#chat">채팅 의도 라우팅</a></td><td>질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환</td></tr>
-      <tr><td><a href="#widgets-artifact">Artifact/위젯 표시</a></td><td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·그래프 조회/전달 수·모델 사용 보고와 원문 근거 확인(대화에 저장)</td></tr>
-      <tr><td><a href="#stage">Stage 배치</a></td><td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, 자동 저장·새로고침 후 복원</td></tr>
-      <tr><td><a href="#graph-rag-sources">프로젝트 문서 그래프</a></td><td>프로젝트별 문서 업로드 → Neo4j 수동 적재 → Stage에서 문서 그래프·본문 조회. 채팅에서 "문서에서 …" 질문에 엔티티·근거로 답변(knowledge_qa)</td></tr>
-      <tr><td><a href="#viewer">Viewer 전용 화면</a></td><td><code>/p/{projectId}/view</code> — 채팅·편집 없이 Stage만 읽기 전용으로 표시</td></tr>
-      <tr><td><a href="#admin">관리자</a></td><td>DB 연결/테이블 권한/브라우저별 AI 설정</td></tr>
-    </tbody>
-  </table>
-  <p>데모 데이터셋은 두 개이며 동등하게 취급한다: <code>dbconn_demo</code>(SOC 보안), <code>dbconn_global</code>(Global Sales). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(<code>cinamon</code>, <code>dbconn_skax_nms</code>)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.</p>
-
-  <h2>공통 확정 규칙</h2>
-  <h3>제품 규칙</h3>
-  <ol>
-    <li><strong>동등한 데모 두 세계</strong> — SOC 보안과 Global Sales는 하나가 메인이고 다른 하나가 곁다리인 관계가 아니다.</li>
-    <li><strong>핀보드지 포스터가 아니다</strong> — 성공은 질문에 맞는 위젯이 채팅에 나오고 사용자가 몇 개를 Stage에 꽂는 것.</li>
-    <li><strong>카탈로그 가구, 사용자 배치</strong> — 에이전트는 후보 위젯을 제안하고, 배치는 사용자가 한다.</li>
-    <li><strong>닫힌 타입, 열린 값</strong> — 차트 종류·레이아웃 문자열·색상을 에이전트가 지어내지 않는다.</li>
-    <li><strong>프로젝트 스코프</strong> — Stage는 프로젝트당 1개. 전역 대시보드 라이브러리가 아니다.</li>
-  </ol>
-
-  <h3>기술/아키텍처 규칙</h3>
-  <ul>
-    <li>백엔드: Python, FastAPI, <code>psycopg</code>, 순수 SQL. <strong>ORM 없음.</strong></li>
-    <li>프론트: Vite, React, <strong>JavaScript</strong>. <strong>TypeScript 없음.</strong></li>
-    <li>상태관리 3원칙: 서버 fetch → <code>useSWR</code> / 전역 UI 슬롯 → <code>useStore</code>(Provider 금지) / 입력·드래그 중 로컬 상태 → <code>useState</code></li>
-    <li>고객 DB는 <strong>읽기 전용 SELECT만</strong>.</li>
-    <li>위젯 컴포넌트 이름은 서버 화이트리스트 검증.</li>
-    <li>채팅 응답은 항상 실 LLM 호출로만 만든다(OpenAI-compatible). 키가 없거나 호출이 실패하면 키워드 매칭 등으로 추측해서 대신 답하지 않고 에러를 그대로 반환한다.</li>
-  </ul>
-
-  <h3>보안/운영 규칙</h3>
-  <ul>
-    <li>서비스 DB와 고객 DB를 같은 커넥션·같은 쿼리 경로로 섞지 않는다.</li>
-    <li>모델이 서비스 DB에 임의 SQL을 실행하게 하지 않는다.</li>
-    <li>고객 DB 비밀번호·API 키를 로그에 남기지 않는다.</li>
-    <li>화이트리스트 밖 컴포넌트 이름을 새로 만들지 않는다.</li>
-    <li>근거 없는 해결 방안을 지어내지 않는다.</li>
-    <li>합의 없이 DML, ORM, TypeScript, SWR Provider 패턴을 도입하지 않는다.</li>
-  </ul>
-
-  <h3>문서 동기화 규칙</h3>
-  <p>코드를 바꾸는 에이전트가 직접 문서를 갱신한다. 나중으로 미루지 않고 <strong>같은 작업 안에서</strong> 끝낸다.</p>
-  <table>
-    <thead><tr><th>변경</th><th>같이 갱신할 문서</th></tr></thead>
-    <tbody>
-      <tr><td>기능 동작·API·응답 형태</td><td><code>docs/features/*.md</code> 해당 문서와 그 문서의 기준일</td></tr>
-      <tr><td>파일·모듈 추가/삭제/역할 변경</td><td><code>docs/01-folder-structure.md</code></td></tr>
-      <tr><td>작업 상태 변화(완료/진행중/예정/보류)</td><td><code>docs/progress.md</code> → <code>docs/kanban.html</code>·<code>docs/dashboard.html</code></td></tr>
-      <tr><td>환경변수 추가/변경</td><td><code>.env.example</code>, <code>README.md</code>, 운영에 필요하면 <code>deployment/README.md</code></td></tr>
-      <tr><td>새 세션이 알아야 할 동작·경로·주의사항</td><td><code>PROJECT_HANDOFF.md</code>, <code>AGENTS.md</code> 2절 기능 개요 표</td></tr>
-      <tr><td><code>AGENTS.md</code> 4절 규칙 문구</td><td><code>docs/dashboard.html</code> <code>&lt;section id="overview"&gt;</code></td></tr>
-    </tbody>
-  </table>
-  <p>작업 완료를 보고하기 전에 위 표로 누락을 점검한다. 갱신하지 않은 항목이 있으면 이유를 함께 적는다.</p>
-
-  <div class="page-nav"><span></span><a href="#auth">다음: 로그인/세션 →</a></div>
-</section>
-
-<!-- ===================== AUTH ===================== -->
-<section id="auth">
-  <div class="doc-title">기능</div>
-  <h1 class="page">로그인/세션</h1>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>backend/app/auth.py</code>, <code>backend/app/main.py</code>, <code>frontend/src/App.jsx</code>, <code>frontend/src/api.js</code></p>
-
-  <h2>F-01 로그인</h2>
-  <table>
-    <tbody>
-      <tr><th>액터</th><td>모든 역할</td></tr>
-      <tr><th>입력</th><td><code>email</code>, <code>password</code></td></tr>
-      <tr><th>처리</th><td>이메일 소문자·trim 후 조회 → <code>argon2</code>로 비밀번호 검증 → JWT access + refresh 발급</td></tr>
-      <tr><th>출력</th><td><code>access_token</code>, <code>refresh_token</code>, <code>user { id, email, role, tenant_id }</code></td></tr>
-      <tr><th>저장</th><td>브라우저 <code>localStorage</code> (<code>agent4any_access</code>, <code>agent4any_refresh</code>)</td></tr>
-      <tr><th>실패</th><td>401 <code>Invalid credentials</code></td></tr>
-    </tbody>
-  </table>
-  <ul>
-    <li>Access 토큰 만료: 기본 30분(<code>JWT_ACCESS_MINUTES</code>)</li>
-    <li>Refresh 토큰 만료: 기본 14일(<code>JWT_REFRESH_DAYS</code>)</li>
-    <li><code>LoginForm</code>은 데모 값(<code>admin@example.com</code> / <code>demo-password</code>)을 기본으로 채워둔다.</li>
-  </ul>
-
-  <h2>F-02 세션 복원 / 토큰 갱신</h2>
-  <ul>
-    <li>앱 시작 시 <code>access_token</code>이 있으면 <code>GET /api/auth/me</code> 호출 → 성공하면 워크스페이스, 실패하면 로그인 화면.</li>
-    <li>API 응답이 401이고 refresh 토큰이 있으면 <code>/api/auth/refresh</code>로 1회 갱신 후 원 요청을 재시도한다. 동시 다발 401도 refresh 호출은 1회로 합쳐진다.</li>
-    <li>갱신도 실패하면 토큰을 지우고 로그인 화면으로 돌아간다.</li>
-    <li>일반 API 요청 타임아웃은 15초, <code>/api/chat</code>만 150초(실 LLM 응답 + SQL 재시도 여유).</li>
-  </ul>
-
-  <h2>역할과 권한</h2>
-  <table>
-    <thead><tr><th>역할</th><th>시드 계정</th><th>요약</th></tr></thead>
-    <tbody>
-      <tr><td><code>admin</code></td><td><code>admin@example.com</code> / <code>demo-password</code></td><td>채팅, Stage 편집, 대화/프로젝트 생성·수정·삭제, Admin 패널, Viewer 링크</td></tr>
-      <tr><td><code>user</code></td><td>로그인 계정 없음</td><td>API 상 일반 사용자. 연결 생성·권한 변경·SQL 프리뷰는 403</td></tr>
-      <tr><td><code>viewer</code></td><td><code>viewer@example.com</code> / <code>demo-password</code></td><td>본인 프로젝트의 Stage <strong>조회만</strong></td></tr>
-    </tbody>
-  </table>
-  <div class="note">모든 대화/프로젝트는 <code>tenant_id</code> + <code>user_id</code>로 격리된다. 남의 리소스 ID를 알아도 404.</div>
-
-  <h2>화면 권한 요약</h2>
-  <table>
-    <thead><tr><th>동작</th><th>admin</th><th>viewer</th></tr></thead>
-    <tbody>
-      <tr><td>New project / New chat</td><td>O</td><td>X</td></tr>
-      <tr><td>질문 전송 / 샘플 질문</td><td>O</td><td>X</td></tr>
-      <tr><td>위젯 드래그·Stage에 추가</td><td>O</td><td>X</td></tr>
-      <tr><td>Stage 이동·리사이즈·삭제</td><td>O</td><td>X</td></tr>
-      <tr><td>Admin 패널 열기</td><td>O</td><td>링크 없음</td></tr>
-      <tr><td>Open viewer (<code>/p/{id}/view</code>)</td><td>O</td><td>O</td></tr>
-      <tr><td>연결(Database) 선택</td><td>O</td><td>O(조회용)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>API</h2>
-  <table>
-    <thead><tr><th>Method</th><th>Path</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td>POST</td><td><code>/api/auth/login</code></td><td>로그인</td></tr>
-      <tr><td>POST</td><td><code>/api/auth/refresh</code></td><td>refresh 토큰으로 access 재발급</td></tr>
-      <tr><td>GET</td><td><code>/api/auth/me</code></td><td>현재 사용자 정보</td></tr>
-      <tr><td>GET</td><td><code>/api/health</code></td><td>헬스체크, 인증 불필요</td></tr>
-    </tbody>
-  </table>
-
-  <div class="page-nav"><a href="#overview">← 개요</a><a href="#projects-conversations">다음: 프로젝트·대화 →</a></div>
-</section>
-
-<!-- ===================== PROJECTS/CONVERSATIONS ===================== -->
-<section id="projects-conversations">
-  <div class="doc-title">기능</div>
-  <h1 class="page">프로젝트 · 대화</h1>
-  <p class="doc-meta">기준일 2026-10-01 (구현 기준) · 코드: <code>backend/app/repositories/projects.py</code>, <code>conversations.py</code>, <code>frontend/src/App.jsx</code></p>
-
-  <h2>용어</h2>
-  <table>
-    <thead><tr><th>용어</th><th>의미</th></tr></thead>
-    <tbody>
-      <tr><td>Project</td><td>대화와 Stage를 묶는 최상위 작업 단위. 사용자당 여러 개 가능</td></tr>
-      <tr><td>Conversation</td><td>프로젝트 안의 개별 채팅 세션. 메시지와 Artifact를 가진다</td></tr>
-      <tr><td>Stage</td><td>프로젝트당 1개인 핀보드 (<a href="#stage">Stage 문서</a>)</td></tr>
-    </tbody>
-  </table>
-  <p>한 프로젝트 아래 여러 대화가 있고, Stage는 <strong>프로젝트에 1개</strong>(대화 단위가 아님)다.</p>
-
-  <h2>F-03 프로젝트·대화 목록</h2>
-  <ul>
-    <li><code>GET /api/projects</code> — 로그인 사용자의 프로젝트를 <code>updated_at DESC, created_at DESC</code> 순으로 반환.</li>
-    <li>프로젝트를 펼치면 <code>GET /api/conversations?project_id={id}</code>로 해당 프로젝트의 대화 목록 표시.</li>
-    <li>대화 행에 마우스를 올리면 이름 변경·삭제 아이콘이 뜬다(편집 가능 역할만).</li>
-  </ul>
-
-  <h2>F-04 프로젝트 / 대화 생성</h2>
-  <p>프로젝트 선택 후 빈 채팅 화면의 New chat 버튼을 누르면 선택한 프로젝트에 대화를 생성하고 해당 대화로 전환한다. 생성 실패 시 오류를 화면에 표시한다.</p>
-  <table>
-    <thead><tr><th>API</th><th>입력</th><th>비고</th></tr></thead>
-    <tbody>
-      <tr><td><code>POST /api/projects</code></td><td><code>{ title }</code></td><td>UI 기본값 "새 프로젝트"</td></tr>
-      <tr><td><code>POST /api/conversations</code></td><td><code>{ project_id, title }</code></td><td>UI 기본값 "New Chat"</td></tr>
-    </tbody>
-  </table>
-  <p>viewer는 "New project" / "New chat" 버튼이 <code>disabled</code>. 대화 제목은 첫 메시지 전송 시 자동 갱신된다.</p>
-
-  <h2>F-05 대화 이름 변경 / 삭제</h2>
-  <ul>
-    <li><code>PATCH /api/conversations/{id}</code> — 제목 변경.</li>
-    <li><code>DELETE /api/conversations/{id}</code> — 대화와 그 메시지만 삭제. <strong>프로젝트 Stage에 이미 추가된 위젯은 유지</strong>된다.</li>
-    <li>활성 대화를 삭제하면 남은 대화 목록의 첫 번째로 자동 전환.</li>
-  </ul>
-
-  <h3>프로젝트 삭제</h3>
-  <ul>
-    <li>프로젝트 행에 마우스를 올리거나 키보드 포커스를 두면 삭제(×) 버튼을 표시한다. 활성 프로젝트는 항상 표시하고, viewer에는 표시하지 않는다.</li>
-    <li>프로젝트 제목과 삭제 범위를 확인 창에 안내하며, 취소하면 삭제하지 않는다.</li>
-    <li><code>DELETE /api/projects/{id}</code> — 서비스 DB에서 본인 프로젝트와 모든 대화·메시지, Stage·위젯을 한 트랜잭션으로 삭제한다. 채팅 벡터 DB의 해당 대화 메시지 사본도 정리하며, 벡터 DB 정리 실패 시 서비스 DB 삭제를 롤백한다. 두 DB의 커밋은 별개이므로 서비스 DB의 최종 커밋이 실패하면 벡터 사본만 먼저 삭제될 수 있다. 다른 프로젝트는 유지된다.</li>
-    <li>업로드한 문서 소스는 <code>project_id = NULL</code>인 미연결 소스로 보존한다. 보관 문서와 적재된 그래프 데이터는 유지된다. 미연결 소스를 다시 연결하는 API·화면은 없다.</li>
-    <li>문서 적재·연결 작업이 소스 잠금을 잡고 있으면 HTTP 409로 거부한다. viewer 요청은 HTTP 403, 존재하지 않거나 다른 소유자·테넌트의 프로젝트는 HTTP 404다.</li>
-    <li>활성 프로젝트를 삭제하면 프로젝트·대화 선택과 입력을 초기화하고 관련 화면 캐시를 비운다. 삭제 실패 시 프로젝트 행에 오류를 표시한다. UI에서는 응답 생성 중인 활성 프로젝트의 삭제 버튼을 비활성화한다.</li>
-  </ul>
-
-  <h2>F-06 대화 상세</h2>
-  <p><code>GET /api/conversations/{id}</code> — 메시지 배열 반환. <code>assistant</code> 메시지는 <code>artifact</code> JSON을 포함한다.</p>
-
-  <h2>데이터 모델</h2>
-  <pre><code>projects(id, tenant_id, user_id, title, created_at, updated_at)
-conversations(id, tenant_id, user_id, project_id, title, created_at, updated_at)
-messages(id, conversation_id, role, content, artifact jsonb, created_at)</code></pre>
-
-  <div class="page-nav"><a href="#auth">← 로그인/세션</a><a href="#chat">다음: 채팅(에이전트) →</a></div>
-</section>
-
-<!-- ===================== CHAT ===================== -->
-<section id="chat">
-  <div class="doc-title">기능</div>
-  <h1 class="page">채팅 (에이전트)</h1>
-  <p class="doc-meta">기준일 2026-10-01 (구현 기준) · 코드: <code>intent_router.py</code>, <code>schema_linking.py</code>, <code>graph_answer.py</code>, <code>agent_service.py</code>, <code>agent.py</code>, <code>llm.py</code>, <code>query.py</code>, <code>documents.py</code>, <code>message_embeddings.py</code></p>
-  <p>이 기능이 제품의 핵심이다: 자연어 질문 → SQL 실행 → 위젯 Artifact. 다른 모든 기능(Stage, Viewer)은 여기서 나온 Artifact를 배치·조회하는 역할이다.</p>
-
-  <h2>흐름도</h2>
-  <style>
-  .flow { margin: 12px 0 4px; }
-  .flow svg { max-width: 680px; width: 100%; height: auto; display: block; }
-  .flow text { font-family: inherit; }
-  .flow .th { font-size: 14px; font-weight: 500; }
-  .flow .ts { font-size: 12px; }
-  .flow .arr { stroke: #888780; stroke-width: 1.5; fill: none; }
-  .flow .c-gray rect { fill: #F1EFE8; stroke: #5F5E5A; stroke-width: 0.5; } .flow .c-gray .th { fill: #2C2C2A; } .flow .c-gray .ts { fill: #5F5E5A; }
-  .flow .c-teal rect { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; } .flow .c-teal .th { fill: #085041; } .flow .c-teal .ts { fill: #0F6E56; }
-  .flow .c-purple rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; } .flow .c-purple .th { fill: #3C3489; } .flow .c-purple .ts { fill: #534AB7; }
-  .flow .c-coral rect { fill: #FAECE7; stroke: #993C1D; stroke-width: 0.5; } .flow .c-coral .th { fill: #712B13; } .flow .c-coral .ts { fill: #993C1D; }
-</style>
-  <p>1. 전체 분기 — 경로를 정하고 다섯 갈래로 나뉜다. 예상 질문 유사도는 여기서 쓰지 않는다.</p>
-  <div class="flow"><svg viewBox="0 0 680 432" role="img"><title>채팅 요청 경로 분기</title><desc>채팅 요청이 경로 결정을 거쳐 데이터 조회, 구조 질문, 문서 질문, 그래프 구성, 되묻기 다섯 경로로 나뉘고 응답으로 모이는 흐름</desc><defs><marker id="arrow-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g class="c-gray"><rect x="240" y="20" width="200" height="56" rx="8"/><text class="th" x="340" y="39" text-anchor="middle" dominant-baseline="central">채팅 요청</text><text class="ts" x="340" y="59" text-anchor="middle" dominant-baseline="central">POST /api/chat</text></g><line x1="340" y1="76" x2="340" y2="102" class="arr" marker-end="url(#arrow-a)"/><g class="c-purple"><rect x="170" y="104" width="340" height="56" rx="8"/><text class="th" x="340" y="123" text-anchor="middle" dominant-baseline="central">경로 결정</text><text class="ts" x="340" y="143" text-anchor="middle" dominant-baseline="central">사용자 선택 → Jev → LLM 폴백</text></g><line x1="340" y1="160" x2="96" y2="218" class="arr" marker-end="url(#arrow-a)"/><line x1="340" y1="160" x2="218" y2="218" class="arr" marker-end="url(#arrow-a)"/><line x1="340" y1="160" x2="340" y2="218" class="arr" marker-end="url(#arrow-a)"/><line x1="340" y1="160" x2="462" y2="218" class="arr" marker-end="url(#arrow-a)"/><line x1="340" y1="160" x2="584" y2="218" class="arr" marker-end="url(#arrow-a)"/><g class="c-teal"><rect x="40" y="220" width="112" height="56" rx="8"/><text class="th" x="96" y="239" text-anchor="middle" dominant-baseline="central">데이터 조회</text><text class="ts" x="96" y="259" text-anchor="middle" dominant-baseline="central">SQL + 위젯</text></g><g class="c-teal"><rect x="162" y="220" width="112" height="56" rx="8"/><text class="th" x="218" y="239" text-anchor="middle" dominant-baseline="central">구조 질문</text><text class="ts" x="218" y="259" text-anchor="middle" dominant-baseline="central">스키마로 설명</text></g><g class="c-teal"><rect x="284" y="220" width="112" height="56" rx="8"/><text class="th" x="340" y="239" text-anchor="middle" dominant-baseline="central">문서 질문</text><text class="ts" x="340" y="259" text-anchor="middle" dominant-baseline="central">엔티티로 답변</text></g><g class="c-gray"><rect x="406" y="220" width="112" height="56" rx="8"/><text class="th" x="462" y="239" text-anchor="middle" dominant-baseline="central">그래프 구성</text><text class="ts" x="462" y="259" text-anchor="middle" dominant-baseline="central">관리자 전용</text></g><g class="c-gray"><rect x="528" y="220" width="112" height="56" rx="8"/><text class="th" x="584" y="239" text-anchor="middle" dominant-baseline="central">되묻기</text><text class="ts" x="584" y="259" text-anchor="middle" dominant-baseline="central">선택지 버튼</text></g><line x1="96" y1="276" x2="300" y2="334" class="arr" marker-end="url(#arrow-a)"/><line x1="218" y1="276" x2="320" y2="334" class="arr" marker-end="url(#arrow-a)"/><line x1="340" y1="276" x2="340" y2="334" class="arr" marker-end="url(#arrow-a)"/><line x1="462" y1="276" x2="360" y2="334" class="arr" marker-end="url(#arrow-a)"/><line x1="584" y1="276" x2="380" y2="334" class="arr" marker-end="url(#arrow-a)"/><g class="c-gray"><rect x="190" y="336" width="300" height="56" rx="8"/><text class="th" x="340" y="355" text-anchor="middle" dominant-baseline="central">응답 저장 · 화면 표시</text><text class="ts" x="340" y="375" text-anchor="middle" dominant-baseline="central">실패 시 HTTP 502 + 사유</text></g></svg></div>
-  <p>2. 데이터 조회 — 유사 질문 검색은 이 경로에서만, SQL을 만들 때 쓴다.</p>
-  <div class="flow"><svg viewBox="0 0 680 546" role="img"><title>데이터 조회 경로</title><desc>허용 테이블 확인, 유사 질문 검색, 관련 테이블 고르기, SQL과 위젯 계획, 읽기 전용 실행, 위젯 응답으로 이어지고 실행 실패 시 전체 스키마로 한 번 재시도하는 흐름</desc><defs><marker id="arrow-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g class="c-gray"><rect x="150" y="20" width="300" height="56" rx="8"/><text class="th" x="300" y="39" text-anchor="middle" dominant-baseline="central">허용 테이블 확인</text><text class="ts" x="300" y="59" text-anchor="middle" dominant-baseline="central">역할별 권한 · 20개 이하면 전체 스키마</text></g><line x1="300" y1="76" x2="300" y2="104" class="arr" marker-end="url(#arrow-b)"/><g class="c-teal"><rect x="150" y="106" width="300" height="56" rx="8"/><text class="th" x="300" y="125" text-anchor="middle" dominant-baseline="central">유사 질문 검색</text><text class="ts" x="300" y="145" text-anchor="middle" dominant-baseline="central">SQL 만들 때만 · 임베딩 유사도</text></g><line x1="300" y1="162" x2="300" y2="190" class="arr" marker-end="url(#arrow-b)"/><g class="c-teal"><rect x="150" y="192" width="300" height="56" rx="8"/><text class="th" x="300" y="211" text-anchor="middle" dominant-baseline="central">관련 테이블 고르기</text><text class="ts" x="300" y="231" text-anchor="middle" dominant-baseline="central">① 유사 질문 ② 문서 그래프 ③ 전체</text></g><line x1="300" y1="248" x2="300" y2="276" class="arr" marker-end="url(#arrow-b)"/><g class="c-purple"><rect x="150" y="278" width="300" height="56" rx="8"/><text class="th" x="300" y="297" text-anchor="middle" dominant-baseline="central">SQL + 위젯 계획</text><text class="ts" x="300" y="317" text-anchor="middle" dominant-baseline="central">채팅 LLM · 매칭 질문을 참고로 전달</text></g><line x1="300" y1="334" x2="300" y2="362" class="arr" marker-end="url(#arrow-b)"/><g class="c-gray"><rect x="150" y="364" width="300" height="56" rx="8"/><text class="th" x="300" y="383" text-anchor="middle" dominant-baseline="central">읽기 전용 SQL 실행</text><text class="ts" x="300" y="403" text-anchor="middle" dominant-baseline="central">SELECT만 · 허용 테이블 · 1000행</text></g><line x1="300" y1="420" x2="300" y2="448" class="arr" marker-end="url(#arrow-b)"/><g class="c-teal"><rect x="150" y="450" width="300" height="56" rx="8"/><text class="th" x="300" y="469" text-anchor="middle" dominant-baseline="central">위젯 응답</text><text class="ts" x="300" y="489" text-anchor="middle" dominant-baseline="central">meta.schema_link 기록</text></g><line x1="450" y1="392" x2="478" y2="392" class="arr" marker-end="url(#arrow-b)"/><g class="c-coral"><rect x="480" y="364" width="160" height="56" rx="8"/><text class="th" x="560" y="383" text-anchor="middle" dominant-baseline="central">실패 시 복구</text><text class="ts" x="560" y="403" text-anchor="middle" dominant-baseline="central">전체 스키마 · 1회</text></g></svg></div>
-  <p>3. 문서 질문 — 프로젝트 문서에서 추출한 엔티티로 답한다. SQL은 실행하지 않는다.</p>
-  <div class="flow"><svg viewBox="0 0 680 374" role="img"><title>문서 질문 경로</title><desc>프로젝트 엔티티 읽기, 40개 초과 시 좁히기, 근거만으로 답하기, 위젯 구성으로 이어지고 엔티티가 없으면 안내와 선택지를 보여주는 흐름</desc><defs><marker id="arrow-c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g class="c-gray"><rect x="150" y="20" width="300" height="56" rx="8"/><text class="th" x="300" y="39" text-anchor="middle" dominant-baseline="central">프로젝트 엔티티 읽기</text><text class="ts" x="300" y="59" text-anchor="middle" dominant-baseline="central">고정 Cypher · 최대 500개</text></g><line x1="300" y1="76" x2="300" y2="104" class="arr" marker-end="url(#arrow-c)"/><g class="c-teal"><rect x="150" y="106" width="300" height="56" rx="8"/><text class="th" x="300" y="125" text-anchor="middle" dominant-baseline="central">40개 초과면 좁히기</text><text class="ts" x="300" y="145" text-anchor="middle" dominant-baseline="central">LLM이 이름 선택 → 이웃 포함</text></g><line x1="300" y1="162" x2="300" y2="190" class="arr" marker-end="url(#arrow-c)"/><g class="c-purple"><rect x="150" y="192" width="300" height="56" rx="8"/><text class="th" x="300" y="211" text-anchor="middle" dominant-baseline="central">근거만으로 답하기</text><text class="ts" x="300" y="231" text-anchor="middle" dominant-baseline="central">개수 · 엔티티 · 근거 문장 · 관계</text></g><line x1="300" y1="248" x2="300" y2="276" class="arr" marker-end="url(#arrow-c)"/><g class="c-teal"><rect x="150" y="278" width="300" height="56" rx="8"/><text class="th" x="300" y="297" text-anchor="middle" dominant-baseline="central">위젯 구성 (코드)</text><text class="ts" x="300" y="317" text-anchor="middle" dominant-baseline="central">답변 · 근거 표 · 관계 표 · 출처</text></g><line x1="450" y1="48" x2="478" y2="48" class="arr" marker-end="url(#arrow-c)"/><g class="c-coral"><rect x="480" y="20" width="160" height="56" rx="8"/><text class="th" x="560" y="39" text-anchor="middle" dominant-baseline="central">엔티티 없음</text><text class="ts" x="560" y="59" text-anchor="middle" dominant-baseline="central">안내 + 선택지</text></g></svg></div>
-
-  <h2>F-07 고객 DB 선택</h2>
-  <p>사이드바 "Database" 셀렉트. 목록은 <code>GET /api/database-connections</code>(테넌트 공유). 선택한 <code>connection_id</code>에 따라 샘플 질문이 바뀐다.</p>
-
-  <h2>F-08 채팅 (핵심 흐름)</h2>
-  <table>
-    <tbody>
-      <tr><th>입력</th><td><code>conversation_id</code>, <code>message</code>, <code>connection_id</code>(선택)</td></tr>
-      <tr><th>처리</th><td>user 메시지 저장 → 제목 갱신 → 에이전트 실행 → assistant 메시지 + artifact + 표시용 meta 저장</td></tr>
-      <tr><th>출력</th><td><code>user_message</code>, <code>assistant_message</code>, <code>artifact</code>, <code>meta</code>, <code>related_messages</code>, <code>embedding_provider</code>, <code>embedding_error</code></td></tr>
-      <tr><th>타임아웃</th><td>150초 — 실 LLM 응답 + SQL 재시도(1회) 여유</td></tr>
-    </tbody>
-  </table>
-
-  <p>채팅 응답은 <strong>항상 실 LLM 호출로만</strong> 만든다. 키가 없거나 호출이 실패하면 추측으로 대신 답하지 않고 에러를 그대로 올린다 — 예전에 있던 SOC/Global 키워드 매칭 폴백(<code>run_mock_agent</code>)은 2026-09-22 완전히 삭제됐다. 다른 커넥션(Northwind, SKAX NMS 등)에는 애초에 대응하지 못한 채 SOC 안내문을 잘못 보여주는 문제가 있었기 때문.</p>
-
-  <h3>의도 라우팅</h3>
-  <p><code>run_agent</code>는 SQL 계획 전에 경로를 먼저 정한다. 응답 <code>meta.route</code>(<code>data_query</code>/<code>schema_qa</code>/<code>knowledge_qa</code>/<code>clarify</code>)와 <code>meta.route_source</code>(<code>user_choice</code>/<code>jev</code>/<code>llm_fallback</code>)로 확인한다. 예상 질문 유사도는 경로 결정에 쓰지 않고 <code>data_query</code>의 SQL 계획에만 쓴다.</p>
-  <ol>
-    <li>요청의 <code>route</code>(되묻기 버튼 선택)가 있으면 그대로 사용 — 모델 호출 없음.</li>
-    <li>TypeSafe <strong>Jev</strong> Choice 질문(<code>/v1/systemone</code>, <code>TYPESAFE_API_KEY</code> 필요). 429/529/네트워크 오류는 최대 2회 재시도(0.5초·1초 백오프), 401/422 등은 즉시 실패.</li>
-    <li>Jev를 못 쓰면 채팅 LLM이 경로를 선택 — <code>route_source = llm_fallback</code>, <code>meta.route_jev_error</code>에 사유 기록.</li>
-    <li>그 LLM도 실패하면 <code>AgentRunError</code> → HTTP 502.</li>
-  </ol>
-  <p>Jev <code>confidence</code>가 <code>ROUTE_MIN_CONFIDENCE</code>(기본 0.5, 실제 데이터로 검증되지 않은 초기값) 미만이거나 <code>other</code>면 <strong>되묻기</strong>로 처리한다.</p>
-  <table>
-    <thead><tr><th>경로</th><th>동작</th></tr></thead>
-    <tbody>
-      <tr><td><code>data_query</code></td><td>아래 "에이전트 실행 경로" 그대로(SQL + 위젯)</td></tr>
-      <tr><td><code>schema_qa</code></td><td>허용된 스키마 텍스트만으로 LLM이 테이블·컬럼 구조 설명. SQL 실행 없음, <code>MarkdownBlock</code> 1개</td></tr>
-      <tr><td><code>knowledge_qa</code></td><td>프로젝트 문서의 엔티티·관계·근거로 답변(아래 "문서 그래프로 답하기"). 엔티티가 없으면 안내와 선택지</td></tr>
-      <tr><td><code>clarify</code></td><td>위젯 없이 선택지 버튼(<code>artifact.type = "choices"</code>)을 반환. 버튼을 누르면 같은 메시지를 <code>route</code>와 함께 재전송(사용자 메시지가 한 번 더 남음). 선택지는 artifact에 저장되어 새로고침 후에도 유지</td></tr>
-    </tbody>
-  </table>
-
-  <h3>문서 그래프로 답하기 (knowledge_qa)</h3>
-  <p>"문서에서 …"처럼 문서에 적힌 내용을 묻는 질문은 프로젝트의 <strong>추출된 엔티티</strong>로 답한다. SQL은 실행하지 않는다.</p>
-  <ol>
-    <li><strong>읽기</strong> — 고정 Cypher(<code>project_graph.project_entities</code>, 테넌트·프로젝트 범위 고정)로 활성 엔티티(최대 500, 타입별로 공평하게 나눈 표본)·관계·원문 근거를 읽고, 타입별 정확한 개수는 별도 집계로 함께 읽는다. LLM이 Cypher를 쓰지 않는다.</li>
-    <li><strong>좁히기</strong> — 엔티티가 40개를 넘으면 채팅 LLM이 "타입·이름·설명" 목록에서 관련 이름을 고르고(최대 15), 코드가 직접 이웃을 모은다(최대 40). 40개 이하면 고르는 호출 없이 전부 쓴다.</li>
-    <li><strong>답하기</strong> — 채팅 LLM이 타입별 개수·엔티티·근거 문장·관계(<code>facts</code>)만으로 답한다. 문서에 없으면 없다고 답하고, 근거로 쓴 엔티티 이름(<code>used</code>)을 함께 받는다.</li>
-    <li><strong>위젯</strong> — 코드가 만든다: <code>MarkdownBlock</code>, 근거 <code>DataTable</code>(타입·이름·설명·문서 소스), 관계 <code>DataTable</code>, 제목 단위 <code>SourceList</code>.</li>
-  </ol>
-  <table>
-    <thead><tr><th>상황</th><th>동작</th></tr></thead>
-    <tbody>
-      <tr><td>추출된 엔티티가 없음</td><td>안내 + 선택지(<code>graph_build</code>는 관리자에게만, <code>data_query</code>, <code>schema_qa</code>)</td></tr>
-      <tr><td>관련 엔티티를 못 찾음</td><td>"찾지 못했어요" + 선택지. 답을 지어내지 않음</td></tr>
-      <tr><td>Neo4j·LLM 실패</td><td>HTTP 502 + 사유</td></tr>
-    </tbody>
-  </table>
-  <p>Jev 상태의 <code>has_document_graph</code>로 문서 기반 질문(<code>knowledge_qa</code>)과 DB 구조 질문(<code>schema_qa</code>)을 가른다. 두 답은 출처가 달라 값이 다를 수 있다(Northwind: 문서 16개 테이블 vs 실제 DB 15개). 응답 <code>meta.knowledge</code>에 읽은 엔티티 수·고른 수·근거 이름이 남는다.</p>
-
-  <h3>스키마 줄이기</h3>
-  <p>허용 테이블이 많은 DB는 전체 컬럼을 프롬프트에 넣으면 크고 느려진다. <code>data_query</code>는 SQL 계획 전에 <strong>관련 테이블만</strong> 스키마로 넘긴다. 1순위는 유사 질문, 없으면 프로젝트 문서 그래프의 테이블 설명이다(<code>schema_linking.link_schema</code>).</p>
-  <table>
-    <thead><tr><th>조건</th><th>계획용 스키마</th><th><code>meta.schema_link</code></th></tr></thead>
-    <tbody>
-      <tr><td>허용 테이블 ≤ <code>SCHEMA_LINK_MIN_TABLES</code>(기본 20)</td><td>전체</td><td><code>full</code>, <code>small_schema</code></td></tr>
-      <tr><td>매칭 질문 SQL에서 허용 테이블을 찾음</td><td>매칭 질문들의 테이블 합집합만(모델 호출 없음)</td><td><code>similarity</code>, <code>tables</code>, <code>total</code></td></tr>
-      <tr><td>위가 아니고 문서 그래프에 설명된 <code>Table</code> 엔티티가 있음</td><td>채팅 LLM이 "이름+설명" 목록에서 고른 테이블만</td><td><code>graph</code>, <code>tables</code>, <code>total</code></td></tr>
-      <tr><td>그래프도 쓸 수 없음</td><td>전체</td><td><code>full</code>, <code>reason</code>(<code>no_project</code> / <code>graph_unavailable</code> / <code>no_documented_tables</code> / <code>no_tables_picked</code>), <code>error</code></td></tr>
-    </tbody>
-  </table>
-  <ul>
-    <li>그래프 경로의 목록은 고정 Cypher로 읽고(LLM이 Cypher를 쓰지 않음) 선택 결과는 허용 테이블로 다시 제한한다. 컬럼·타입은 실제 DB 메타데이터에서 만들고 FK 이웃 확장은 하지 않는다.</li>
-    <li>줄인 스키마로 SQL이 실패하면 1회 복구 재시도는 <strong>전체 스키마</strong>로 한다(<code>escalated_to_full: true</code>).</li>
-    <li>CTE 이름과 역할이 읽을 수 없는 테이블은 제외한다. <code>schema_qa</code>는 항상 전체 스키마를 쓴다.</li>
-    <li>Northwind(15개 테이블, 임계값 5로 낮춘 실행)로 유사 질문 경로 2개, 그래프 경로 5개 질문이 모두 재시도 없이 성공했다. 100개 이상 DB는 미검증.</li>
-  </ul>
-  <div class="note"><strong>알려진 문제(이번 변경과 무관)</strong>: SQL 검증기가 <code>EXTRACT(YEAR FROM AGE(...))</code>의 <code>FROM AGE</code>를 테이블로 오인해 <code>Table not permitted: AGE</code>로 거부한다. 전체 스키마에서도 재현된다.</div>
-
-  <h3>에이전트 실행 경로</h3>
-  <ol>
-    <li><strong>연결/권한 해석</strong> — 선택된 연결과 사용자 role의 <code>table_permissions</code> 조회. 비어 있으면 SOC/Global 기본 테이블로 폴백.</li>
-    <li><strong>스키마 텍스트 구성</strong> — 선택된 연결의 허용 테이블만으로 스키마 텍스트를 만든다.</li>
-    <li><strong>LLM 호출</strong> — 플랜이 비면(키 없음/호출 실패/파싱 실패 등 사유 무관) <strong>바로 AgentRunError를 던져 HTTP 502 + 실제 에러 메시지를 그대로 반환</strong>한다.</li>
-    <li><strong>SQL 실행</strong> — 플랜이 있으면 각 위젯의 SQL을 읽기 전용 실행 → 결과를 컴포넌트별 props로 변환.</li>
-    <li><strong>1회 복구 재시도</strong> — SQL/JSON 실행이 실패하면 실패 사유를 <code>repair_hint</code>로 넣어 LLM에 재요청. 그것도 실패하면 (Mock 폴백 없이) AgentRunError를 던진다.</li>
-    <li><strong>문서 근거 보강</strong> — "공격"/"attack" 키워드가 있으면 <code>DocumentProvider</code>로 관련 문서를 찾아 해결 방안 + 출처 위젯 추가. 출처 없으면 지어내지 않는다.</li>
-    <li><strong>사용량 기록</strong> — 실 LLM 호출마다 <code>llm_usage</code>에 provider/model/토큰/성공여부 기록.</li>
-  </ol>
-
-  <h3>채팅 처리 내역 (새로고침 후 유지)</h3>
-  <p>답변 위의 <strong>처리 내역</strong>을 펼치면 선택 경로·분류 방식(Jev / 채팅 LLM 폴백 / 사용자 선택)·분류 확신·답변 모델을 확인한다. 그래프 사용 여부는 실행 결과로 표시하며, 그래프 구성은 문서 질문 답변과 구분한다.</p>
-  <ul>
-    <li><code>assistant_message.meta</code>와 대화 조회의 <code>messages[].meta</code>에 표시용 처리 내역을 저장한다(<code>messages.meta</code>, 마이그레이션 <code>010_message_meta.sql</code>). 기존 최상위 <code>meta</code> 응답은 유지한다.</li>
-    <li>문서 질문의 <code>knowledge</code>에는 <code>status</code>, 그래프 전체 <code>entities_total</code>/<code>relations_total</code>, 실제 읽은 <code>entities_read</code>/<code>relations_read</code>, <code>truncated</code>, 답변 모델에 전달한 <code>entities_in_prompt</code>/<code>relations_in_prompt</code>와 <code>prompt_entities</code>를 기록한다. 500개 한도 조회는 전체 개수와 구분한다.</li>
-    <li><code>used_entities</code>는 모델이 사용했다고 보고한 엔티티의 ID·타입·이름·문서 소스·원문 근거다. <code>used_relations</code>는 보고된 엔티티 사이의 관계다. 실제 조회·전달 사실과 모델의 사용 보고를 구분하며, 정확성은 원문과 대조한다. 모델이 보고하지 않으면 빈 목록으로 표시한다.</li>
-    <li>SQL의 <code>schema_link</code>는 그래프 기반 테이블 선택·실패/미사용 사유·전체 스키마 복구 재시도·대응되는 테이블 설명 수와 선택한 설명을 표시한다. <code>question_retrieval</code>은 검색 상태·참고 질문 수·질문/유사도를 표시한다.</li>
-    <li><code>graph_build</code>에는 응답 당시 소스·스키마/추출 상태·엔티티/관계 수를 기록한다. 백그라운드 진행 상태는 기존 그래프 카드에서 갱신하며, 처리 내역은 응답 당시 기록이다.</li>
-    <li>표시용 기록은 허용된 필드만 저장하며 API 키·요청 헤더·원시 오류·유사 질문 SQL 계획을 포함하지 않는다. 서버 로그·감사 로그에 문서 본문을 추가하지 않는다. 최종 HTTP 502 오류는 기존 오류 화면을 유지한다.</li>
-    <li>기존 답변은 <code>meta=null</code>로 <strong>기록 없음</strong>을 표시한다. 과거 사용 여부를 추정하거나 재계산하지 않는다.</li>
-  </ul>
-  <h3>LLM 프로바이더</h3>
-  <table>
-    <tbody>
-      <tr><th>지원</th><td>OpenAI 호환, Gemini(기존 Google OpenAI 호환 API 유지), 로컬 OpenAI 호환 서버. <code>providers/openai.py</code>, <code>gemini.py</code>, <code>local.py</code>가 요청·응답을 담당하고 <code>providers/transport.py</code>가 HTTP 전송을 공유한다. 공통 프롬프트는 <code>prompts.py</code>, 공통 진입점·사용량 기록은 <code>llm.py</code>에 있다.</td></tr>
-      <tr><th>런타임 오버라이드</th><td>브라우저 AI 설정이 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달되면 서버 환경변수보다 우선</td></tr>
-      <tr><th>실패 시</th><td>클라우드 키가 없거나 호출이 실패하면 <strong>HTTP 502 + 실제 에러 메시지를 그대로 노출</strong>. 조용한 폴백 없음</td></tr>
-      <tr><th>스키마 컨텍스트</th><td>선택 연결의 허용 테이블에 한해 컬럼·PK/FK를 프롬프트에 전달. <strong>실제 데이터 행·비밀번호는 전달 안 함</strong></td></tr>
-    </tbody>
-  </table>
-
-  <p>로컬 모델은 API 키가 선택 사항이며 채팅 모델 이름과 Base URL이 필요하다. 임베딩 모델이 없거나 차원이 <code>CHAT_EMBEDDING_DIM</code>과 다르면 유사도 검색을 생략하고 실모델 채팅은 계속한다. 예상 질문 생성·저장은 유효한 임베딩 모델이 필요하다. 다른 Provider의 서버 키를 가져와 사용하지 않는다.</p>
-
-  <h3>SQL 규칙</h3>
-  <ul>
-    <li><code>SELECT</code> 또는 <code>WITH</code>로 시작, 단일 문장만.</li>
-    <li>쓰기·DDL·권한 키워드(INSERT/UPDATE/DELETE/DROP/…)가 있으면 거부.</li>
-    <li><code>FOR UPDATE</code>/<code>FOR SHARE</code> 락 절 금지.</li>
-    <li><code>FROM</code>/<code>JOIN</code> 대상 테이블은 역할별 허용 목록에 있어야 함.</li>
-    <li>읽기 전용 커넥션, <code>statement_timeout</code> 기본 10초, 결과 최대 1000행.</li>
-  </ul>
-
-  <h3>예상 질문 유사도 DB <span class="badge done">완료</span></h3>
-  <p>AI가 선택한 DB의 전체 테이블에서 다양한 예상 질문과 SQL·위젯을 생성하고, 코드는 실행 가능한 읽기 전용 SQL만 검증해 저장한다. 유사 질문의 계획을 LLM 답변 생성에 전달하며 결과는 <code>meta.question_retrieval</code>에 포함한다. 생성 개수는 고정하지 않으며 역할별로 생성하지 않는다. <a href="features/similarity-search-design.md">상세 문서</a>.</p>
-
-  <h3>채팅 메시지 임베딩 <span class="badge wip">진행중</span></h3>
-  <p>메시지를 보내면 임베딩(Gemini <code>gemini-embedding-001</code> 또는 OpenAI <code>text-embedding-3-small</code>)을 만들어 <code>chat_vector</code> DB(pgvector)에 저장하고, 코사인 유사도로 과거 메시지 상위 5개를 <code>related_messages</code>로 반환한다. 응답의 <code>embedding_provider</code> 필드로 실제 어떤 provider가 쓰였는지(<code>"gemini"</code>/<code>"openai"</code>/<code>"mock"</code>) 항상 명확히 알 수 있다.</p>
-  <div class="note"><strong>주의</strong>: <code>related_messages</code>/<code>embedding_provider</code>/<code>embedding_error</code>는 API 응답에는 있지만 프론트가 아직 렌더링하지 않는다 — 백엔드 스캐폴드만 완료된 상태.</div>
-
-  <div class="page-nav"><a href="#projects-conversations">← 프로젝트·대화</a><a href="#widgets-artifact">다음: Artifact/위젯 카탈로그 →</a></div>
-</section>
-
-<!-- ===================== WIDGETS ===================== -->
-<section id="widgets-artifact">
-  <div class="doc-title">기능</div>
-  <h1 class="page">Artifact / 위젯 카탈로그</h1>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>config.py</code>(ALLOWED_COMPONENTS), <code>agent.py</code>(sanitize_artifact), <code>WidgetRenderer.jsx</code></p>
-
-  <h2>F-09 Artifact 표시</h2>
-  <ul>
-    <li>Artifact가 있으면 <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다.</li>
-    <li>Widget 뷰: 위젯마다 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.</li>
-    <li>SQL 보기 가능 여부는 직접 붙은 SQL이 있거나 컴포넌트가 SQL 지원 목록에 속할 때.</li>
-    <li>미리보기 카드는 드래그 가능(SQL 보기 중이거나 viewer면 제외).</li>
-  </ul>
-
-  <h2>허용 위젯 카탈로그</h2>
-  <p>서버 <code>ALLOWED_COMPONENTS</code>가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 레지스트리도 정확히 이 12개와 1:1 대응.</p>
-  <table>
-    <thead><tr><th>컴포넌트</th><th>용도</th><th>대표 props</th></tr></thead>
-    <tbody>
-      <tr><td><code>KpiStat</code></td><td>단일 수치</td><td>label, value, unit?, delta?</td></tr>
-      <tr><td><code>DataTable</code></td><td>표</td><td>columns, rows</td></tr>
-      <tr><td><code>RankList</code></td><td>순위 목록</td><td>items[rank,label,value,meta?]</td></tr>
-      <tr><td><code>BarChart</code></td><td>막대</td><td>categories, series</td></tr>
-      <tr><td><code>LineChart</code></td><td>추이</td><td>series[points]</td></tr>
-      <tr><td><code>PieChart</code></td><td>비중</td><td>slices</td></tr>
-      <tr><td><code>MarkdownBlock</code></td><td>설명·보고서 텍스트</td><td>markdown, citations</td></tr>
-      <tr><td><code>SourceList</code></td><td>문서 출처</td><td>sources</td></tr>
-      <tr><td><code>FilterBar</code></td><td>필터 칩(카탈로그 예약)</td><td>filters</td></tr>
-      <tr><td><code>KpiSparkline</code></td><td>KPI + 미니 추이</td><td>value + points</td></tr>
-      <tr><td><code>PieTable</code></td><td>파이 + 표</td><td>slices, columns?, rows?</td></tr>
-      <tr><td><code>BarTable</code></td><td>막대 + 표(+선택 KPI)</td><td>categories, series, columns?, rows?</td></tr>
-    </tbody>
-  </table>
-
-  <h3>화이트리스트 위반 시 동작이 다르다</h3>
-  <table>
-    <thead><tr><th>경로</th><th>목록 밖 컴포넌트 처리</th></tr></thead>
-    <tbody>
-      <tr><td>채팅 Artifact</td><td><code>DataTable</code>로 치환, 안내 행 삽입</td></tr>
-      <tr><td>Stage 저장</td><td><code>ValueError</code> → <strong>400</strong>. 폴백 없음</td></tr>
-    </tbody>
-  </table>
-
-  <div class="page-nav"><a href="#chat">← 채팅(에이전트)</a><a href="#stage">다음: Stage →</a></div>
-</section>
-
-<!-- ===================== STAGE ===================== -->
-<section id="stage">
-<div class="doc-title">기능</div>
-<h1 class="page">기능: Stage (핀보드)</h1>
+    <main id="main"><section id="overview"><h1>agent4any / sql2widget — 에이전트용 프로젝트 문서</h1>
 <table>
-<tr><th>항목</th><th>내용</th></tr>
-<tr><td>문서명</td><td>기능 문서 — Stage 배치</td></tr>
-<tr><td>기준일</td><td>2026-10-01 (구현 기준)</td></tr>
-<tr><td>관련 문서</td><td><a href="features/graph-rag-sources.md">graph-rag-sources.md</a>(프로젝트 그래프), <a href="features/widgets-artifact.md">widgets-artifact.md</a>(위젯 카탈로그), <a href="features/viewer.md">viewer.md</a>(읽기 전용 표시)</td></tr>
-<tr><td>관련 코드</td><td><code>backend/app/repositories/stages.py</code>, <code>backend/app/main.py</code>(<code>/api/projects/{id}/stage*</code>), <code>frontend/src/StageCanvas.jsx</code>, <code>frontend/src/ProjectGraph.jsx</code></td></tr>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>프로젝트 문서 (Claude / Codex 등 코딩 에이전트가 세션 시작 시 자동으로 읽는 문서)</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02</td>
+</tr>
+<tr>
+<td>대상</td>
+<td>이 저장소에서 작업하는 AI 에이전트, 처음 들어오는 사람</td>
+</tr>
+</tbody>
+</table>
+<p>이 문서는 저장소 전체 문서를 어디서 무엇을 보면 되는지 안내하고, 문서마다 반복 설명하지 않는 <strong>공통 확정 규칙</strong>과 <strong>기능 개요</strong>를 한 곳에 모은다. 여기 규칙이 다른 문서와 충돌하면 이 문서가 아니라 <strong>구현 코드</strong>가 기준이다.</p>
+<hr />
+<h2>1. 프로젝트 한 줄 설명</h2>
+<p>비기술 사용자가 자연어로 고객 DB(SOC 보안 / Global Sales)를 조회하고, 결과를 허용된 위젯(차트·표·KPI 등)으로 받은 뒤, <strong>프로젝트마다 1개</strong>인 Stage(핀보드)에 배치·저장하는 에이전트 MVP. 완성된 공유 대시보드 템플릿을 자동 생성하는 것은 목표가 아니다.</p>
+<hr />
+<h2>2. 주요 기능 개요</h2>
+<p>상세 스펙은 <a href="features/README.md">docs/features/</a>를 본다.</p>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>한 줄 설명</th>
+<th>상세 문서</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>로그인/세션</td>
+<td>이메일·비밀번호 로그인, JWT access+refresh, <code>admin</code>/<code>viewer</code> 역할 구분</td>
+<td><a href="features/auth.md">auth.md</a></td>
+</tr>
+<tr>
+<td>프로젝트·대화</td>
+<td>프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제</td>
+<td><a href="features/projects-conversations.md">projects-conversations.md</a></td>
+</tr>
+<tr>
+<td>채팅(에이전트)</td>
+<td>자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환</td>
+<td><a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>채팅 의도 라우팅</td>
+<td>질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환</td>
+<td><a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>예상 질문 유사도 DB</td>
+<td>사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성</td>
+<td><a href="features/similarity-search-design.md">similarity-search-design.md</a></td>
+</tr>
+<tr>
+<td>Artifact/위젯 표시</td>
+<td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td>
+<td><a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
+</tr>
+<tr>
+<td>Stage 배치</td>
+<td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, <code>react-grid-layout</code>으로 이동·리사이즈, 자동 저장·새로고침 후 복원</td>
+<td><a href="features/stage.md">stage.md</a></td>
+</tr>
+<tr>
+<td>Viewer 전용 화면</td>
+<td><code>/p/{projectId}/view</code> — 채팅·편집 없이 Stage만 읽기 전용으로 표시</td>
+<td><a href="features/viewer.md">viewer.md</a></td>
+</tr>
+<tr>
+<td>관리자 — DB 연결/권한/AI 설정</td>
+<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정</td>
+<td><a href="features/admin.md">admin.md</a></td>
+</tr>
+</tbody>
+</table>
+<p>데모 데이터셋은 두 개이며 동등하게 취급한다: <code>dbconn_demo</code>(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), <code>dbconn_global</code>(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(<code>cinamon</code>, <code>dbconn_skax_nms</code>)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.</p>
+<p>문서 업로드·엔티티 추출·문서 채팅·그래프 화면은 독립 <code>doc2graph</code>로 이동했다. 최소 그래프 기반은 <code>backend/app/graph_backend.py</code>에만 남겼으며 기본 미사용·UI 비표시다. 로컬 실행은 <code>.env.local</code>과 <code>sql2widget-local</code> Compose 이름으로 새 데이터를 사용한다. 토큰 issuer/브라우저 설정 키도 앱별로 분리했다.</p>
+<hr />
+<h2>3. 문서 지도</h2>
+<h3>3.1 루트 문서</h3>
+<table>
+<thead>
+<tr>
+<th>문서</th>
+<th>역할</th>
+<th>언제 보는가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTS.md</code> / <code>CLAUDE.md</code></td>
+<td>본 문서(공용). 문서 지도 + 공통 확정 규칙 + 기능 개요. Claude Code는 <code>CLAUDE.md</code>의 <code>@AGENTS.md</code> import로 자동 로드, Codex 등은 <code>AGENTS.md</code>를 직접 읽음</td>
+<td>세션 시작 시 항상</td>
+</tr>
+<tr>
+<td><a href="../README.md">README.md</a></td>
+<td>로컬 실행 방법(Docker Compose), 상태관리 3원칙, LLM 환경변수, 스모크 테스트 명령</td>
+<td>처음 로컬에 띄울 때</td>
+</tr>
+<tr>
+<td><a href="../PRODUCT.md">PRODUCT.md</a></td>
+<td>제품 정의, 사용자/역할, 성공 정의, 확정/미확정 제품 결정</td>
+<td>기능을 추가하거나 범위를 판단할 때</td>
+</tr>
+<tr>
+<td><a href="../DESIGN.md">DESIGN.md</a></td>
+<td>디자인 시스템 — 색상, 타이포, 컴포넌트 스타일 토큰</td>
+<td>UI를 만들거나 스타일을 바꿀 때</td>
+</tr>
+<tr>
+<td><a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td>
+<td>대화 없이 저장소만 보고 이어받기 위한 요약 (현재 동작, 다음 작업 우선순위, 작업 시 주의)</td>
+<td>새 세션/새 작업자가 시작할 때</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 <code>docs/</code> 문서</h3>
+<table>
+<thead>
+<tr>
+<th>문서</th>
+<th>역할</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="01-folder-structure.md">docs/01-folder-structure.md</a></td>
+<td>폴더·파일 단위 설명</td>
+<td>완료</td>
+</tr>
+<tr>
+<td><a href="project-separation-proposal.md">docs/project-separation-proposal.md</a></td>
+<td>DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록</td>
+<td>구현 완료 — 로컬 독립 실행·테스트 검증, 운영 전환 미실행</td>
+</tr>
+<tr>
+<td><a href="features/README.md">docs/features/*.md</a></td>
+<td>기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리)</td>
+<td>완료 — <code>docs/기능명세서.md</code> 대체함(삭제됨)</td>
+</tr>
+<tr>
+<td><a href="progress.md">docs/progress.md</a></td>
+<td>작업 진행 상황 (완료/진행중/예정/보류)</td>
+<td>완료 — <code>docs/현황.html</code> 대체함(삭제됨)</td>
+</tr>
+<tr>
+<td><a href="dashboard.html">docs/dashboard.html</a></td>
+<td><code>features/*.md</code> + <code>progress.md</code> 전체를 GitBook 스타일(좌측 목차 + 본문)로 묶어 보여주는 HTML 문서</td>
+<td>완료</td>
+</tr>
+<tr>
+<td><a href="kanban.html">docs/kanban.html</a></td>
+<td><code>features/*.md</code> + <code>progress.md</code>를 시각화한 칸반형 정적 보드</td>
+<td>완료</td>
+</tr>
+<tr>
+<td><a href="PLAN.md">docs/PLAN.md</a></td>
+<td>최초 기획서 (P0~P6 로드맵). 구현과 다르면 구현이 기준</td>
+<td>유지 — 히스토리 참고용</td>
+</tr>
+<tr>
+<td><a href="UI_BRIEF.md">docs/UI_BRIEF.md</a></td>
+<td>DESIGN.md 이전의 초기 비주얼 방향 메모</td>
+<td>유지 — 히스토리 참고용</td>
+</tr>
+<tr>
+<td><a href="design/README.md">docs/design/README.md</a></td>
+<td>Figma/Stitch 익스포트 보관 안내</td>
+<td>유지</td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 배포 문서</h3>
+<table>
+<thead>
+<tr>
+<th>문서</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../deployment/README.md">deployment/README.md</a></td>
+<td>운영 배포 절차, 필요한 환경변수/시크릿, GitHub Actions 파이프라인 설명</td>
+</tr>
+</tbody>
+</table>
+<h3>3.4 읽는 순서 권장</h3>
+<ol>
+<li>처음 온 경우: <code>README.md</code> (실행) → 본 문서 → <a href="01-folder-structure.md">docs/01-folder-structure.md</a> → <code>PRODUCT.md</code></li>
+<li>특정 기능을 고치는 경우: <a href="features/README.md">docs/features/</a> 해당 기능 문서 → 관련 코드</li>
+<li>현재 뭐가 됐고 뭐가 남았는지 보는 경우: <a href="progress.md">docs/progress.md</a> 또는 <a href="kanban.html">docs/kanban.html</a></li>
+<li>문서 전체를 훑어보는 경우: <a href="dashboard.html">docs/dashboard.html</a></li>
+<li>세션을 새로 이어받는 경우: <code>PROJECT_HANDOFF.md</code></li>
+</ol>
+<h3>3.5 문서 수정 시 동기화 절차</h3>
+<p><code>docs/dashboard.html</code>/<code>docs/kanban.html</code>은 빌드 스크립트가 없다. <strong>원본 마크다운을 손으로 복사해 넣은 정적 스냅샷</strong>이라, 원본을 고쳐도 저절로 반영되지 않는다. 아래 관계를 지킨다.</p>
+<table>
+<thead>
+<tr>
+<th>원본(고치는 곳)</th>
+<th>반영해야 할 파생 문서</th>
+<th>무엇을 맞추는가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="progress.md">docs/progress.md</a> 2~5절(완료/진행중/예정/보류)</td>
+<td><a href="kanban.html">docs/kanban.html</a> <code>&lt;section class="board"&gt;</code></td>
+<td>항목을 추가/이동/삭제하면 <strong>같은 턴에</strong> 해당 컬럼의 <code>.card</code>를 똑같이 추가/이동/삭제하고, <code>.col-head .count</code> 숫자를 실제 카드 개수와 일치시킨다. <strong>칸반과 progress.md의 항목 수·내용이 어긋나면 안 된다</strong> — 둘 중 하나만 고치고 끝내지 않는다.</td>
+</tr>
+<tr>
+<td><a href="progress.md">docs/progress.md</a> 전체</td>
+<td><a href="dashboard.html">docs/dashboard.html</a> <code>&lt;section id="progress"&gt;</code></td>
+<td>요약 배지(<code>완료 14</code> 등 카운트), 완료/진행중 목록, 예정 표, 보류 문단을 progress.md와 동일하게 맞춘다.</td>
+</tr>
+<tr>
+<td><code>docs/features/*.md</code> 아무 파일</td>
+<td><a href="dashboard.html">docs/dashboard.html</a>의 대응 <code>&lt;section id="{파일명}"&gt;</code></td>
+<td>그 섹션 본문을 원본 마크다운 내용과 맞춘다. <strong>새 기능 문서를 추가했으면</strong> 좌측 <code>&lt;nav class="toc"&gt;</code>에 링크(<code>&lt;a href="#id" data-id="id"&gt;</code>)도 추가한다.</td>
+</tr>
+<tr>
+<td><code>AGENTS.md</code> 4절(공통 확정 규칙)</td>
+<td><a href="dashboard.html">docs/dashboard.html</a> <code>&lt;section id="overview"&gt;</code></td>
+<td>규칙 문구가 달라지면 그대로 옮긴다(예: Mock 관련 규칙이 바뀌었는데 대시보드에 옛 문구가 남아있으면 안 됨).</td>
+</tr>
+<tr>
+<td><code>docs/features/README.md</code>의 표</td>
+<td><a href="kanban.html">docs/kanban.html</a> "기능 문서" 섹션</td>
+<td>새 문서가 추가되면 카드/행을 같이 추가한다.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>순서</strong>: 원본 마크다운을 먼저 고친다 → 영향받는 HTML 파일을 같은 작업 안에서 바로 고친다 → "나중에 한번에 재생성"으로 미루지 않는다(미루면 드리프트가 누적된다 — 실제로 2026-09-22 세션 중 <code>docs/progress.md</code>에 항목 하나를 추가하고 <code>kanban.html</code>/<code>dashboard.html</code>을 안 고쳐서 바로 어긋난 사례가 있었다).</p>
+<hr />
+<h2>4. 공통 확정 규칙</h2>
+<h3>4.1 제품 규칙</h3>
+<ol>
+<li><strong>동등한 데모 두 세계</strong> — SOC 보안(<code>dbconn_demo</code>)과 Global Sales(<code>dbconn_global</code>)는 하나가 메인이고 다른 하나가 곁다리인 관계가 아니다.</li>
+<li><strong>핀보드지 포스터가 아니다</strong> — 성공은 질문에 맞는 위젯이 채팅에 나오고 사용자가 몇 개를 Stage에 꽂는 것. 완성된 공유 대시보드 템플릿 자동 생성은 목표가 아니다.</li>
+<li><strong>카탈로그 가구, 사용자 배치</strong> — 에이전트는 후보 위젯을 제안하고, 배치는 사용자가 한다.</li>
+<li><strong>닫힌 타입, 열린 값</strong> — 차트 종류·레이아웃 문자열·색상(hex/CSS/HTML)을 에이전트가 지어내지 않는다. 데이터 값은 열려 있어도 컬럼 형태는 닫혀 있다.</li>
+<li><strong>프로젝트 스코프</strong> — Stage는 프로젝트당 1개. 전역 대시보드 라이브러리가 아니다.</li>
+</ol>
+<h3>4.2 기술/아키텍처 규칙</h3>
+<ul>
+<li>백엔드: Python, FastAPI, <code>psycopg</code>, 순수 SQL. <strong>ORM 없음.</strong></li>
+<li>프론트: Vite, React, <strong>JavaScript</strong>. <strong>TypeScript 없음.</strong></li>
+<li>상태관리 3원칙:
+  1. 서버 fetch → <code>useSWR</code>
+  2. 전역 UI 슬롯 → <code>useStore</code> (SWR 캐시 래퍼, Provider/<code>SWRConfig</code> 금지)
+  3. 입력·드래그 중 즉시성이 필요한 로컬 상태 → <code>useState</code></li>
+<li>로컬 기동 기준: Docker Compose.</li>
+<li>Stage 레이아웃: <code>react-grid-layout</code>.</li>
+<li>고객 DB는 <strong>읽기 전용 <code>SELECT</code>만</strong>. 앱이 DML을 실행하지 않는다.</li>
+<li>위젯 컴포넌트 이름은 서버 화이트리스트(<code>ALLOWED_COMPONENTS</code>) 검증. 목록 밖 이름은 채팅에서는 <code>DataTable</code> 폴백, Stage 저장은 400으로 거부.</li>
+<li>채팅 응답은 항상 실 LLM 호출로만 만든다(OpenAI-compatible). 키가 없거나 호출이 실패하면 <strong>키워드 매칭 등으로 추측해서 대신 답하지 않고 에러를 그대로 반환</strong>한다 — 에러를 성공한 것처럼 위장하지 않는다.</li>
+<li>외부 문서 검색은 <code>DocumentProvider</code> 인터페이스로 추상화. 현재 구현은 Mock.</li>
+<li>감사 로그에는 행위만 남긴다. 사용자 데이터를 수정하는 쿼리는 없다.</li>
+</ul>
+<h3>4.3 보안/운영 규칙</h3>
+<ul>
+<li>서비스 DB(<code>tenants</code>, <code>users</code>, <code>projects</code>, …)와 고객 DB(SOC/Global/Northwind 등)를 같은 커넥션·같은 쿼리 경로로 섞지 않는다.</li>
+<li>모델이 서비스 DB에 임의 SQL을 실행하게 하지 않는다.</li>
+<li>고객 DB 비밀번호·API 키를 로그에 남기지 않는다. <code>APP_SECRET</code>으로 암호화해 저장한다.</li>
+<li>화이트리스트 밖 컴포넌트 이름을 새로 만들지 않는다.</li>
+<li>근거 없는 해결 방안(보고서용 텍스트 등)을 지어내지 않는다.</li>
+<li>합의 없이 DML, ORM, TypeScript, SWR Provider 패턴을 도입하지 않는다.</li>
+<li>완성된 대시보드 템플릿을 기본 성공 조건으로 바꾸지 않는다.</li>
+<li>운영 배포 시 개발용 기본 비밀번호를 쓰지 않는다 (<code>deployment/README.md</code> 참고).</li>
+</ul>
+<h3>4.4 문서 동기화 규칙</h3>
+<p>코드를 바꾸는 에이전트가 직접 문서를 갱신한다. "나중에 문서화"로 미루지 않고 <strong>같은 작업 안에서</strong> 끝낸다.</p>
+<table>
+<thead>
+<tr>
+<th>변경</th>
+<th>같이 갱신할 문서</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>기능 동작·API·응답 형태</td>
+<td><code>docs/features/*.md</code> 해당 문서와 그 문서의 기준일</td>
+</tr>
+<tr>
+<td>파일·모듈 추가/삭제/역할 변경</td>
+<td><code>docs/01-folder-structure.md</code></td>
+</tr>
+<tr>
+<td>작업 상태 변화(완료/진행중/예정/보류)</td>
+<td><code>docs/progress.md</code> → <code>docs/kanban.html</code>·<code>docs/dashboard.html</code> (3.5절)</td>
+</tr>
+<tr>
+<td>환경변수 추가/변경</td>
+<td><code>.env.example</code>, <code>README.md</code>, 운영에 필요하면 <code>deployment/README.md</code></td>
+</tr>
+<tr>
+<td>새 세션이 알아야 할 동작·경로·주의사항</td>
+<td><code>PROJECT_HANDOFF.md</code>, 본 문서 2절 기능 개요 표</td>
+</tr>
+<tr>
+<td>본 문서 4절 규칙 문구</td>
+<td><code>docs/dashboard.html</code> <code>&lt;section id="overview"&gt;</code> (3.5절)</td>
+</tr>
+</tbody>
+</table>
+<p>작업 완료를 보고하기 전에 위 표로 누락을 점검한다. 갱신하지 않은 항목이 있으면 이유를 함께 적는다. 문서 작성 절차는 <code>docs-sync</code> 스킬을 따른다.</p>
+<hr />
+<h2>5. 문서 작성 컨벤션 (이번 문서화 작업 공통)</h2>
+<p>새로 만드는 <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, <code>docs/progress.md</code>, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code>에 공통 적용한다.</p>
+<ul>
+<li>언어: 한국어. 코드 식별자·경로는 원문 그대로.</li>
+<li>새 파일명은 영문 kebab-case (<code>01-folder-structure.md</code>, <code>features/chat.md</code>). 기존 한국어 파일명(<code>기능명세서.md</code> 등)은 대체되며 신규 명명 규칙을 따르지 않는다.</li>
+<li>기능 문서는 <code>docs/기능명세서.md</code>의 관례를 유지: <strong>기획이 아니라 현재 동작하는 구현이 기준.</strong> 코드와 문서가 다르면 코드가 맞다.</li>
+<li><code>docs/progress.md</code>의 상태 라벨은 4종으로 고정: <code>완료</code> / <code>진행중</code> / <code>예정</code> / <code>보류</code>.</li>
+<li>각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).</li>
+</ul>
+<hr />
+<h2>6. 문서 세트 상태</h2>
+<p>1~5번 문서(본 문서, 폴더 구조, 기능별 문서, 진행 상황, <code>dashboard.html</code>+<code>kanban.html</code>) 모두 완료. 이후에는 코드가 바뀔 때마다 해당 기능 문서와 <code>docs/progress.md</code>를 갱신하고, <code>docs/dashboard.html</code>/<code>docs/kanban.html</code>은 그 내용을 반영해 다시 만든다.</p></section>
+<section id="auth"><h1>기능: 로그인/세션</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — 로그인/세션</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (구현 기준, 기획과 다르면 코드가 맞음)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="../AGENTS.md">AGENTS.md</a>, <a href="01-folder-structure.md">01-folder-structure.md</a></td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/auth.py</code>, <code>backend/app/main.py</code>(<code>/api/auth/*</code>), <code>frontend/src/App.jsx</code>(<code>LoginForm</code>, <code>App</code>), <code>frontend/src/api.js</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>F-01 로그인</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>액터</td>
+<td>모든 역할</td>
+</tr>
+<tr>
+<td>입력</td>
+<td><code>email</code>, <code>password</code></td>
+</tr>
+<tr>
+<td>처리</td>
+<td>이메일을 소문자·trim 후 조회 → <code>argon2</code>로 비밀번호 검증 → JWT access + refresh 발급</td>
+</tr>
+<tr>
+<td>출력</td>
+<td><code>access_token</code>, <code>refresh_token</code>, <code>user { id, email, role, tenant_id }</code></td>
+</tr>
+<tr>
+<td>저장</td>
+<td>브라우저 <code>localStorage</code> (<code>agent4any_access</code>, <code>agent4any_refresh</code>)</td>
+</tr>
+<tr>
+<td>실패</td>
+<td>401 <code>Invalid credentials</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Access 토큰 만료: 기본 30분(<code>JWT_ACCESS_MINUTES</code>)</li>
+<li>Refresh 토큰 만료: 기본 14일(<code>JWT_REFRESH_DAYS</code>)</li>
+<li><code>LoginForm</code>은 데모 값(<code>admin@example.com</code> / <code>demo-password</code>)을 기본으로 채워둔다.</li>
+</ul>
+<h2>F-02 세션 복원 / 토큰 갱신</h2>
+<ul>
+<li>앱 시작 시 <code>access_token</code>이 있으면 <code>GET /api/auth/me</code> 호출 → 성공하면 워크스페이스, 실패하면 로그인 화면.</li>
+<li>API 응답이 401이고 <code>retry</code>가 참이며 refresh 토큰이 있고 경로가 <code>/auth/*</code>가 아니면, <code>frontend/src/api.js</code>가 <code>/api/auth/refresh</code>로 한 번 갱신 후 원 요청을 재시도한다. 동시에 여러 요청이 401을 받아도 refresh 호출은 1회로 합쳐진다(<code>refreshPromise</code> 공유).</li>
+<li>갱신도 실패하면 토큰을 지우고 로그인 화면으로 돌아간다.</li>
+<li>일반 API 요청 타임아웃은 15초(<code>timeoutMs</code> 기본값). <code>/api/chat</code>만 150초로 별도 지정한다(§ <a href="features/chat.md">chat.md</a> 참고 — 실 LLM 응답 + SQL 재시도 여유).</li>
+</ul>
+<h2>역할과 권한</h2>
+<table>
+<thead>
+<tr>
+<th>역할</th>
+<th>시드 계정</th>
+<th>요약</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td><code>admin@example.com</code> / <code>demo-password</code></td>
+<td>채팅, Stage 편집, 대화/프로젝트 생성·수정·삭제, Admin 패널(연결·권한), Viewer 링크</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>로그인 계정 없음(권한 테이블 행만 존재)</td>
+<td>API 상 일반 사용자. 연결 생성·권한 변경·SQL 프리뷰는 403</td>
+</tr>
+<tr>
+<td><code>viewer</code></td>
+<td><code>viewer@example.com</code> / <code>demo-password</code></td>
+<td>본인 프로젝트의 Stage <strong>조회만</strong>. 채팅·DnD·리사이즈·프로젝트/대화 생성·수정·삭제 불가</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>프론트에서 <code>isViewer = user.role === "viewer"</code>, <code>canEdit = !isViewer</code>(<code>frontend/src/App.jsx</code> <code>Workspace</code>)로 화면 요소를 토글한다. 이건 UX 편의이며 진짜 방어선이 아니다 — 실제 권한은 백엔드 라우트(<code>require_admin</code> 등)와 <code>table_permissions</code>가 최종 판단한다.</li>
+<li>모든 대화/프로젝트는 <code>tenant_id</code> + <code>user_id</code>로 격리된다. 남의 리소스 ID를 알아도 404.</li>
+</ul>
+<h2>화면 권한 요약 (프론트)</h2>
+<table>
+<thead>
+<tr>
+<th>동작</th>
+<th>admin</th>
+<th>viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New project / New chat</td>
+<td>O</td>
+<td>X (버튼 disabled)</td>
+</tr>
+<tr>
+<td>질문 전송 / 샘플 질문</td>
+<td>O</td>
+<td>X</td>
+</tr>
+<tr>
+<td>위젯 드래그·Stage에 추가</td>
+<td>O</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Stage 이동·리사이즈·삭제</td>
+<td>O</td>
+<td>X</td>
+</tr>
+<tr>
+<td>Stage 패널 숨기기 토글</td>
+<td>O</td>
+<td>버튼 자체가 없음(패널은 항상 보임, 편집 불가)</td>
+</tr>
+<tr>
+<td>Admin 패널 열기</td>
+<td>O</td>
+<td>링크 없음</td>
+</tr>
+<tr>
+<td>Open viewer (<code>/p/{id}/view</code>)</td>
+<td>O (프로젝트 선택 시)</td>
+<td>O (프로젝트 선택 시)</td>
+</tr>
+<tr>
+<td>연결(Database) 선택</td>
+<td>O</td>
+<td>O (조회용 셀렉트, 채팅에는 못 씀)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>API</h2>
+<p>인증: <code>Authorization: Bearer &lt;access_token&gt;</code> (아래 두 엔드포인트만 인증 불필요)</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/api/auth/login</code></td>
+<td>로그인</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/auth/refresh</code></td>
+<td>refresh 토큰으로 access 재발급</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/auth/me</code></td>
+<td>현재 사용자 정보(세션 복원용)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>헬스체크. <code>{ ok, provider, effective_provider }</code>, 인증 불필요</td>
+</tr>
+</tbody>
+</table>
+<h2>독립 인증</h2>
+<p>이 앱의 JWT issuer는 <code>sql2widget</code>로 고정한다. 서명뿐 아니라 issuer를 검증하여 다른 앱의 토큰을 거부한다. 브라우저 토큰 키는 <code>sql2widget_access</code> / <code>sql2widget_refresh</code>다. 계정·세션·프로젝트는 앱별 서비스 DB에서 관리하고 통합 로그인이나 기존 토큰 이전은 제공하지 않는다.</p></section>
+<section id="projects-conversations"><h1>기능: 프로젝트 · 대화</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — 프로젝트 · 대화</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/chat.md">chat.md</a>, <a href="features/stage.md">stage.md</a></td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/repositories/projects.py</code>, <code>backend/app/repositories/conversations.py</code>, <code>backend/app/main.py</code>, <code>frontend/src/App.jsx</code>(<code>Workspace</code>, <code>ProjectHeader</code>, <code>ConversationItem</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>용어</h2>
+<table>
+<thead>
+<tr>
+<th>용어</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project</td>
+<td>대화와 Stage를 묶는 최상위 작업 단위. 사용자당 여러 개 가능</td>
+</tr>
+<tr>
+<td>Conversation</td>
+<td>프로젝트 안의 개별 채팅 세션. 메시지와 Artifact를 가진다</td>
+</tr>
+<tr>
+<td>Stage</td>
+<td>프로젝트당 1개인 핀보드. <a href="features/stage.md">stage.md</a> 참고</td>
+</tr>
+</tbody>
+</table>
+<p>한 프로젝트 아래 여러 대화가 있고, Stage는 <strong>프로젝트에 1개</strong>(대화 단위가 아님)다.</p>
+<hr />
+<h2>F-03 프로젝트·대화 목록</h2>
+<ul>
+<li><code>GET /api/projects</code> — 로그인 사용자의 프로젝트를 <code>updated_at DESC, created_at DESC</code> 순으로 반환.</li>
+<li>사이드바에서 프로젝트를 펼치면 <code>GET /api/conversations?project_id={id}</code>로 해당 프로젝트의 대화 목록을 <code>updated_at DESC</code> 순으로 표시.</li>
+<li>대화 행에 마우스를 올리면 이름 변경·삭제 아이콘이 뜬다(편집 가능 역할만, <code>readOnly={isViewer}</code>로 제어).</li>
+</ul>
+<h2>F-04 프로젝트 / 대화 생성</h2>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>입력</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/projects</code></td>
+<td><code>{ title }</code></td>
+<td>UI 기본값 "새 프로젝트"</td>
+</tr>
+<tr>
+<td><code>POST /api/conversations</code></td>
+<td><code>{ project_id, title }</code></td>
+<td>UI 기본값 "New Chat"</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>새 프로젝트를 만들면 즉시 활성 프로젝트로 전환되고 대화 선택은 초기화된다(<code>activeId = null</code>).</li>
+<li>프로젝트 선택 후 빈 채팅 화면의 "New chat" 버튼을 누르면 선택한 프로젝트에 대화를 생성하고 해당 대화로 전환한다. 생성 실패 시 오류를 화면에 표시한다.</li>
+<li>viewer는 "New project" / "New chat" 버튼이 <code>disabled</code>.</li>
+<li>대화 제목은 첫 메시지 전송 시 자동 갱신된다(§ <a href="features/chat.md">chat.md</a> F-08).</li>
+</ul>
+<h2>F-05 대화 이름 변경 / 삭제</h2>
+<ul>
+<li><code>PATCH /api/conversations/{id}</code> — 제목 변경(빈 문자열이거나 기존과 같으면 서버 호출 없이 취소).</li>
+<li><code>DELETE /api/conversations/{id}</code> — 대화와 그 메시지만 삭제. <strong>프로젝트 Stage에 이미 추가된 위젯은 유지</strong>(Stage는 프로젝트 소유, 대화 소유가 아니므로).</li>
+<li>활성 대화를 삭제하면 남은 대화 목록의 첫 번째로 자동 전환, 없으면 빈 채팅 화면.</li>
+</ul>
+<h3>프로젝트 삭제</h3>
+<ul>
+<li>프로젝트 행에 마우스를 올리거나 키보드 포커스를 두면 삭제(×) 버튼을 표시한다. 활성 프로젝트는 항상 표시하고, viewer에는 표시하지 않는다.</li>
+<li>프로젝트 제목과 삭제 범위를 확인 창에 안내하며, 취소하면 삭제하지 않는다.</li>
+<li><code>DELETE /api/projects/{id}</code> — 서비스 DB에서 본인 프로젝트와 모든 대화·메시지, Stage·위젯을 한 트랜잭션으로 삭제한다. 채팅 벡터 DB의 해당 대화 메시지 사본도 정리하며, 벡터 DB 정리 실패 시 서비스 DB 삭제를 롤백한다. 두 DB의 커밋은 별개이므로 서비스 DB의 최종 커밋이 실패하면 벡터 사본만 먼저 삭제될 수 있다. 다른 프로젝트는 유지된다.</li>
+<li>viewer 요청은 HTTP 403, 존재하지 않거나 다른 소유자·테넌트의 프로젝트는 HTTP 404다.</li>
+<li>활성 프로젝트를 삭제하면 프로젝트·대화 선택과 입력을 초기화하고 관련 화면 캐시를 비운다. 삭제 실패 시 프로젝트 행에 오류를 표시한다. UI에서는 응답 생성 중인 활성 프로젝트의 삭제 버튼을 비활성화한다.</li>
+</ul>
+<h2>F-06 대화 상세</h2>
+<ul>
+<li><code>GET /api/conversations/{id}</code> — 메시지 배열 반환. <code>assistant</code> 메시지는 <code>artifact</code> JSON을 포함한다.</li>
+</ul>
+<hr />
+<h2>데이터 모델 (서비스 DB)</h2>
+<pre><code class="language-text">projects(id, tenant_id, user_id, title, created_at, updated_at)
+conversations(id, tenant_id, user_id, project_id, title, created_at, updated_at)
+messages(id, conversation_id, role, content, artifact jsonb, created_at)
+</code></pre>
+<p>접근은 항상 <code>tenant_id</code> + <code>user_id</code>로 필터링된다(저장소 함수 시그니처 참고). 다른 사용자의 <code>project_id</code>/<code>conversation_id</code>를 넣어도 404.</p>
+<hr />
+<h2>API 목록</h2>
+<p>인증: 로그인 필요, 본인 리소스만.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET/POST</td>
+<td><code>/api/projects</code></td>
+</tr>
+<tr>
+<td>PATCH/DELETE</td>
+<td><code>/api/projects/{id}</code></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/conversations?project_id={id}</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/conversations</code></td>
+</tr>
+<tr>
+<td>GET/PATCH/DELETE</td>
+<td><code>/api/conversations/{id}</code></td>
+</tr>
+</tbody>
+</table></section>
+<section id="chat"><h1>기능: DB 채팅</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능: DB 채팅</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (분리 후 구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td>
+</tr>
+</tbody>
+</table>
+<h2>DB 선택과 질문</h2>
+<p><code>POST /api/chat</code> 입력은 <code>conversation_id</code>, <code>message</code>, 선택적 <code>connection_id</code>, <code>route</code>다. route는 <code>data_query</code> / <code>schema_qa</code>만 허용한다. 프로젝트와 대화는 로그인한 본인의 리소스만 접근한다.</p>
+<ul>
+<li><code>data_query</code>: 허용 테이블의 실제 스키마와 예상 질문의 SQL·위젯 계획을 실 LLM에 전달하고 읽기 전용 SQL을 실행해 위젯을 생성한다.</li>
+<li><code>schema_qa</code>: 현재 연결한 DB의 허용 테이블·컬럼·키 구조를 답한다.</li>
+<li>의도가 불분명하면 위 두 경로의 선택지를 반환한다. TypeSafe Jev 실패 시 채팅 LLM이 판단하며, LLM도 실패하면 HTTP 502다.</li>
+<li>문서 질문·그래프 구성 경로와 문서 그래프 참조는 없다. <code>schema_linking.py</code>는 큰 DB에서 유사 질문이 사용한 테이블만 전달하고, 매칭이 없으면 전체 허용 스키마를 전달한다.</li>
+<li>SQL/계획 실행 실패 시 전체 스키마로 한 번 수정 요청한다. 그래도 실패하면 오류를 표시한다.</li>
+</ul>
+<h2>SQL과 위젯</h2>
+<p>고객 DB는 SELECT/WITH 기반 읽기 전용 조회만 허용한다. 역할별 테이블 접근 권한과 서버 위젯 화이트리스트를 검증한다. 지원 위젯은 <a href="features/widgets-artifact.md">widgets-artifact.md</a>를 본다.</p>
+<p>기존 SOC 데모의 고정 <code>DocumentProvider</code> 출처 보조 기능은 유지한다. 사용자 업로드 문서나 doc2graph의 그래프를 읽는 기능은 아니다.</p>
+<h2>저장과 AI 설정</h2>
+<p>대화 메시지·Artifact·표시용 처리 내역은 서비스 DB에 저장한다. 처리 내역에는 경로·모델·SQL 테이블 선택·유사 질문·복구 결과를 표시한다. API 키·원시 오류·참조 SQL 계획은 표시용 meta에 저장하지 않는다.</p>
+<p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
+<p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p></section>
+<section id="widgets-artifact"><h1>기능: Artifact / 위젯 카탈로그</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-09-21 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>rows_to_props</code>), <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>용어</h2>
+<table>
+<thead>
+<tr>
+<th>용어</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Artifact</td>
+<td>채팅 한 번의 답변에 묶인 위젯 집합. <code>artifact_id</code>, <code>type</code>(<code>widget</code>/<code>dashboard</code>/<code>report</code>), <code>widgets[]</code></td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>허용 컴포넌트 하나. <code>widget_id</code>, <code>component</code>, <code>title</code>, <code>props</code>, 선택적 <code>sql</code></td>
+</tr>
+<tr>
+<td>Furniture</td>
+<td>에이전트가 내는 닫힌 카탈로그 JSON을 부르는 제품 용어. 모르는 키/타입은 버려진다</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>F-09 Artifact 표시</h2>
+<ul>
+<li>어시스턴트 메시지에 Artifact가 있으면(<code>artifact.widgets.length</code> 또는 <code>artifact_id</code> 존재) <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다(<code>AssistantAnswer</code>).</li>
+<li>Widget 뷰: 위젯마다 <code>ArtifactPreviewCard</code> — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.</li>
+<li>JSON 뷰: Artifact 전체를 pretty-print.</li>
+<li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
+<li>실제 SQL 문자열은 <code>resolveWidgetSql()</code>이 반환한다: 위젯에 백엔드가 직접 붙인 <code>sql</code>/<code>query_ref.sql</code>/<code>props.__sql</code>만 보여준다 — 없으면 빈 문자열이고 SQL 토글이 숨는다. 추측한 SQL을 대신 보여주지 않는다(2026-09-22, 옛 <code>FALLBACK_BY_TITLE</code>/<code>FALLBACK_BY_COMPONENT</code> 하드코딩 테이블 삭제).</li>
+<li>미리보기 카드는 <code>draggable</code>(SQL 보기 중이거나 viewer면 제외). viewer는 드래그 핸들도, "Add to stage" 버튼도 없다.</li>
+</ul>
+<hr />
+<h2>허용 위젯 카탈로그</h2>
+<p>서버 <code>ALLOWED_COMPONENTS</code>(<code>backend/app/config.py</code>)가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 <code>REGISTRY</code>도 정확히 이 12개와 1:1로 대응한다.</p>
+<table>
+<thead>
+<tr>
+<th>컴포넌트</th>
+<th>용도</th>
+<th>대표 props</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>KpiStat</code></td>
+<td>단일 수치</td>
+<td><code>label, value, unit?, delta?</code></td>
+</tr>
+<tr>
+<td><code>DataTable</code></td>
+<td>표</td>
+<td><code>columns[{key,label}], rows[]</code></td>
+</tr>
+<tr>
+<td><code>RankList</code></td>
+<td>순위 목록</td>
+<td><code>items[{rank,label,value,meta?}]</code></td>
+</tr>
+<tr>
+<td><code>BarChart</code></td>
+<td>막대</td>
+<td><code>categories[], series[0]{name,data[]}</code></td>
+</tr>
+<tr>
+<td><code>LineChart</code></td>
+<td>추이</td>
+<td><code>series[]{name,points[{x,y}]}</code></td>
+</tr>
+<tr>
+<td><code>PieChart</code></td>
+<td>비중</td>
+<td><code>slices[{label,value}]</code></td>
+</tr>
+<tr>
+<td><code>MarkdownBlock</code></td>
+<td>설명·보고서 텍스트</td>
+<td><code>markdown, citations[]</code></td>
+</tr>
+<tr>
+<td><code>SourceList</code></td>
+<td>문서 출처</td>
+<td><code>sources[{title,version?,section?}]</code></td>
+</tr>
+<tr>
+<td><code>FilterBar</code></td>
+<td>필터 칩 UI(카탈로그 예약)</td>
+<td><code>filters[{label,value}]</code></td>
+</tr>
+<tr>
+<td><code>KpiSparkline</code></td>
+<td>KPI + 미니 추이</td>
+<td><code>label,value,unit?,delta?,points[{x,y}]</code></td>
+</tr>
+<tr>
+<td><code>PieTable</code></td>
+<td>파이 + 표 (컨테이너 쿼리로 레이아웃 전환)</td>
+<td><code>slices[], columns?, rows?</code></td>
+</tr>
+<tr>
+<td><code>BarTable</code></td>
+<td>막대 + 표 (+선택 KPI 헤더)</td>
+<td><code>label?,value?,categories[],series[],columns?,rows?</code></td>
+</tr>
+</tbody>
+</table>
+<p>렌더링은 Recharts(<code>WidgetRenderer.jsx</code>). <code>PieTable</code>/<code>BarTable</code>/<code>KpiSparkline</code>은 자체 CSS(<code>cq-composite</code>)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.</p>
+<h3>화이트리스트 위반 시 동작이 다르다</h3>
+<table>
+<thead>
+<tr>
+<th>경로</th>
+<th>목록 밖 컴포넌트 처리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>채팅 Artifact (<code>sanitize_artifact</code>)</td>
+<td><code>DataTable</code>로 치환. 원래 <code>props</code>에 <code>columns</code>가 없으면 "Unsupported component fell back to table" 안내 행으로 대체</td>
+</tr>
+<tr>
+<td>Stage 저장 (<code>stages.add_widget</code> / <code>replace_stage_widgets</code>)</td>
+<td><code>ValueError</code> → API가 <strong>400</strong>으로 거부. 폴백 없음</td>
+</tr>
+</tbody>
+</table>
+<h3>빈 결과일 때 props (<code>rows_to_props</code>, 실 LLM 경로)</h3>
+<p>SQL 실행 결과가 0행이면 컴포넌트별로 빈 상태 props를 만든다: <code>KpiStat</code>은 <code>value: 0</code>, <code>DataTable</code>은 "결과 없음" 안내 행, <code>BarChart</code>/<code>LineChart</code>/<code>RankList</code>/<code>PieChart</code>는 빈 배열.</p>
+<hr />
+<h2>관련 자료</h2>
+<ul>
+<li>LLM이 Artifact JSON을 만드는 프롬프트 규격(<code>SCHEMA_HINT</code>)은 <a href="features/chat.md">chat.md</a>에서 다룬다.</li>
+<li>Stage에 위젯을 올리는 절차는 <a href="features/stage.md">stage.md</a> F-10을 본다.</li>
+</ul></section>
+<section id="stage"><h1>기능: Stage (핀보드)</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — Stage 배치</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/widgets-artifact.md">widgets-artifact.md</a>(위젯 카탈로그), <a href="features/viewer.md">viewer.md</a>(읽기 전용 표시)</td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/repositories/stages.py</code>, <code>backend/app/main.py</code>(<code>/api/projects/{id}/stage*</code>), <code>frontend/src/StageCanvas.jsx</code>, <code>frontend/src/ProjectGraph.jsx</code></td>
+</tr>
+</tbody>
 </table>
 <p>Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2).</p>
+<hr />
 <h2>F-10 Stage에 위젯 추가</h2>
 <p>두 가지 경로 모두 최종적으로 <code>POST /api/projects/{id}/stage/widgets</code>를 호출한다.</p>
 <ol>
 <li><strong>드래그</strong>: <code>ArtifactPreviewCard</code>가 <code>dataTransfer</code>에 MIME 타입 <code>application/x-agent4any-widget</code>로 위젯 JSON을 싣는다. <code>StageCanvas</code>의 그리드가 <code>onDrop</code>에서 이를 파싱해 드롭 좌표(<code>layoutItem.x/y</code>)에 추가한다.</li>
-<li><strong>버튼</strong>: 카드의 &quot;Add to stage&quot; 클릭 → <code>addWidgetToStage()</code> 헬퍼가 현재 Stage의 최대 <code>y</code>값 아래(<code>yMax</code>)에 이어 붙인다.</li>
+<li><strong>버튼</strong>: 카드의 "Add to stage" 클릭 → <code>addWidgetToStage()</code> 헬퍼가 현재 Stage의 최대 <code>y</code>값 아래(<code>yMax</code>)에 이어 붙인다.</li>
 </ol>
 <p>공통 처리:</p>
 <ul>
@@ -616,345 +1084,639 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)</code><
 <ul>
 <li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li>
 <li>프로젝트당 Stage 1행. <code>GET .../stage</code> 호출 시 없으면 생성(<code>get_or_create_stage</code>).</li>
-<li>레이아웃 엔진은 <code>react-grid-layout</code>(12열, <code>rowHeight: 36</code>, <code>margin: [12,12]</code>, <code>compactType: &quot;vertical&quot;</code>).</li>
+<li>레이아웃 엔진은 <code>react-grid-layout</code>(12열, <code>rowHeight: 36</code>, <code>margin: [12,12]</code>, <code>compactType: "vertical"</code>).</li>
 <li>이동·리사이즈(<code>onLayoutChange</code>)는 <strong>500ms 디바운스</strong> 후 변경된 위젯들만 <code>PATCH .../stage/widgets/{id}</code>로 저장(<code>persistLayout</code>). 저장 중에는 로컬 상태(<code>localWidgets</code>)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 <code>error</code>로 표시한다.</li>
 <li>전체 교체: <code>PUT .../stage</code> <code>{ widgets: [...] }</code> (현재 UI는 이 경로를 안 쓰고 있으나 API는 열려 있음).</li>
 <li>단건 수정: <code>PATCH</code> — <code>title</code>/<code>props</code>/<code>layout</code> 중 보낸 필드만 갱신.</li>
 <li>삭제: <code>DELETE .../stage/widgets/{id}</code>.</li>
 <li>새로고침해도 SWR 캐시(<code>storeKeys.stage(projectId)</code>)를 통해 서버 상태로 복원.</li>
-<li>빈 Stage 안내: 편집 가능 역할 &quot;대화의 결과 위젯을 여기로 드래그하세요&quot;, viewer &quot;배치된 위젯이 없습니다.&quot;</li>
+<li>빈 Stage 안내: 편집 가능 역할 "대화의 결과 위젯을 여기로 드래그하세요", viewer "배치된 위젯이 없습니다."</li>
 <li>저장 상태 표시줄(<code>대기</code> / <code>저장 중…</code> / <code>저장됨</code> / <code>저장 실패</code>)은 전역 슬롯 <code>storeKeys.ui</code>(<code>useStore</code>)에 있다. 편집 불가 역할(<code>readOnly</code>)에는 표시하지 않는다.</li>
 <li>위젯 크기는 <code>minW:2, minH:2</code>로 제한.</li>
 </ul>
-<h2>프로젝트 문서 그래프 보기</h2>
-<p>Stage 헤더의 <strong>위젯 / 그래프</strong> 버튼으로 전환한다. 그래프는 현재 프로젝트의 활성 문서·명시된 문서 링크를 Neo4j에서 읽어 표시한다. 위젯 배치나 화이트리스트를 변경하지 않는다.</p>
-<ul>
-<li>제목·경로 검색, 확대·축소·전체 보기, 배경 드래그 이동을 지원한다. 휠은 마우스 위치를 중심으로 확대·축소하며 확대 범위는 10%~3200%다. 노드와 제목 공간을 분리해 문서가 많아도 겹치지 않도록 배치한다.</li>
-<li>노드 선택 시 문서 본문과 연결된 문서를 보여준다. 본문 조각의 겹침을 제거하고 일반 텍스트로 표시한다.</li>
-<li>기본 문서 200개·문서 사이 링크 최대 1,000개, 본문 처음 100,000자까지 표시한다. 초과 시 안내한다.</li>
-<li>문서가 없으면 DB 관리에서 문서를 업로드한 뒤 적재하도록 안내한다. 조회 실패는 오류로 표시한다.</li>
-<li>Viewer에서도 조회할 수 있다. API는 테넌트·프로젝트 소유자·소속 소스를 검사한다.</li>
-<li>상세 API·제한은 <a href="features/graph-rag-sources.md">graph-rag-sources.md</a>를 본다.</li>
-</ul>
+<hr />
+<h2>프로젝트 결과 영역</h2>
+<p>sql2widget 결과 영역에는 위젯 Stage만 표시한다. 문서/엔티티 그래프 탭은 doc2graph의 결과 영역으로 이동했다.</p>
+<hr />
 <h2>데이터 모델 (서비스 DB)</h2>
-<pre><code>stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
+<pre><code class="language-text">stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
 stage_widgets(
   id, stage_id, source_widget_id?, source_artifact_id?,
   component, title, props jsonb,
   layout_i, layout_x, layout_y, layout_w, layout_h,
   updated_at
-)</code></pre>
+)
+</code></pre>
 <ul>
 <li><code>stages.project_id</code>가 유니크 — 프로젝트당 1행이라는 규칙이 DB 레벨에서도 강제된다.</li>
 <li><code>stage_widgets</code>는 <code>layout_y ASC, layout_x ASC</code> 순으로 조회된다.</li>
 <li><code>props</code>는 <code>jsonb</code>로 저장되며 화이트리스트 검증은 저장소 함수(<code>add_widget</code>/<code>replace_stage_widgets</code>)에서 <code>ALLOWED_COMPONENTS</code>로 수행.</li>
 </ul>
+<hr />
 <h2>API</h2>
 <table>
-<tr><th>Method</th><th>Path</th><th>권한</th></tr>
-<tr><td>GET/PUT</td><td><code>/api/projects/{id}/stage</code></td><td>본인(프로젝트 소유자)</td></tr>
-<tr><td>POST</td><td><code>/api/projects/{id}/stage/widgets</code></td><td>본인</td></tr>
-<tr><td>PATCH/DELETE</td><td><code>/api/projects/{id}/stage/widgets/{widget_id}</code></td><td>본인</td></tr>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>권한</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET/PUT</td>
+<td><code>/api/projects/{id}/stage</code></td>
+<td>본인(프로젝트 소유자)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/projects/{id}/stage/widgets</code></td>
+<td>본인</td>
+</tr>
+<tr>
+<td>PATCH/DELETE</td>
+<td><code>/api/projects/{id}/stage/widgets/{widget_id}</code></td>
+<td>본인</td>
+</tr>
+</tbody>
 </table>
-<p>viewer도 GET은 호출되지만(읽기 전용 페이지가 Stage를 불러와야 하므로), 쓰기 경로는 프론트에서 버튼 자체를 렌더링하지 않아 도달하지 않는다. 서버 쪽에서 role로 쓰기를 막는 별도 검사는 없다 — <code>StageCanvas</code>의 <code>readOnly</code> prop이 유일한 방어선이라는 점에 주의(§ <a href="features/viewer.md">viewer.md</a>).</p>
-<div class="page-nav"><a href="#widgets-artifact">← Artifact/위젯 카탈로그</a><a href="#viewer">다음: Viewer 화면 →</a></div>
-</section>
-
-<!-- ===================== VIEWER ===================== -->
-<section id="viewer">
-  <div class="doc-title">기능</div>
-  <h1 class="page">Viewer 화면</h1>
-  <p class="doc-meta">기준일 2026-09-21 (구현 기준) · 코드: <code>ViewerStagePage.jsx</code>, <code>StageCanvas.jsx</code></p>
-
-  <h2>F-12 Viewer 화면</h2>
-  <ul>
-    <li>경로: <code>/p/{projectId}/view</code>. <strong>누구나</strong> 갈 수 있는 읽기 전용 뷰(admin도 "Open viewer" 링크로 들어간다).</li>
-    <li><code>StageCanvas</code>를 <code>readOnly</code> + <code>variant="orion"</code>으로 감싸는 얇은 페이지.</li>
-    <li>헤더: Editor로 복귀, Stage 제목, 기간 pill(표시용, 실제 필터 아님), 사용자 이메일, Sign out.</li>
-  </ul>
-
-  <h3><code>readOnly</code>가 실제로 끄는 것</h3>
-  <table>
-    <thead><tr><th>기능</th><th>readOnly=false</th><th>readOnly=true(Viewer)</th></tr></thead>
-    <tbody>
-      <tr><td>드래그 이동</td><td>가능</td><td>비활성</td></tr>
-      <tr><td>리사이즈</td><td>가능</td><td>비활성</td></tr>
-      <tr><td>새 위젯 드롭</td><td>가능</td><td>비활성</td></tr>
-      <tr><td>위젯 제거(×)</td><td>가능</td><td>버튼 자체 없음</td></tr>
-      <tr><td>저장 상태 표시줄</td><td>표시</td><td>표시 안 함</td></tr>
-    </tbody>
-  </table>
-  <p><code>variant="orion"</code>은 어두운 톤의 레거시 뷰어 자리표시 — <a href="../DESIGN.md" class="external">DESIGN.md</a>가 "정식 토큰 아님"으로 명시.</p>
-
-  <div class="page-nav"><a href="#stage">← Stage</a><a href="#admin">다음: 관리자 →</a></div>
-</section>
-
-<!-- ===================== ADMIN ===================== -->
-<section id="admin">
-  <div class="doc-title">기능</div>
-  <h1 class="page">관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
-  <p>사이드바 하단에는 기존 Admin 버튼과 별도로 AI 설정, DB 관리 버튼이 있다. Admin은 기존 전체 설정을 유지한다. AI 설정 패널은 Provider별 AI 연결 설정만, DB 관리 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
-  <p class="doc-meta">기준일 2026-10-01 (구현 기준) · 코드: <code>connections.py</code>, <code>crypto.py</code>, <code>AdminPanel.jsx</code></p>
-
-  <p>드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.</p>
-  <h2>F-13 DB 연결 관리</h2>
-  <p>DB 관리와 전체 Admin 패널에는 <strong>Graph RAG 데이터 소스</strong>도 표시된다. 폴더·파일을 업로드하고 별도의 <strong>적재</strong> 버튼으로 문서 본문과 명시된 문서 링크를 Neo4j에 저장한다. <a href="#graph-rag-sources">지원 범위·API·접근 제한</a>.</p>
-  <table>
-    <thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead>
-    <tbody>
-      <tr><td><code>GET /api/database-connections</code></td><td>연결 목록(비밀번호 비노출)</td><td>로그인</td></tr>
-      <tr><td><code>POST /api/database-connections</code></td><td>연결 추가</td><td>admin</td></tr>
-      <tr><td><code>POST .../test</code></td><td><code>SELECT 1</code> 연결 테스트</td><td>로그인</td></tr>
-      <tr><td><code>GET .../tables</code></td><td>베이스 테이블 목록</td><td>로그인</td></tr>
-      <tr><td><code>POST .../preview-sql</code></td><td>검증된 SELECT 실행</td><td>admin</td></tr>
-    </tbody>
-  </table>
-  <p>비밀번호는 <code>APP_SECRET</code> 기반 Fernet 암호화로 저장, 조회 응답에는 절대 포함하지 않는다.</p>
-
-  <p>SKAX NMS는 로컬·운영에서 <code>SKAX NMS DB</code>(<code>dbconn_skax_nms</code>) 연결로 자동 등록한다. 운영은 별도 <code>db-skax-nms</code> 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 <code>cinamon</code> 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. <a href="../deployment/README.md#skax-nms-cinamon-운영-db">운영 절차</a>.</p>
-
-  <h2>F-14 테이블 권한</h2>
-  <p><code>PUT /api/table-permissions</code> <code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체를 delete-then-insert로 교체한다. 현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능.</p>
-
-  <h2>AI 연결 설정 (브라우저 로컬)</h2>
-  <p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 localStorage(<code>agent4any_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local } }</code> 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, AI 설정 저장을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
-  <table>
-    <thead><tr><th>필드</th><th>동작</th></tr></thead>
-    <tbody>
-      <tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
-      <tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
-      <tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
-      <tr><td>API key</td><td>비밀번호 입력란, 로컬은 선택 사항</td></tr>
-      <tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
-    </tbody>
-  </table>
-  <ul>
-    <li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달되며 서버 환경변수보다 우선한다.</li>
-    <li>URL은 백엔드에서 접근하는 주소다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
-    <li>로컬 Provider는 패널을 열 때와 모델 목록 새로고침 클릭 시 <code>POST /api/ai/local-models</code>(관리자 전용, body <code>{base_url, api_key}</code>)를 호출한다. 백엔드가 <code>{base_url}/models</code>(OpenAI 호환, 타임아웃 5초)를 조회해 <code>{models: [id…]}</code>를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.</li>
-    <li>로컬 임베딩 벡터 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
-    <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
-    <li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
-  </ul>
-
-  <div class="page-nav"><a href="#viewer">← Viewer 화면</a><a href="#graph-rag-sources">다음: Graph RAG 데이터 소스 →</a></div>
-</section>
-
-<!-- ===================== PROGRESS ===================== -->
-<section id="graph-rag-sources">
-<div class="doc-title">기능</div>
-<h1 class="page">기능: 프로젝트별 Graph RAG 문서 그래프</h1>
+<p>viewer도 GET은 호출되지만(읽기 전용 페이지가 Stage를 불러와야 하므로), 쓰기 경로는 프론트에서 버튼 자체를 렌더링하지 않아 도달하지 않는다. 서버 쪽에서 role로 쓰기를 막는 별도 검사는 없다 — <code>StageCanvas</code>의 <code>readOnly</code> prop이 유일한 방어선이라는 점에 주의(§ <a href="features/viewer.md">viewer.md</a>).</p></section>
+<section id="viewer"><h1>기능: Viewer 화면</h1>
 <table>
-<tr><th>항목</th><th>내용</th></tr>
-<tr><td>문서명</td><td>기능 문서 — Graph RAG 데이터 소스</td></tr>
-<tr><td>기준일</td><td>2026-10-01 (구현 기준)</td></tr>
-<tr><td>관련 문서</td><td><a href="features/stage.md">stage.md</a>, <a href="features/admin.md">admin.md</a>, <a href="../README.md">README.md</a>, <a href="progress.md">progress.md</a></td></tr>
-<tr><td>관련 코드</td><td><code>backend/app/graph_source_routes.py</code>, <code>graph_ingestion.py</code>, <code>graph_schema.py</code>, <code>graph_extraction.py</code>, <code>graph_service.py</code>, <code>graph_chat.py</code>, <code>project_graph.py</code>, <code>repositories/graph_sources.py</code>, <code>backend/sql/migrations/005_graph_sources.sql</code>, <code>006_graph_source_projects.sql</code>, <code>007_graph_source_files.sql</code>, <code>008_graph_source_schema.sql</code>, <code>009_graph_source_extraction.sql</code>, <code>frontend/src/GraphSources.jsx</code>, <code>GraphFlowCard.jsx</code>, <code>graphUpload.js</code>, <code>ProjectGraph.jsx</code>, <code>frontend/deployment/nginx.conf</code></td></tr>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — Viewer 전용 화면</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-09-21 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/stage.md">stage.md</a>, <a href="features/auth.md">auth.md</a>(역할/권한)</td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>frontend/src/ViewerStagePage.jsx</code>, <code>frontend/src/StageCanvas.jsx</code>(<code>readOnly</code>/<code>variant</code> props), <code>frontend/src/main.jsx</code>(라우팅)</td>
+</tr>
+</tbody>
 </table>
-<h2>범위</h2>
-<p>관리자가 브라우저에서 폴더·파일을 <strong>업로드</strong>하고 <strong>적재</strong> 버튼으로 Neo4j에 문서 본문과 문서 간 명시된 링크를 저장한다. <code>DB 관리</code>와 전체 <code>Admin</code> 패널에 표시된다. 사이드바에서 선택한 프로젝트의 데이터 소스만 등록·적재한다. Neo4j 서버는 하나를 사용하고, 테넌트·프로젝트·소스 식별자로 데이터를 논리적으로 분리한다. 프로젝트별 별도 컨테이너나 데이터베이스를 생성하지 않는다.</p>
-<p>현재는 Graph RAG용 문서 그래프를 준비하는 단계다. 채팅 내부 설정과 질문에서 그래프를 검색하는 연결, 임베딩, 엔티티 기반 질문 검색, 자동 적재·폴더 감시, PDF·이미지 처리는 구현하지 않았다. 채팅은 기존 SQL·예상 질문 검색 경로를 유지한다.</p>
-<h2>문서 업로드</h2>
-<p>서버 폴더 경로를 입력하지 않는다. 사용자의 컴퓨터와 서버의 경로가 달라도 동작하도록 브라우저가 파일을 읽어 올린다.</p>
+<hr />
+<h2>F-12 Viewer 화면</h2>
 <ul>
-<li>DB 관리의 폼에서 이름을 입력하고 <strong>폴더 선택</strong>(하위 폴더 포함) 또는 <strong>파일 선택</strong>으로 문서를 고른 뒤 <strong>문서 올리기</strong>를 누른다.</li>
-<li>브라우저가 <code>.md</code>·<code>.txt</code>만 UTF-8로 읽어 JSON(<code>{path, text}</code>)으로 전송한다. 폴더를 고르면 폴더 기준 상대 경로를 <code>path</code>로 쓴다. 숨김 폴더·파일(<code>.git</code>, <code>.obsidian</code> 등)과 미지원 파일은 올리지 않고 제외 개수를 보여준다.</li>
-<li>서버는 경로를 정규화하고(<code>..</code>·빈 경로 거부) 같은 규칙으로 다시 걸러낸 뒤, 적재와 같은 검사(크기·UTF-8·빈 문서)를 통과해야 저장한다. 검사에 실패하면 아무것도 저장하지 않고 400을 반환한다.</li>
-<li>올린 문서는 서비스 DB의 <code>graph_source_files</code>에 <strong>보관</strong>한다. 업로드는 적재를 실행하지 않으며, 목록의 <strong>적재</strong> 버튼이 보관된 문서를 Neo4j에 저장한다.</li>
-<li>문서를 고쳤다면 소스의 <strong>폴더/파일 다시 올리기</strong>로 보관 문서를 통째로 교체한다. 교체하면 상태가 <code>registered</code>로 돌아가며 <strong>적재</strong>를 눌러야 그래프에 반영된다.</li>
-<li>같은 이름으로 여러 번 올리면 각각 별도 소스가 된다. 서버의 임의 경로를 읽지 않으므로 공유 폴더 마운트와 <code>GRAPH_RAG_HOST_PATH</code>는 없다.</li>
-<li>업로드 본문은 최대 20 MiB이며 운영 nginx는 이 API 경로에 한해 32 MB까지 허용한다(<code>frontend/deployment/nginx.conf</code>, <code>deployment/sql2widget.crudy.cloud.conf</code>).</li>
+<li>경로: <code>/p/{projectId}/view</code>. <code>viewer</code> 역할 전용 화면이 아니라 <strong>누구나</strong> 갈 수 있는 읽기 전용 뷰(§ <a href="features/auth.md">auth.md</a> 화면 권한 표 — admin도 "Open viewer" 링크로 들어간다).</li>
+<li><code>StageCanvas</code>를 <code>readOnly</code> + <code>variant="orion"</code>으로 감싸기만 하는 얇은 페이지(<code>ViewerStagePage.jsx</code>, 33줄).</li>
+<li>헤더: <code>← Editor</code>(워크스페이스로 복귀), 프로젝트 Stage 제목, 기간 표시용 pill("Period: Last 12 months" — 고정 텍스트, 실제 기간 필터는 아직 없음), 로그인 사용자 이메일, Sign out.</li>
+<li>본문은 Stage 그리드만 전체 화면으로 표시. 채팅 패널·사이드바 없음.</li>
 </ul>
-<h2>이전 경로 방식 소스</h2>
-<p>이전 버전에서 경로로 등록한 소스는 행이 그대로 남지만 보관된 문서가 없다(목록에 "올린 문서 없음" 표시, <strong>적재</strong> 비활성). 문서를 다시 올리면 같은 소스로 적재할 수 있다. 경로 등록·<code>assign</code>(프로젝트 연결) API는 제거했으며, 프로젝트에 연결되지 않은 이전 소스는 목록에 표시하지 않는다. 이미 Neo4j에 저장된 데이터는 삭제하지 않는다.</p>
-<h2>수동 적재</h2>
-<p>지원: UTF-8 Markdown(<code>.md</code>)·텍스트(<code>.txt</code>). 폴더는 하위 폴더까지 올린다.</p>
-<ul>
-<li>숨김 파일·폴더(<code>.obsidian</code>, <code>.git</code> 등)는 올리지 않는다. 이미지·PDF 등 미지원 파일은 업로드 때 제외 개수를 보여주고, 빈 문서는 적재 결과에 제외 개수로 표시한다.</li>
-<li>적재할 문서가 없거나 UTF-8이 아니면 실패로 표시한다. 에러를 완료로 표시하지 않는다.</li>
-<li>제한: 문서당 2 MiB, 한 번에 1,000개 문서·20 MiB. 초과하면 작은 하위 폴더로 나눠 올린다.</li>
-<li>본문은 문서 종류와 무관하게 최대 4,000자 조각으로 나누고 인접 조각은 최대 400자 겹친다. 자르는 위치는 빈 줄 → 줄바꿈 → 4,000자 순으로 가까운 곳이고, 겹침이 허용하면 다음 조각은 줄 시작에서 시작한다. Markdown 헤딩은 경계로 쓰지 않고, <code>.md</code> 조각의 <code>heading</code>(조각 시작 위치의 가까운 헤딩, 코드 블록 안 제외) 메타데이터로만 보관한다. 원문 내 시작·끝 위치도 보관한다. 엔티티 경계는 청킹이 아니라 승인된 스키마를 따르는 LLM 추출이 정한다. 이미 적재된 소스는 <strong>다시 적재해야</strong> 새 기준이 적용된다.</li>
-<li>Markdown의 Obsidian <code>[[문서]]</code>, <code>[[문서#제목|표시명]]</code>, 일반 상대 링크를 실제 적재 문서에 연결한다. 코드 예제·외부 URL·이미지 링크는 문서 관계를 만들지 않는다.</li>
-<li>같은 파일명의 후보가 여러 개이거나 대상이 없는 링크는 임의로 연결하지 않고 미해결 링크 개수를 표시한다. 업로드한 상대 경로·파일명으로 해석하며 Obsidian frontmatter 별칭은 해석하지 않는다.</li>
-<li>결과에 문서·본문 조각·문서 링크·제외 파일·미해결 링크 수, 마지막 성공 시각을 표시한다. 실패해도 직전 성공 결과는 유지한다.</li>
-</ul>
-<p>상태: <code>registered</code>(등록됨) → <code>processing</code>(적재 중) → <code>completed</code>(적재 완료) 또는 <code>failed</code>(적재 실패).</p>
-<p>적재 요청은 동기 실행하고 화면은 처리 중 상태를 조회한다. 소스별 PostgreSQL 세션 잠금으로 중복 실행을 409로 거부한다. 백엔드가 중단되면 잠금이 풀리므로 버튼으로 다시 실행할 수 있다. Neo4j 반영은 소스 전체를 한 트랜잭션으로 처리한다. 서비스 DB와 Neo4j 사이에는 분산 트랜잭션이 없으므로 결과 상태 저장에 실패한 경우 재실행으로 복구한다.</p>
-<h2>저장 구조</h2>
-<p>소스 상태와 올린 문서는 <strong>서비스 PostgreSQL</strong>의 <code>graph_sources</code>·<code>graph_source_files</code>에 저장한다. 고객 PostgreSQL 데이터는 읽거나 수정하지 않는다. 소스 업로드·목록·교체·적재는 관리자이면서 해당 프로젝트 소유자인 사용자만 가능하다. 그래프·문서 조회는 로그인한 프로젝트 소유자에게 허용한다(viewer 포함). API는 프로젝트 소유자·테넌트를 검사한 뒤 서비스 DB에서 소스 ID를 구하고, Neo4j에서도 테넌트·프로젝트·소스·활성 상태를 모두 검사한다.</p>
-<pre><code>graph_sources(id, tenant_id, project_id?, name, path, status,
-              document_count, chunk_count, link_count, skipped_count,
-              unresolved_link_count, error, created_by, created_at, last_ingested_at,
-              schema_draft JSONB, schema_status,  -- schema_status: none / proposed / approved
-              extract_status, extract_progress JSONB, extract_error,  -- extract_status: idle / running / completed / failed
-              entity_count, relation_count, last_extracted_at)
-              -- path는 `upload:{id}` 식별자. 목록 응답에는 file_count가 추가된다.
-graph_source_files(source_id → graph_sources ON DELETE CASCADE, path, content)</code></pre>
-<p>Neo4j 구조:</p>
-<pre><code>(GraphSource)-[:HAS_DOCUMENT]-&gt;(GraphDocument)-[:HAS_CHUNK]-&gt;(GraphChunk)
-(GraphChunk)-[:NEXT_CHUNK]-&gt;(GraphChunk)
-(GraphDocument)-[:LINKS_TO]-&gt;(GraphDocument)
-(Entity)-[:FROM_CHUNK]-&gt;(GraphChunk)           -- 엔티티 추출 결과. 엔티티 사이 관계는 스키마의 관계 이름</code></pre>
-<p>문서·조각 ID는 소스와 경로로 고정하며, 소스·문서·조각 노드에 <code>project_id</code>·<code>tenant_id</code>를 저장하고 문서·조각에는 <code>source_id</code>도 저장한다. 문서 링크에도 프로젝트·테넌트 범위를 저장한다. 서로 다른 소스의 링크를 합치지 않는다. 적재 시 세 노드 타입에 ID 고유 제약을 만든다.</p>
-<p>재적재 시 같은 노드를 갱신한다. 이전 조각·문서 링크·이번에 누락된 문서는 <code>active=false</code>로 남기고 삭제하지 않는다. 이후 검색 구현은 문서·본문 조각·문서 링크의 활성 상태를 확인해야 한다.</p>
-<h2>엔티티 스키마 (제안·승인)</h2>
-<p>문서에서 테이블·사람 같은 <strong>엔티티 노드</strong>를 뽑기 전에, 어떤 타입으로 쪼갤지를 사용자와 합의하는 단계다. 현재 구현은 <strong>스키마 제안·수정·승인 저장</strong>까지이며, 승인된 스키마로 엔티티를 추출해 Neo4j에 적재하는 단계와 채팅에서 이를 진행하는 화면은 아직 없다.</p>
-<ul>
-<li><strong>제안</strong>: 저장된 문서의 헤딩 개요와 앞부분 본문 샘플(총 12,000자 이내, 문서 최대 20개)을 채팅 LLM에 보내 <code>{entity_types, relation_types, questions}</code>를 받는다. AI 연결은 채팅과 같은 <code>X-LLM-*</code> 헤더로 전달한다. 지시문(<code>instruction</code>)과 기존 초안이 있으면 초안을 고쳐서 다시 제안한다. 호출이 실패하거나 응답이 검증을 통과하지 못하면 추측하지 않고 502로 에러를 반환하며 저장된 초안은 그대로다.</li>
-<li><strong>닫힌 타입</strong>: 엔티티 이름은 영문 PascalCase, 관계 이름은 영문 대문자 스네이크, 속성 이름은 영문 소문자 스네이크만 허용한다(Cypher 라벨에 쓰므로 그 외 문자열 거부). 엔티티 최대 12개, 관계 최대 20개, 엔티티당 속성 최대 10개. 관계의 양끝은 선언된 엔티티여야 하고 <code>GraphSource</code>·<code>GraphDocument</code>·<code>GraphChunk</code>·<code>Entity</code>와 기존 관계 이름(<code>HAS_DOCUMENT</code> 등)은 예약어라 쓸 수 없다.</li>
-<li><strong>예시 검증</strong>: 제안된 타입의 <code>examples</code>가 문서 본문에 실제로 있어야 한다. 문서에서 확인되지 않는 예시는 지우고, 예시가 하나도 남지 않은 타입(과 그 타입을 쓰는 관계)은 제외한 뒤 <code>questions</code>에 제외한 타입을 알린다. 모든 타입이 제외되면 502. 제안 프롬프트는 문서가 시스템 구조(DB 스키마·API·코드)를 설명하면 업무 개념(<code>Order</code>)이 아니라 구조(<code>Table</code>, <code>Column</code>)로 타입을 만들도록 지시한다.</li>
-<li><strong>되묻기</strong>: LLM이 정하지 못한 선택(예: 컬럼을 노드로 둘지)은 <code>questions</code>(최대 3개)로 반환한다. 사용자의 답은 <code>instruction</code>으로 다시 제안받는 방식으로 반영한다.</li>
-<li><strong>상태</strong>: <code>graph_sources.schema_status</code>는 <code>none</code>(없음) → <code>proposed</code>(초안) → <code>approved</code>(승인). 제안·수정은 항상 <code>proposed</code>로 되돌리며 <code>approve</code>로만 승인된다. 초안이 없으면 승인할 수 없다(400).</li>
-<li>보관 문서를 교체해도 저장된 스키마는 유지한다.</li>
-</ul>
-<h2>엔티티 추출</h2>
-<p>승인된 스키마로 문서 조각에서 엔티티·관계를 뽑아 Neo4j에 저장하는 백그라운드 작업이다(<code>graph_extraction.py</code>).</p>
-<ul>
-<li><strong>전제</strong>: 스키마가 <code>approved</code>이고 소스 상태가 <code>completed</code>(적재 완료)여야 한다. 아니면 400. 문서를 교체하면 상태가 <code>registered</code>로 돌아가므로 다시 적재해야 추출할 수 있다.</li>
-<li><strong>실행</strong>: <code>extract</code>를 호출하면 즉시 <code>extract_status=running</code>으로 응답하고, 서버 안의 백그라운드 스레드가 조각을 <strong>동시에 최대 <code>EXTRACT_CONCURRENCY</code>개(기본 4)씩</strong> LLM에 보낸다(소스당 1개, 중복 요청은 409). LLM 호출 1회의 제한 시간은 <code>EXTRACT_TIMEOUT_SECONDS</code>(기본 180초)다. 조각 결과는 조각 순서대로 병합한다. 진행률은 소스의 <code>extract_progress</code>(<code>done</code>·<code>total</code>·<code>failed</code>)로 조회한다. AI 연결은 요청의 <code>X-LLM-*</code> 헤더를 쓰며 서버에 저장하지 않는다. 추출 중에는 적재·문서 교체를 409로 막는다.</li>
-<li><strong>검증</strong>: 스키마에 없는 타입·속성은 버린다. 엔티티 이름·관계 양끝 이름·<code>evidence</code>(원문 그대로 인용)가 해당 조각 본문에 실제로 있어야 하며(Markdown 기호·대소문자·공백 차이는 무시), 없으면 버린다. 관계의 양끝 타입은 스키마 정의를 따른다. 같은 타입·이름(대소문자 무시)은 한 노드로 합치고, 관계에 나온 끝점은 엔티티로 함께 만든다.</li>
-<li><strong>실패 처리</strong>: 조각 하나는 3초 쉰 뒤 1회 재시도하고, 완료 순서로 연속 3개 조각이 실패하면 중단한다(대기 중인 조각은 호출하지 않음). 모든 조각이 실패해도 <code>failed</code>다. 일부만 실패하면 완료하되 <code>failed</code> 개수를 표시한다. 실패해도 이전 성공 결과(엔티티·<code>entity_count</code>)는 바뀌지 않는다. 취소(<code>extract/cancel</code>)는 현재 조각이 끝난 뒤 멈추고 마찬가지로 기존 결과를 유지한다. 서버가 재시작되면 실행 중이던 작업은 <code>failed</code>로 바뀌어 다시 실행할 수 있다.</li>
-<li><strong>저장</strong>: 모든 조각을 처리한 뒤 Neo4j에 한 트랜잭션으로 반영한다. 노드는 <code>(:Entity {id, type, name, props, source_id, tenant_id, project_id, active})</code>(타입은 라벨이 아닌 <code>type</code> 속성), 근거는 <code>(Entity)-[:FROM_CHUNK {evidence}]->(GraphChunk)</code>, 관계는 스키마의 관계 이름 그대로다. 재추출하면 이전 엔티티·관계·근거 연결은 <code>active=false</code>로 남기고 이번 결과만 활성화한다. ID는 소스·타입·이름으로 고정이라 재실행해도 노드가 늘지 않는다.</li>
-<li><strong>검증 결과(2026-10-01, 서버 기본 AI 설정, Northwind 스키마 문서 1개)</strong>: 제안은 <code>Database</code>·<code>Table</code>·<code>Column</code> 3타입과 <code>CONTAINS_TABLE</code>·<code>HAS_COLUMN</code>·<code>REFERENCES_TABLE</code>·<code>REFERENCES_COLUMN</code> 4관계였고, 추출은 조각 4개에서 <code>Table</code> 16개 전부와 FK 관계 13개 전부(문서 ERD와 일치)를 뽑았다. 한계: 같은 타입·이름은 문서 전체에서 한 노드로 합쳐지므로 <code>customer_id</code>처럼 여러 테이블에 있는 <code>Column</code>이 하나로 섞인다(<code>Column</code>이 55개뿐인 이유 중 하나). 컬럼은 노드가 아니라 <code>Table</code> 속성으로 두는 편이 맞을 수 있다.</li>
-<li><strong>아직 없는 것</strong>: 스키마 직접 편집 화면(채팅 지시문 또는 <code>PUT .../schema</code> API로만 수정).</li>
-</ul>
-<h2>엔티티 조회와 표본</h2>
-<p>엔티티가 <code>limit</code>(기본 500)보다 많으면 일부만 돌려준다. 예전에는 타입 이름 순으로 잘라서 <code>Column</code>이 앞이라 500개가 전부 컬럼이 되었고, 관계는 0개가 됐다(Table 170·Column 1,038 소스).</p>
-<ul>
-  <li><strong>타입별 공평 할당</strong>: 개수가 적은 타입부터 전부 담고 남는 자리를 가장 큰 타입이 가져간다. 타입 안에서는 연결이 많은 엔티티가 먼저다. 1,216개 소스·limit 500: Table 170(전부)·Schema 3·View 4·Database 1·Column 322, 관계 1,845개 중 1,193개.</li>
-  <li><strong>정확한 전체 값</strong>: <code>total</code>·<code>type_counts</code>·<code>relation_total</code>은 표본이 아니라 별도 집계다. 화면 범례와 문서 질문의 "몇 개" 답이 이 값을 쓴다.</li>
-  <li><strong>화면</strong>: 잘리면 "엔티티 1216개 중 500개 표시 · 관계 1845개 중 1193개 표시"로 보여 준다. 범례의 타입별 개수는 전체 기준이다.</li>
-  <li>표본에서 빠진 엔티티(주로 컬럼)는 이름 검색에 걸리지 않는다. 타입 필터는 아직 없다.</li>
-</ul>
-
-<h2>엔티티 추출 속도</h2>
-<p>조각당 LLM 호출 1회이고 출력이 길어(엔티티·관계마다 원문 근거 복사) 한 호출이 11~60초 걸린다. 이전에는 호출 제한 시간 60초에 자주 걸렸다(로그 12.5분 중 약 7분이 타임아웃 대기). 52조각에 약 50분으로 추정됐다.</p>
+<h3><code>readOnly</code>가 실제로 끄는 것 (<code>StageCanvas.jsx</code>)</h3>
 <table>
-  <thead><tr><th>항목</th><th>이전</th><th>현재</th></tr></thead>
-  <tbody>
-    <tr><td>처리 방식</td><td>순차</td><td>최대 4개 동시</td></tr>
-    <tr><td>호출 제한 시간</td><td>60초</td><td>180초</td></tr>
-    <tr><td>52조각(Northwind 문서 11개, 153 kB)</td><td>약 50분 추정, 13조각 처리 시 실패 3건</td><td><strong>11.3분, 실패 0건</strong>, 엔티티 1,216개·관계 1,845개</td></tr>
-  </tbody>
+<thead>
+<tr>
+<th>기능</th>
+<th>readOnly=false(기본)</th>
+<th>readOnly=true(Viewer)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>위젯 드래그 이동</td>
+<td>가능</td>
+<td><code>isDraggable={false}</code></td>
+</tr>
+<tr>
+<td>위젯 리사이즈</td>
+<td>가능</td>
+<td><code>isResizable={false}</code></td>
+</tr>
+<tr>
+<td>새 위젯 드롭</td>
+<td>가능</td>
+<td><code>isDroppable={false}</code>, <code>onDrop</code> 미연결</td>
+</tr>
+<tr>
+<td>위젯 제거(×)</td>
+<td>가능</td>
+<td>제거 버튼 자체를 렌더링하지 않음</td>
+</tr>
+<tr>
+<td>저장 상태 표시줄</td>
+<td>표시</td>
+<td>표시 안 함</td>
+</tr>
+<tr>
+<td>빈 Stage 안내 문구</td>
+<td>"대화의 결과 위젯을 여기로 드래그하세요"</td>
+<td>"배치된 위젯이 없습니다."</td>
+</tr>
+</tbody>
 </table>
+<p><code>variant="orion"</code>은 시각적 스타일 클래스만 바꾼다(어두운 톤의 레거시 뷰어 자리표시 — <a href="../DESIGN.md">DESIGN.md</a>는 이를 "정식 토큰이 아닌 잔재"로 명시하고 있다. 정리 필요 항목은 <a href="progress.md">progress.md</a>에서 추적 예정).</p>
+<h3>주의할 점</h3>
 <ul>
-  <li>환경변수 <code>EXTRACT_CONCURRENCY</code>, <code>EXTRACT_TIMEOUT_SECONDS</code>로 조정한다. 동시 호출이 많아지면 AI 제공자의 요청 제한(429)에 걸릴 수 있다.</li>
-  <li>모델이 JSON 뒤에 불필요한 문자를 붙여 파싱에 실패하는 호출이 간혹 있으나(52회 중 1회) 재시도로 해결됐다.</li>
-  <li>결과는 모든 조각이 끝난 뒤 한 번에 기록한다. 서버가 재시작되면 진행 중이던 추출은 <code>failed</code>가 되고 처음부터 다시 해야 한다.</li>
+<li><code>readOnly</code>는 <strong>프론트엔드 렌더링 제어일 뿐</strong>이다. 백엔드 Stage 쓰기 API는 role을 별도로 검사하지 않는다(§ <a href="features/stage.md">stage.md</a> API 절). 즉 이 화면의 "읽기 전용"은 UI 차원의 보장이며, 서버가 role 기반으로 쓰기를 거부하는 것이 아니라는 점을 문서화해둔다.</li>
+<li>채팅·프로젝트/대화 생성 기능은 이 라우트에 아예 없다 — 접근 자체가 안 된다(컴포넌트가 존재하지 않음).</li>
 </ul>
-
-<h2>채팅 연동</h2>
-<p>문서 그래프 구성(스키마 협의·승인·추출)을 채팅에서 진행한다. 구현은 <code>graph_chat.py</code>이고 REST 라우트와 같은 로직(<code>graph_service.py</code>)을 쓴다.</p>
-<ul>
-<li><strong>진입</strong>: 채팅에서 “올려둔 문서를 지식 그래프로 만들고 싶어. 어떤 노드로 나눌지 정해줘”처럼 말하면 의도 라우터가 새 경로 <code>graph_build</code>로 분류한다(Jev criteria <code>graph_build</code>, LLM 폴백도 동일). 직전 답변이 그래프 카드(<code>artifact.type = graph_flow</code>)면 라우터 입력에 <code>pending_graph_flow: true</code>를 넣어, “컬럼은 노드로 만들지 마” 같은 짧은 답도 이 경로로 가게 한다. 되묻기 버튼처럼 <code>route=graph_build</code>로 직접 요청하면 모델 호출 없이 바로 처리한다.</li>
-<li><strong>권한·대상</strong>: 관리자만 가능하다(아니면 안내 문구). 현재 대화의 프로젝트에 올린 소스를 대상으로 하며, 소스가 없으면 올리라고 안내하고 둘 이상이면 어느 소스인지 버튼으로 되묻는다.</li>
-<li><strong>진행</strong>: 스키마가 없으면 제안하고, 제안된 상태에서 보낸 일반 메시지는 <strong>수정 지시</strong>로 보고 초안을 고쳐 다시 제안한다. 답변마다 <code>graph_flow</code> 카드(엔티티 타입·예시·속성·관계·되묻는 질문)와 버튼을 붙인다. 버튼은 <code>graph_action = {type, source_id}</code>로 전송한다: <code>approve</code>(승인 후 추출), <code>regenerate</code>(처음부터 다시 제안), <code>extract</code>(다시 추출), <code>cancel</code>(추출 취소), <code>select</code>(소스 선택).</li>
-<li><strong>승인 → 추출</strong>: <code>approve</code>는 스키마를 확정하고, 문서가 아직 적재되지 않았으면 먼저 적재한 뒤 추출 작업을 시작한다. 카드는 <code>GET graph-sources</code>를 2초마다 다시 읽어 진행률(조각 <code>done/total</code>·실패 수)과 완료 결과(엔티티·관계 수)를 보여주고, 완료되면 Stage 그래프 캐시를 갱신한다. 이미 추출이 끝난 소스에 일반 메시지를 보내면 상태만 알려 주고 스키마를 되돌리지 않는다.</li>
-<li><strong>실패 처리</strong>: 서비스 오류(진행 중·미적재·LLM 실패 등)는 에러가 아니라 “진행하지 못했어요: …” 답변으로 돌려준다. LLM 호출 실패를 추측으로 대신하지 않는다.</li>
-<li><strong>검증(2026-10-01, 로컬 브라우저)</strong>: 임시 프로젝트의 Northwind 문서로 자연어 요청 → 스키마 카드(3타입·4관계, 컬럼 노드 여부 질문) → “컬럼은 노드로 만들지 말고 Table의 속성으로 해줘”(2타입·2관계로 수정) → 승인 → 진행률 → 완료(엔티티 16·관계 13) → Stage 그래프 ‘엔티티’ 보기까지 확인했다. 다른 문서 유형은 아직 시험하지 않았다.</li>
-</ul>
-<h2>Stage 그래프</h2>
-<ul>
-<li>Stage 헤더에서 <strong>위젯 / 그래프</strong> 보기를 전환한다. 기존 위젯 배치·저장 동작은 유지하며 그래프는 위젯 화이트리스트나 <code>stage_widgets</code>에 추가하지 않는다.</li>
-<li>그래프 보기 위쪽의 <strong>문서 / 엔티티</strong> 전환으로 두 그래프를 오간다. <strong>엔티티</strong> 보기는 추출된 엔티티가 노드(타입별 색, 범례에 타입별 개수), 스키마 관계가 방향 있는 선이다. 이름·타입 검색을 지원하고, 노드를 고르면 타입·속성·관계(눌러서 이동)·원문 근거(인용문과 헤딩)를 보여준다. 추출 결과가 없으면 채팅으로 만들라는 안내를 표시한다. 소유자면 Viewer에서도 조회할 수 있다.</li>
-<li>현재 프로젝트의 활성 문서가 노드, 명시된 문서 링크가 방향 있는 선으로 표시된다. 소스·문서·본문 조각·링크 총개수를 보여준다.</li>
-<li>제목·경로 검색, 확대·축소·전체 보기, 배경 드래그 이동을 지원한다. 휠은 마우스 위치를 중심으로 확대·축소하며 확대 범위는 10%~3200%다. 노드와 제목 공간을 분리해 문서가 많아도 겹치지 않도록 배치한다. 노드는 클릭하거나 키보드 Enter/Space로 선택한다.</li>
-<li>선택한 문서의 소스·경로·본문 조각 수·본문을 보여주고 연결된 문서로 이동할 수 있다. 본문은 조각 겹침을 제거한 일반 텍스트로 표시한다(HTML 실행 없음).</li>
-<li>문서 기본 200개(API 상한 500개), 표시된 문서 사이 링크 최대 1,000개를 반환한다. 초과 시 제한 안내를 표시하며 검색은 표시된 문서를 대상으로 한다. 본문은 처음 100,000자까지 보여준다.</li>
-<li>적재 후 그래프 캐시를 갱신한다. Stage의 <strong>새로고침</strong>으로 다시 조회할 수도 있다. 문서가 없거나 조회에 실패하면 안내·오류를 표시한다.</li>
-<li>Viewer에서도 그래프·본문 조회가 가능하다. 프로젝트 소유자 검사는 동일하며 소스 편집은 제공하지 않는다.</li>
-</ul>
+<hr />
 <h2>API</h2>
-<p>아래 경로의 <code>{project_id}</code>는 로그인한 사용자가 소유한 프로젝트여야 한다.</p>
+<p>Viewer 화면이 쓰는 API는 Stage 조회 하나뿐이다.</p>
 <table>
-<tr><th>API</th><th>동작</th><th>권한</th></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph-sources</code></td><td>해당 프로젝트 소스(<code>file_count</code> 포함), 지원 확장자</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources</code></td><td><code>{name, files:[{path, text}]}</code> 업로드로 새 소스 생성·문서 보관. 응답에 <code>excluded_count</code></td><td>admin + 소유자</td></tr>
-<tr><td><code>PUT /api/projects/{project_id}/graph-sources/{id}/files</code></td><td><code>{files}</code>로 보관 문서를 교체하고 상태를 <code>registered</code>로 되돌림</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/ingest</code></td><td>보관된 문서를 읽어 Neo4j에 적재하고 결과 반환</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/schema/propose</code></td><td><code>{instruction?}</code>로 엔티티 스키마 제안(지시문이 있고 초안이 있으면 수정 제안). <code>X-LLM-*</code> 헤더 필요. 응답은 소스(<code>schema_draft</code>, <code>schema_status=proposed</code>). LLM 실패·검증 실패는 502</td><td>admin + 소유자</td></tr>
-<tr><td><code>PUT /api/projects/{project_id}/graph-sources/{id}/schema</code></td><td><code>{schema}</code>를 검증해 저장하고 <code>proposed</code>로 되돌림. 검증 실패는 400</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/schema/approve</code></td><td>저장된 초안을 <code>approved</code>로 확정. 초안이 없으면 400</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/extract</code></td><td>승인된 스키마로 엔티티 추출 작업 시작(<code>X-LLM-*</code> 헤더 필요). 스키마 미승인·미적재는 400, 이미 추출 중이면 409. 응답은 <code>extract_status=running</code>인 소스</td><td>admin + 소유자</td></tr>
-<tr><td><code>POST /api/projects/{project_id}/graph-sources/{id}/extract/cancel</code></td><td>실행 중인 추출을 취소(대기 중 조각은 보내지 않음). 실행 중이 아니면 409</td><td>admin + 소유자</td></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph-sources/{id}/entities?limit=500</code></td><td>활성 엔티티(<code>id</code>, <code>type</code>, <code>name</code>, <code>properties</code>)와 관계(<code>source</code>, <code>type</code>, <code>target</code>, <code>evidence</code>) 반환</td><td>admin + 소유자</td></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph/entities?limit=500</code></td><td>프로젝트 모든 소스의 활성 엔티티(<code>type</code>, <code>name</code>, <code>properties</code>, <code>evidence</code>)와 관계 반환. Stage ‘엔티티’ 보기가 사용. 엔티티가 <code>limit</code>를 넘으면 타입별로 공평하게 나눈 표본을 주고, 전체 기준의 <code>total</code>·<code>type_counts</code>·<code>relation_total</code>과 <code>truncated</code>를 함께 준다</td><td>소유자</td></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph?limit=200</code></td><td>활성 문서 노드·링크·개수·표시 제한 반환</td><td>소유자</td></tr>
-<tr><td><code>GET /api/projects/{project_id}/graph/documents/{document_id}</code></td><td>소속 문서 정보와 본문 조회, 다른 프로젝트 문서는 404</td><td>소유자</td></tr>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/projects/{id}/stage</code></td>
+</tr>
+</tbody>
+</table></section>
+<section id="admin"><h1>기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — 관리자 패널</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td>
+</tr>
+</tbody>
 </table>
-<p>이전 테넌트 공통 <code>/api/graph-sources</code> 경로는 제거했다.</p>
-<p>기존 환경에는 <code>python scripts/migrate.py</code>를 적용한다. Docker Compose 백엔드 기동 시 이 마이그레이션을 자동 적용한다. 접속 비밀번호는 <code>.env</code>의 <code>NEO4J_PASSWORD</code>를 사용하고 API 응답·로그에 포함하지 않는다.</p>
-<div class="page-nav"><a href="#admin">← 관리자</a><a href="#progress">다음: 진행 상황 →</a></div>
-</section>
-
-<section id="progress">
-  <div class="doc-title">운영</div>
-  <h1 class="page">작업 진행 상황</h1>
-  <p class="doc-meta">기준일 2026-10-01 · 원문 <code>docs/progress.md</code> · <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체</p>
-
-  <p><span class="badge done">완료 22</span><span class="badge wip">진행중 2</span><span class="badge plan">예정 6</span><span class="badge hold">보류 1</span></p>
-
-  <h2>요약</h2>
-  <ul>
-    <li>로컬 데모 골격(로그인 → 질문 → 위젯 → Stage 핀 → 새로고침 유지)은 <strong>완료</strong>.</li>
-    <li>2026-09-03 스냅샷 이후 <strong>프로젝트 계층</strong>이 새로 들어왔다 — <code>/c/:id/view</code>는 지금 <code>/p/:projectId/view</code>로 바뀌었다.</li>
-    <li>실 LLM 경로도 스냅샷 이후 상당히 진전됐다.</li>
-    <li>채팅 메시지 임베딩은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작한다.</li>
-    <li>Graph RAG 준비용 Neo4j 로컬 설치와 프로젝트별 문서 업로드·수동 적재·Stage 그래프 조회는 <strong>완료</strong>. 문서 본문과 명시된 문서 링크를 저장하며, 채팅 질문으로 엔티티를 조회해 답하는 연동(knowledge_qa)도 <strong>완료</strong>.</li>
-  </ul>
-
-  <h2><span class="badge done">완료</span></h2>
-  <ul>
-    <li>로그인/세션, JWT access+refresh, 역할 분리 — <a href="#auth">auth</a></li>
-    <li>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·문서 소스 보존, New chat 생성 오류 수정 — <a href="#projects-conversations">projects-conversations</a></li>
-    <li>Artifact 위젯 렌더 + SQL 미리보기 — <a href="#widgets-artifact">widgets-artifact</a></li>
-    <li>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 — <a href="#stage">stage</a></li>
-    <li>Viewer 읽기 전용 화면 — <a href="#viewer">viewer</a></li>
-    <li>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기 — <a href="#admin">admin</a></li>
-    <li>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</li>
-    <li>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</li>
-    <li>운영 배포 파이프라인 — 2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함 — <a href="../deployment/README.md">운영 절차</a></li>
-    <li>Graph RAG 준비용 Neo4j 로컬 설치 — Community <code>2026.09.0</code>, 독립 Compose 서비스, 로컬 전용 Browser/Bolt, 인증·영속 볼륨·healthcheck — <a href="../README.md#neo4j-로컬-설치-graph-rag-준비">설치 방법</a></li>
-    <li>프로젝트별 문서 업로드·수동 Neo4j 적재 — 프로젝트 소유자·테넌트 분리, 브라우저 폴더·파일 업로드(경로·공유 폴더 제한 없음)와 서비스 DB 보관·교체, 적재 상태, Markdown/텍스트 본문·문서 링크, 재적재 중복 방지. 질문 연동은 knowledge_qa로 완료 — <a href="#graph-rag-sources">상세 문서</a></li>
-    <li>Stage 프로젝트 문서 그래프·본문 조회 — 위젯/그래프 전환, 문서 노드·링크, 검색·휠 확대(최대 3200%)·이동·노드 겹침 방지, 본문·연결 문서 조회, Viewer 조회 — <a href="#graph-rag-sources">상세 문서</a></li>
-    <li>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트, 1회 복구 재시도, 실패 시 추측 없이 에러 반환 — <a href="#chat">chat</a></li>
-    <li>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select)</li>
-    <li><code>llm_usage</code> 사용량 기록 골격</li>
-    <li>DB별 예상 질문 유사도 검색 → 검색 결과를 참조해 답변 생성, 전체 테이블 질문 생성 — <a href="features/similarity-search-design.md">예상 질문 유사도 DB</a></li>
-    <li>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지. 단위 테스트와 실제 Jev 호출(2026-10-01)로 확인, 임계값 0.5는 검증 전 — <a href="#chat">chat</a></li>
-    <li>문서 그래프 기반 답변(knowledge_qa) — "문서에서 …" 질문에 프로젝트의 엔티티·관계·근거로 답하고 근거 엔티티·관계 표·출처 위젯을 반환. Northwind 문서 1개로 확인, 다른 문서 유형·500개 초과 그래프 미검증 — <a href="#chat">chat</a></li>
-    <li>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 없으면 문서 그래프의 테이블 설명으로 고른 테이블만 전달, 실패 시 전체 스키마로 재시도. Northwind 확인, 100개 이상 DB 미검증 — <a href="#chat">chat</a></li>
-    <li>문서 그래프 엔티티 구성 — LLM 스키마 제안 → 채팅에서 수정·승인 → 스키마대로 LLM 엔티티 추출·Neo4j 적재 → Stage 그래프 ‘엔티티’ 보기. Northwind 1개 브라우저 검증, 다른 문서 유형 미검증. 추출은 4개 동시·호출 180초(52조각 11.3분, 이전 약 50분 추정) — <a href="#graph-rag-sources">상세 문서</a></li>
-    <li>문서 체계 정비 — AGENTS.md/CLAUDE.md, 폴더구조, 기능 문서 7종, progress.md, dashboard.html, kanban.html</li>
-    <li>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, 그래프 전체/조회/모델 전달 수, 모델이 보고한 사용 엔티티와 원문 근거, SQL 테이블 선택·유사 질문 참조. 새로고침 후 유지, 과거 답변은 기록 없음 — <a href="#chat">chat</a></li>
-  </ul>
-
-  <h2><span class="badge wip">진행중</span></h2>
-  <ul>
-    <li>채팅 메시지 임베딩·유사도 검색 — 백엔드 저장·검색 완료, <strong>프론트 미표시</strong></li>
-    <li>실 LLM 경로 하드닝 — 재시도 1회 한정, 레이트리밋/서킷브레이커 없음</li>
-  </ul>
-
-  <h2><span class="badge plan">예정</span></h2>
-  <table>
-    <thead><tr><th>항목</th><th>우선순위</th></tr></thead>
-    <tbody>
-      <tr><td>질문 유사도 테스트 하니스</td><td><span class="badge high">HIGH</span></td></tr>
-      <tr><td>Circle 게이지 조합 카탈로그</td><td>MED</td></tr>
-      <tr><td>Viewer 다크 Orion 자리표시 정리</td><td>LOW</td></tr>
-      <tr><td>실 RAG 고도화</td><td>LOW</td></tr>
-      <tr><td>LLM 사용량 조회 UI</td><td>미지정</td></tr>
-      <tr><td>Stage 서버측 role 검사 추가 여부</td><td>미지정</td></tr>
-    </tbody>
-  </table>
-
-  <h2><span class="badge hold">보류</span> — 열려 있는 제품 결정</h2>
-  <p>완성 Orion 대시보드 템플릿을 넣을지. 현재 기본 규칙은 "핀보드만, 템플릿 없음"이며 바꾸려면 합의가 필요하다.</p>
-
-  <div class="page-nav"><a href="#admin">← 관리자</a><span></span></div>
-</section>
-
-    </main>
+<p>액터: 대부분 <code>admin</code>만. 그 외 역할은 403(패널 자체가 사이드바에 노출되지 않음, § <a href="features/auth.md">auth.md</a>).</p>
+<p>사이드바 하단에는 기존 <code>Admin</code> 버튼과 별도로 <code>AI 설정</code>, <code>DB 관리</code> 버튼이 있다. <code>Admin</code>은 기존 전체 설정을 유지한다. <code>AI 설정</code> 패널은 Provider별 AI 연결 설정만, <code>DB 관리</code> 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
+<p>드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.</p>
+<hr />
+<h2>F-13 DB 연결 관리</h2>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>기능</th>
+<th>권한</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/database-connections</code></td>
+<td>테넌트 연결 목록(비밀번호 비노출)</td>
+<td>로그인</td>
+</tr>
+<tr>
+<td><code>POST /api/database-connections</code></td>
+<td>연결 추가(host, port, database_name, username, password, sslmode)</td>
+<td>admin</td>
+</tr>
+<tr>
+<td><code>POST /api/database-connections/{id}/test</code></td>
+<td><code>SELECT 1</code>로 연결 테스트</td>
+<td>로그인</td>
+</tr>
+<tr>
+<td><code>GET /api/database-connections/{id}/tables</code></td>
+<td><code>information_schema.tables</code> 베이스 테이블 목록</td>
+<td>로그인</td>
+</tr>
+<tr>
+<td><code>POST /api/database-connections/{id}/preview-sql</code></td>
+<td>검증된 SELECT 실행(디버그용)</td>
+<td>admin</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>비밀번호는 <code>APP_SECRET</code>에서 유도한 키로 Fernet 대칭암호화해 <code>password_encrypted</code>에 저장(<code>crypto.encrypt_secret</code>). 조회 응답에는 절대 포함하지 않는다.</li>
+<li><code>connection_url()</code>이 요청 시점에 복호화해 <code>postgresql://user:pass@host:port/db?sslmode=...</code> 형태로 조립.</li>
+<li>새 연결 등록 폼 기본값은 로컬 SOC 데모 DB 접속정보(<code>db-customer</code> / <code>agent4any_customer_demo</code> / …) — 그대로 저장하면 로컬 컨테이너를 가리키므로 운영에서는 반드시 바꿔야 한다.</li>
+<li><code>preview-sql</code>도 일반 채팅과 같은 읽기 전용 검증(<code>query.execute_readonly</code>)을 거친다 — admin이라고 DML이 뚫리지는 않는다.</li>
+<li>SKAX NMS는 로컬·운영에서 <code>SKAX NMS DB</code>(<code>dbconn_skax_nms</code>) 연결로 자동 등록한다. 운영은 별도 <code>db-skax-nms</code> 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 <code>cinamon</code> 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. <a href="../deployment/README.md#skax-nms-cinamon-운영-db">운영 절차</a>.</li>
+</ul>
+<h2>F-14 테이블 권한</h2>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>기능</th>
+<th>권한</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/table-permissions?connection_id=</code></td>
+<td>연결별 역할-테이블 매핑 조회</td>
+<td>로그인</td>
+</tr>
+<tr>
+<td><code>PUT /api/table-permissions</code></td>
+<td><code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체 교체</td>
+<td>admin</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>저장은 delete-then-insert: 해당 <code>(tenant_id, connection_id, role)</code> 행을 지우고 새로 넣는다(<code>replace_table_permissions</code>).</li>
+<li>현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능(체크박스 목록). <code>admin</code>/<code>viewer</code>용 허용 테이블은 시드 스크립트(<code>backend/scripts/seed_dev.py</code> 등)가 넣어둔 값을 UI에서 바꿀 방법이 아직 없다 — API 자체는 임의 role을 받는다.</li>
+<li>이 목록이 채팅/미리보기 SQL의 <code>FROM</code>/<code>JOIN</code> 허용 테이블을 결정한다(§ <a href="features/chat.md">chat.md</a> SQL 규칙). 행이 비어 있으면 SOC/Global 기본 테이블 집합으로 폴백.</li>
+<li><code>schema_metadata()</code>가 이 허용 테이블만 골라 <code>information_schema</code>에서 컬럼·PK·FK를 읽어 실 LLM 프롬프트용 스키마 텍스트를 만든다 — 데이터 행은 절대 읽지 않는다.</li>
+</ul>
+<h2>AI 연결 설정 (브라우저 로컬)</h2>
+<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local } }</code> 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>동작</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider</td>
+<td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td>
+</tr>
+<tr>
+<td>Model</td>
+<td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td>
+</tr>
+<tr>
+<td>Base URL</td>
+<td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td>
+</tr>
+<tr>
+<td>API key</td>
+<td><code>type="password"</code>, 로컬에서는 선택 사항</td>
+</tr>
+<tr>
+<td>Embedding model</td>
+<td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달된다. 요청 설정이 서버 환경변수보다 우선한다.</li>
+<li>URL은 브라우저가 아니라 <strong>백엔드에서 접근하는 주소</strong>다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
+<li>로컬 Provider는 패널을 열 때와 <strong>모델 목록 새로고침</strong> 클릭 시 <code>POST /api/ai/local-models</code>(관리자 전용, body <code>{base_url, api_key}</code>)를 호출한다. 백엔드가 <code>{base_url}/models</code>(OpenAI 호환, 타임아웃 5초)를 조회해 <code>{models: [id…]}</code>를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.</li>
+<li>로컬 임베딩 벡터의 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
+<li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
+<li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
+</ul>
+<hr />
+<h2>데이터 모델 (서비스 DB)</h2>
+<pre><code class="language-text">database_connections(id, tenant_id, name, host, port, database_name,
+                      username, password_encrypted, sslmode, created_by, created_at)
+table_permissions(id, tenant_id, connection_id, role, schema_name, table_name)
+llm_usage(id, tenant_id, user_id, conversation_id, provider, model,
+          prompt_tokens, completion_tokens, total_tokens, success, error, created_at)
+</code></pre>
+<p><code>llm_usage</code>는 이 패널에서 직접 보여주지 않는다 — 현재는 기록만 되는 골격(§ <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a> 다음 작업 후보).</p>
+<h2>예상 질문 유사도 DB</h2>
+<p>AI 설정을 저장한 뒤 DB를 선택하고 <strong>예상 질문 생성</strong>을 누른다. 테이블 접근 역할을 고르거나 생성 개수를 지정하지 않는다. AI가 선택한 DB의 모든 테이블을 묶음별로 살펴보고 다양한 예상 질문과 SQL·위젯을 만든다. 코드는 읽기 전용 SQL을 검증하고 유효한 AI 질문만 임베딩해 저장한다. 진행률과 질문 수를 보여주며 중단되면 이어서 진행할 수 있다. 채팅에서는 기존 사용자 테이블 접근 제한을 적용한다. <a href="features/similarity-search-design.md">예상 질문 유사도 상세</a>.</p></section>
+<section id="similarity-search-design"><h1>기능: DB별 예상 질문 유사도 검색</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능 문서 — 예상 질문 유사도 DB</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-09-22 (구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="features/chat.md">chat.md</a>, <a href="features/admin.md">admin.md</a></td>
+</tr>
+<tr>
+<td>관련 코드</td>
+<td><code>backend/app/question_similarity.py</code>, <code>backend/app/repositories/question_catalog.py</code>, <code>backend/app/agent_service.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2>동작</h2>
+<p>사용자 질문 → 선택한 DB의 예상 질문 검색 → 검색된 질문에 연결된 SQL·위젯 정보를 참고해
+LLM이 <strong>현재 질문</strong>에 맞는 답변 계획 생성 → 고객 DB 조회 → 위젯 반환.
+검색의 기준은 자연어 질문이다. SQL, 위젯, DB 정보는 각 예상 질문에 연결된 실행 정보다.</p>
+<p>유사도 기준은 코사인 유사도 0.75 이상, 기본 상위 5개다. 점수가 높아도 질문이 동일하다는
+보장은 없으므로 LLM이 조건·날짜·집계·정렬을 현재 질문과 스키마에 맞춰 재검토한다.
+검색 결과가 없거나 검색에 실패하면 LLM이 현재 스키마로 계획을 생성한다.
+LLM 호출 자체가 실패하면 기존 채팅처럼 오류를 반환한다.</p>
+<h2>저장 구조와 접근 범위</h2>
+<p>기존 <code>chat_vector</code> DB의 <code>question_catalog</code> 테이블을 사용한다. 채팅 로그용
+<code>message_embeddings</code>와 별도다. <code>003_question_catalog.sql</code>은 기존 <code>command_catalog</code>
+테이블과 컬럼을 이름만 바꿔 데이터를 보존한다.</p>
+<p>각 항목에는 <code>tenant_id</code>, <code>connection_id</code>, 자연어 <code>question</code>, 그 질문의 임베딩,
+<code>plan</code>(SQL·위젯 컴포넌트·제목), DB 이름·테이블 목록, 전체 DB 스키마 해시,
+임베딩 모델 식별자와 등록 시각이 저장된다. 비밀번호·API 키·조회 결과 행은 저장하지 않는다.
+동일 고객·DB·스키마·모델에서 같은 질문을 다시 등록하면 기존 항목을 갱신한다.</p>
+<p><strong>예상 질문 등록은 역할별로 나누지 않는다.</strong> 선택한 DB의 전체 조회 가능 테이블을 대상으로
+한 번 생성한다. 채팅에서 검색할 때는 현재 로그인 사용자의 기존 테이블 접근 권한으로
+SQL 참조를 다시 검사한다. 다른 고객·DB의 질문은 검색되지 않는다.
+스키마가 바뀌면 새 스키마 기준으로 다시 생성해야 한다.</p>
+<h2>전체 DB의 예상 질문 생성</h2>
+<p>관리자 화면에서 AI 연결 설정을 저장하고 DB를 선택한 다음 <strong>예상 질문 생성</strong>을 누른다.
+<code>테이블 권한 기준</code> 선택과 생성 개수 입력은 없다. DB 연결을 등록할 때 자동 실행되지는 않는다.</p>
+<ol>
+<li>DB의 조회 가능한 사용자 테이블·뷰와 컬럼·PK/FK를 읽는다. 내부 <code>schema_migrations</code>는 제외한다.</li>
+<li>4개 테이블씩 AI에 스키마를 전달해 예상 질문과 SQL·위젯을 생성한다. 코드에서
+   건수·목록 같은 질문을 미리 만들거나 질문 개수를 고정하지 않는다. AI에는 각 테이블과
+   집계·순위·분포·추이·필터·관계 등 서로 다른 질문 의도를 다루도록 요청한다.</li>
+<li>생성된 SQL을 현재 고객 DB에서 읽기 전용으로 검증한다. 실행할 수 없는 질문은 건너뛰고
+   <code>skipped_count</code>로 알린다. 질문을 만들지 못한 테이블은 <code>uncovered_tables</code>에 표시한다.
+   다른 질문 의도를 AI에 추가 요청하고, 빠진 테이블은 다시 요청한다. 유효한 AI 질문만
+   묶음으로 임베딩해 저장한다.</li>
+<li>화면에 테이블 진행률과 등록된 질문 수를 보여준다. 중단되면 같은 DB에서 다시 눌러 이어간다.</li>
+</ol>
+<p>조건·날짜·값의 조합은 무한하므로 가능한 모든 문장을 미리 저장할 수는 없다.
+이 로직은 <strong>조회 가능한 모든 테이블을 처리하고, 스키마로 의미가 있는 다양한 질문을 추가</strong>한다.
+저장된 질문과 가까운 새 질문은 LLM이 현재 조건에 맞게 답변을 만든다.</p>
+<h2>API</h2>
+<p>접두사: <code>/api/database-connections/{connection_id}</code>. AI 설정 헤더는 채팅과 같은
+<code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>을 사용한다.</p>
+<table>
+<thead>
+<tr>
+<th>Method / Path</th>
+<th>입력</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST <code>/questions/seed</code></td>
+<td><code>offset</code>(기본 0)</td>
+<td>관리자 전용. <code>questions</code>, <code>saved_count</code>, <code>skipped_count</code>, <code>uncovered_tables</code>, <code>processed_tables</code>, <code>total_tables</code>, <code>next_offset</code> 반환. <code>next_offset</code>이 없을 때까지 반복</td>
+</tr>
+<tr>
+<td>POST <code>/questions/search</code></td>
+<td><code>question</code>, <code>limit</code>(기본 5), <code>min_similarity</code>(기본 0.75)</td>
+<td>로그인 사용자의 접근 가능 SQL만 <code>matches</code>로 반환</td>
+</tr>
+</tbody>
+</table>
+<p>채팅 응답은 <code>meta.question_retrieval</code>에 검색 상태를 포함한다.
+검색 장애는 전용 API에서 HTTP 502, 생성 실패는 HTTP 502,
+다른 고객의 DB는 HTTP 404, 비관리자 등록은 HTTP 403이다.</p>
+<h2>검증</h2>
+<pre><code class="language-sh">docker compose exec backend python scripts/migrate_chat_vector.py
+docker compose exec backend pytest -q
+</code></pre>
+<p>실제 pgvector 테스트는 고객·DB·스키마·모델 분리, 임계값과 중복 등록을 롤백하며 검증한다.
+서비스 테스트는 전 테이블 처리, AI 질문 검증, 권한 밖 SQL 제외와 LLM 전달을 확인한다.</p></section>
+<section id="graph-rag-sources"><h1>기능: 최소 그래프 기반과 문서 기능 분리</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>기능: 최소 그래프 기반과 문서 기능 분리</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02 (분리 후 구현 기준)</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td>
+</tr>
+</tbody>
+</table>
+<p>문서 업로드·스키마 협의·엔티티 추출·문서 질의응답·그래프 화면은 독립 프로젝트 <code>doc2graph</code>로 이동했다. sql2widget에는 문서 그래프 API/테이블/화면이 없다.</p>
+<p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
+<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="progress"><span class="badge done">완료 18</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문서명</td>
+<td>작업 진행 상황</td>
+</tr>
+<tr>
+<td>기준일</td>
+<td>2026-10-02</td>
+</tr>
+<tr>
+<td>관련 문서</td>
+<td><a href="../AGENTS.md">AGENTS.md</a>, <a href="features/README.md">docs/features/</a>, <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td>
+</tr>
+</tbody>
+</table>
+<p>상태 라벨은 4종 고정: <code>완료</code> / <code>진행중</code> / <code>예정</code> / <code>보류</code>. 이 문서는 <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체한다 — 이전 스냅샷 수치는 6절에 남겨둔다.</p>
+<hr />
+<h2>1. 요약</h2>
+<ul>
+<li>로컬 데모 골격(로그인 → 질문 → 위젯 → Stage 핀 → 새로고침 유지)은 <strong>완료</strong>.</li>
+<li>2026-09-03 스냅샷 이후 <strong>프로젝트 계층</strong>(대화 여러 개를 프로젝트 하나로 묶고, Stage를 프로젝트당 1개로)이 새로 들어왔다 — 당시 문서의 <code>/c/:id/view</code>는 지금 <code>/p/:projectId/view</code>로 바뀌었다.</li>
+<li>실 LLM 경로(OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도)도 스냅샷 이후 상당히 진전됐다.</li>
+<li>채팅 메시지 임베딩(pgvector 유사도 검색)은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작하고 프론트는 아직 안 붙었다.</li>
+</ul>
+<hr />
+<h2>2. 완료</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)</td>
+<td><a href="features/auth.md">auth.md</a></td>
+</tr>
+<tr>
+<td>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</td>
+<td><a href="features/projects-conversations.md">projects-conversations.md</a></td>
+</tr>
+<tr>
+<td>Artifact 위젯 렌더 + SQL 미리보기</td>
+<td><a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
+</tr>
+<tr>
+<td>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</td>
+<td><a href="features/stage.md">stage.md</a></td>
+</tr>
+<tr>
+<td>Viewer 읽기 전용 화면(<code>/p/:id/view</code>)</td>
+<td><a href="features/viewer.md">viewer.md</a></td>
+</tr>
+<tr>
+<td>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기</td>
+<td><a href="features/admin.md">admin.md</a></td>
+</tr>
+<tr>
+<td>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</td>
+<td><code>docker-compose.yml</code></td>
+</tr>
+<tr>
+<td>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</td>
+<td><code>backend/scripts/seed_northwind_recent.py</code>, <code>seed_skax_nms.py</code></td>
+</tr>
+<tr>
+<td>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제)</td>
+<td><a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select)</td>
+<td><a href="features/admin.md">admin.md</a></td>
+</tr>
+<tr>
+<td><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</td>
+<td><a href="features/admin.md">admin.md</a> 데이터 모델</td>
+</tr>
+<tr>
+<td>문서 체계 정비 — <code>AGENTS.md</code>/<code>CLAUDE.md</code>, <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, 본 문서, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code></td>
+<td>이번 문서화 작업 1~5번 전체 완료</td>
+</tr>
+<tr>
+<td>DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성</td>
+<td><a href="features/similarity-search-design.md">similarity-search-design.md</a></td>
+</tr>
+<tr>
+<td>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지</td>
+<td>단위 테스트와 실제 Jev 호출(2026-10-01, <code>jev-1.13.0</code>)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. <code>ROUTE_MIN_CONFIDENCE</code> 0.5는 아직 검증 전 초기값. <a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도</td>
+<td>단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. <a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조</td>
+<td><code>messages.meta</code> 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. <a href="features/chat.md">chat.md</a></td>
+</tr>
+<tr>
+<td>운영 배포 파이프라인</td>
+<td>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a></td>
+</tr>
+<tr>
+<td>DB/문서 프로젝트 분리 및 독립 실행</td>
+<td>sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 운영 전환·실모델 유료 호출은 미실행</td>
+</tr>
+</tbody>
+</table>
+<h2>3. 진행중</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>채팅 메시지 임베딩·유사도 검색(pgvector, <code>chat_vector</code> DB)</td>
+<td>백엔드 저장·검색(<code>message_embeddings.py</code>)까지 완료, API가 <code>related_messages</code> 반환. <strong>프론트 미표시</strong> — <code>App.jsx</code>가 아직 렌더링 안 함</td>
+</tr>
+<tr>
+<td>실 LLM 경로 하드닝</td>
+<td>기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td>
+</tr>
+</tbody>
+</table>
+<h2>4. 예정</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>우선순위</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증</td>
+<td>HIGH</td>
+<td><a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a>, 2026-09-03 스냅샷 #7과 동일 항목, 미착수</td>
+</tr>
+<tr>
+<td>Circle 게이지 조합 카탈로그 (ring × size × companion)</td>
+<td>MED</td>
+<td>스냅샷 #9와 동일, <code>ALLOWED_COMPONENTS</code>에 아직 없음</td>
+</tr>
+<tr>
+<td>Viewer에 남은 다크 Orion 자리표시(CSS <code>variant="orion"</code>) 정리</td>
+<td>LOW</td>
+<td><a href="../DESIGN.md">DESIGN.md</a>가 "정식 토큰 아님"으로 명시. <a href="features/viewer.md">viewer.md</a> 참고</td>
+</tr>
+<tr>
+<td>실 RAG(문서 검색) 고도화 — 현재 <code>DocumentProvider</code>는 Mock 고정 문서만</td>
+<td>LOW</td>
+<td>고정 SOC 데모 출처 보조 기능. 사용자 업로드 문서 그래프는 doc2graph 소유</td>
+</tr>
+<tr>
+<td>LLM 사용량(<code>llm_usage</code>) 조회 UI</td>
+<td>미지정</td>
+<td>기록만 되고 화면에서 보여주지 않음. <a href="features/admin.md">admin.md</a></td>
+</tr>
+<tr>
+<td>Stage 쓰기 API에 role 기반 서버측 검사 추가 여부</td>
+<td>미지정</td>
+<td>현재는 소유자 검사만 있고 <code>readOnly</code>는 프론트 전용. <a href="features/stage.md">stage.md</a> 주의 항목 — 취약점이 아니라 설계 확인 필요 항목으로 분류</td>
+</tr>
+</tbody>
+</table>
+<h2>5. 보류 — 열려 있는 제품 결정</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>완성 Orion 대시보드 템플릿을 넣을지</td>
+<td>스냅샷 #8과 동일. <a href="../PRODUCT.md">PRODUCT.md</a> "Explicitly undecided"에 명시. <strong>현재 기본 규칙은 "핀보드만, 템플릿 없음"</strong>이며, 이 규칙을 바꾸려면 합의가 필요하다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. 히스토리 — 2026-09-03 스냅샷 (<code>docs/현황.html</code>, 대체됨)</h2>
+<p>당시 수치: 백로그 11건 중 완료 6 · 대기 5(55%). 완료 6건은 위 "2. 완료"에 모두 흡수됐다. 대기 5건(#7~#11)은 위 "4. 예정"과 "5. 보류"에 각각 대응한다 — 새로 생긴 항목(프로젝트 계층, 실 LLM 진전, 채팅 임베딩, 배포 파이프라인)은 스냅샷에는 없었다.</p>
+<p>인수 시나리오(S-01~S-05)는 여전히 유효하며 기능 문서의 대표 시나리오로 이어졌다: SOC 유형별 비중 → PieTable → Stage 드래그(<a href="features/chat.md">chat.md</a>, <a href="features/stage.md">stage.md</a>), Global 지역 매출 → BarTable, viewer 제약(<a href="features/viewer.md">viewer.md</a>), 틀린 비밀번호 거부, 쓰기 SQL 차단(<a href="features/chat.md">chat.md</a> SQL 규칙).</p>
+<hr />
+<h2>7. 관련 문서</h2>
+<p>→ <a href="dashboard.html">docs/dashboard.html</a>: 전체 문서를 GitBook 스타일로 묶어 보여주는 HTML 문서.
+→ <a href="kanban.html">docs/kanban.html</a>: <code>docs/features/*.md</code> + 본 문서를 시각화한 칸반형 정적 보드.</p></section></main>
   </div>
 
 <footer class="doc-footer">

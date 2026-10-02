@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
-const TOKEN_KEY = "agent4any_access";
-const REFRESH_KEY = "agent4any_refresh";
+const TOKEN_KEY = "sql2widget_access";
+const REFRESH_KEY = "sql2widget_refresh";
 export { getAiSettings, setAiSettings } from "./aiSettings";
 import { getAiSettings } from "./aiSettings";
 
@@ -145,7 +145,7 @@ export const api = {
     request(`/api/conversations/${id}`, {
       method: "DELETE",
     }),
-  chat: (conversationId, message, connectionId, route = null, graphAction = null) =>
+  chat: (conversationId, message, connectionId, route = null) =>
     request("/api/chat", {
       method: "POST",
       // Gemini can take up to 60s, and the backend may run one repair attempt.
@@ -155,7 +155,6 @@ export const api = {
         message,
         connection_id: connectionId || null,
         route,
-        graph_action: graphAction,
       }),
     }),
   getStage: (projectId) => request(`/api/projects/${projectId}/stage`),
@@ -179,24 +178,6 @@ export const api = {
       method: "DELETE",
     }),
   listConnections: () => request("/api/database-connections"),
-  listGraphSources: (projectId) => request(`/api/projects/${projectId}/graph-sources`),
-  registerGraphSource: (projectId, payload) => request(`/api/projects/${projectId}/graph-sources`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    timeoutMs: 300000,
-  }),
-  replaceGraphSourceFiles: (projectId, id, files) => request(`/api/projects/${projectId}/graph-sources/${id}/files`, {
-    method: "PUT",
-    body: JSON.stringify({ files }),
-    timeoutMs: 300000,
-  }),
-  ingestGraphSource: (projectId, id) => request(`/api/projects/${projectId}/graph-sources/${id}/ingest`, {
-    method: "POST",
-    timeoutMs: 300000,
-  }),
-  getProjectGraph: (projectId) => request(`/api/projects/${projectId}/graph`),
-  getProjectEntities: (projectId) => request(`/api/projects/${projectId}/graph/entities`),
-  getGraphDocument: (projectId, id) => request(`/api/projects/${projectId}/graph/documents/${id}`),
   createConnection: (payload) =>
     request("/api/database-connections", {
       method: "POST",

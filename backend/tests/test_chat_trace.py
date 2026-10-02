@@ -12,7 +12,7 @@ def test_trace_excludes_raw_errors_credentials_and_reference_sql():
     raw = {
         "route": "data_query", "route_source": "llm_fallback", "route_jev_error": "never-persist",
         "api_key": "never-persist", "provider": "gemini", "model": "m",
-        "schema_link": {"source": "full", "reason": "graph_unavailable", "error": "never-persist"},
+        "schema_link": {"source": "full", "reason": "no_matched_tables", "error": "never-persist"},
         "question_retrieval": {"status": "matched", "matches": [
             {"question": "고객 순위", "similarity": 0.9, "plan": {"sql": "never-persist"}}]},
     }
@@ -25,11 +25,9 @@ def test_trace_excludes_raw_errors_credentials_and_reference_sql():
 
 
 def test_chat_response_and_reloaded_conversation_keep_the_same_processing_record(monkeypatch):
-    trace = {"route": "knowledge_qa", "route_source": "jev", "model": "m", "provider": "gemini",
-             "knowledge": {"status": "answered", "entities_total": 1000, "entities_read": 500,
-                           "entities_in_prompt": 2, "used": ["orders"],
-                           "used_entities": [{"id": "e1", "name": "orders", "source": "문서",
-                                              "evidence": [{"heading": "구조", "evidence": "주문 설명"}]}]}}
+    trace = {"route": "data_query", "route_source": "jev", "model": "m", "provider": "gemini",
+             "schema_link": {"source": "similarity", "tables": ["orders"], "total": 32},
+             "question_retrieval": {"status": "matched", "matches": [{"question": "고객별 주문", "similarity": 0.9}]}}
     monkeypatch.setattr(main, "run_agent", lambda *a, **k: ("답변", {"widgets": []}, trace))
     monkeypatch.setattr(main, "embed_text", lambda *a, **k: {"embedding": None, "error": None, "provider": "gemini"})
     monkeypatch.setitem(main.app.dependency_overrides, get_current_user,
@@ -48,7 +46,7 @@ def test_chat_response_and_reloaded_conversation_keep_the_same_processing_record
         try:
             chat = conversations.create_conversation("tenant_demo", "user_admin", "prj_default_user_admin", "처리 내역 테스트")
             client = TestClient(main.app)
-            response = client.post("/api/chat", json={"conversation_id": chat["id"], "message": "문서에서 주문 설명"})
+            response = client.post("/api/chat", json={"conversation_id": chat["id"], "message": "고객별 주문 보여줘"})
             assert response.status_code == 200
             saved = response.json()["assistant_message"]["meta"]
             assert saved == message_meta(trace)

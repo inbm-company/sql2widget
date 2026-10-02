@@ -1,3 +1,4 @@
+name: sql2widget-local
 services:
   db:
     image: postgres:17-alpine
@@ -6,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${POSTGRES_DB:-agent4any}
     ports:
-      - "5434:5432"
+      - "${SERVICE_DB_PORT:-5544}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +23,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${CUSTOMER_POSTGRES_DB:-agent4any_customer_demo}
     ports:
-      - "5436:5432"
+      - "${CUSTOMER_DB_PORT:-5546}:5432"
     volumes:
       - pg_customer_data:/var/lib/postgresql/data
       - ./backend/sql/sample_customer:/docker-entrypoint-initdb.d:ro
@@ -39,7 +40,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${STAGE_GLOBAL_POSTGRES_DB:-agent4any_stage_global}
     ports:
-      - "5435:5432"
+      - "${GLOBAL_DB_PORT:-5547}:5432"
     volumes:
       - pg_stage_global_data:/var/lib/postgresql/data
       - ./backend/sql/stage_global:/docker-entrypoint-initdb.d:ro
@@ -56,7 +57,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${NORTHWIND_POSTGRES_DB:-agent4any_northwind}
     ports:
-      - "5437:5432"
+      - "${NORTHWIND_DB_PORT:-5548}:5432"
     volumes:
       - pg_northwind_data:/var/lib/postgresql/data
       - ./backend/sql/northwind:/docker-entrypoint-initdb.d:ro
@@ -73,7 +74,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}
     ports:
-      - "5438:5432"
+      - "${SKAX_DB_PORT:-5549}:5432"
     volumes:
       - pg_skax_nms_data:/var/lib/postgresql/data
       - ./backend/sql/skax_nms:/docker-entrypoint-initdb.d:ro
@@ -91,7 +92,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agent4any}
       POSTGRES_DB: ${CHAT_VECTOR_POSTGRES_DB:-agent4any_chat_vector}
     ports:
-      - "5439:5432"
+      - "${VECTOR_DB_PORT:-5550}:5432"
     volumes:
       - pg_chat_vector_data:/var/lib/postgresql/data
     healthcheck:
@@ -100,33 +101,12 @@ services:
       timeout: 5s
       retries: 20
 
-  # Graph RAG 준비용 독립 그래프 DB. 데이터 적재·백엔드 연동은 다음 단계.
-  neo4j:
-    image: neo4j:2026.09.0
-    environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env before starting Neo4j}
-      NEO4J_server_memory_heap_initial__size: 256m
-      NEO4J_server_memory_heap_max__size: 512m
-      NEO4J_server_memory_pagecache_size: 256m
-    ports:
-      - "127.0.0.1:7474:7474"
-      - "127.0.0.1:7687:7687"
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1;' > /dev/null"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - .env.local
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db:5432/${POSTGRES_DB:-agent4any}
       DEMO_CUSTOMER_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-customer:5432/${CUSTOMER_POSTGRES_DB:-agent4any_customer_demo}
@@ -135,14 +115,13 @@ services:
       SKAX_NMS_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-skax-nms:5432/${SKAX_NMS_POSTGRES_DB:-agent4any_skax_nms}
       CHAT_VECTOR_DATABASE_URL: postgresql://${POSTGRES_USER:-agent4any}:${POSTGRES_PASSWORD:-agent4any}@db-chat-vector:5432/${CHAT_VECTOR_POSTGRES_DB:-agent4any_chat_vector}
       CHAT_EMBEDDING_DIM: ${CHAT_EMBEDDING_DIM:-1536}
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USERNAME: neo4j
+      GRAPH_ENABLED: "false"
       APP_SECRET: ${APP_SECRET:-dev-secret-replace-with-at-least-32-chars!!}
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173}
-      # Host API is published on 8010 (8001 often taken by other local apps)
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:5175,http://localhost:5175}
+      # 독립 로컬 API 포트는 기본 8011
     ports:
-      - "8010:8000"
+      - "${API_PORT:-8011}:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -173,9 +152,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      VITE_API_BASE: http://127.0.0.1:8010
+      VITE_API_BASE: http://127.0.0.1:${API_PORT:-8011}
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5175}:5173"
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
@@ -190,6 +169,4 @@ volumes:
   pg_northwind_data:
   pg_skax_nms_data:
   pg_chat_vector_data:
-  neo4j_data:
-  neo4j_logs:
   frontend_node_modules:

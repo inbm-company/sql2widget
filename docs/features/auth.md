@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 로그인/세션 |
-| 기준일 | 2026-09-21 (구현 기준, 기획과 다르면 코드가 맞음) |
+| 기준일 | 2026-10-02 (구현 기준, 기획과 다르면 코드가 맞음) |
 | 관련 문서 | [AGENTS.md](../../AGENTS.md), [01-folder-structure.md](../01-folder-structure.md) |
 | 관련 코드 | `backend/app/auth.py`, `backend/app/main.py`(`/api/auth/*`), `frontend/src/App.jsx`(`LoginForm`, `App`), `frontend/src/api.js` |
 
@@ -67,3 +67,7 @@
 | POST | `/api/auth/refresh` | refresh 토큰으로 access 재발급 |
 | GET | `/api/auth/me` | 현재 사용자 정보(세션 복원용) |
 | GET | `/api/health` | 헬스체크. `{ ok, provider, effective_provider }`, 인증 불필요 |
+
+## 독립 인증
+
+이 앱의 JWT issuer는 `sql2widget`로 고정한다. 서명뿐 아니라 issuer를 검증하여 다른 앱의 토큰을 거부한다. 브라우저 토큰 키는 `sql2widget_access` / `sql2widget_refresh`다. 계정·세션·프로젝트는 앱별 서비스 DB에서 관리하고 통합 로그인이나 기존 토큰 이전은 제공하지 않는다.

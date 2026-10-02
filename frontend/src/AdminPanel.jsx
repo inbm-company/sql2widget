@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { api, getAiSettings, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
-import GraphSources from "./GraphSources.jsx";
 
 export default function AdminPanel({ open, onClose, mode = "admin", projectId, projectTitle }) {
   const showAi = mode !== "db";
@@ -255,7 +254,6 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
         </section> : null}
 
         {showDb ? <>
-        <GraphSources key={projectId || "none"} open={open && showDb} projectId={projectId} projectTitle={projectTitle} />
         <section>
           <h3>DB 연결</h3>
           <ul className="admin-list">

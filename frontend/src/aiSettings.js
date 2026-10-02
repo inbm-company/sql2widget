@@ -1,4 +1,4 @@
-const SETTINGS_KEY = "agent4any_ai_settings";
+const SETTINGS_KEY = "sql2widget_ai_settings";
 
 const DEFAULTS = {
   gemini: { model: "gemini-3.6-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", embeddingModel: "gemini-embedding-001" },

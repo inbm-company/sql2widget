@@ -4,7 +4,6 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { api } from "./api";
 import { setStore, storeKeys, useSWR, useStore } from "./store";
-import ProjectGraph from "./ProjectGraph.jsx";
 import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
 
 function debounce(fn, ms) {
@@ -22,7 +21,6 @@ export default function StageCanvas({ projectId, readOnly = false, variant = "de
     () => api.getStage(projectId),
     { revalidateOnFocus: false }
   );
-  const [viewMode, setViewMode] = useState("widgets");
   const [width, setWidth] = useState(480);
   const wrapRef = useRef(null);
   const [localWidgets, setLocalWidgets] = useState([]);
@@ -185,15 +183,9 @@ export default function StageCanvas({ projectId, readOnly = false, variant = "de
     <div className={`stage-root ${variant === "orion" ? "stage-root--orion" : ""}`}>
       <header className="stage-header">
         <h2>{variant === "orion" ? "Orion Stage" : "Stage"}</h2>
-        <div className="stage-tabs" aria-label="Stage 보기">
-          <button type="button" aria-pressed={viewMode === "widgets"} onClick={() => setViewMode("widgets")}>위젯</button>
-          <button type="button" aria-pressed={viewMode === "graph"} onClick={() => setViewMode("graph")}>그래프</button>
-        </div>
-        {!readOnly && viewMode === "widgets" ? <span className={`save-status ${status}`}>{statusLabel}</span> : null}
+        {!readOnly ? <span className={`save-status ${status}`}>{statusLabel}</span> : null}
       </header>
-      {viewMode === "graph" ? <ProjectGraph key={projectId} projectId={projectId} /> : null}
       <div
-        hidden={viewMode !== "widgets"}
         className={`stage-canvas ${variant === "orion" ? "stage-canvas--orion" : ""}`}
         ref={wrapRef}
         onDragOver={readOnly ? undefined : (e) => e.preventDefault()}

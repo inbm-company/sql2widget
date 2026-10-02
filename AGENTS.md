@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 프로젝트 문서 (Claude / Codex 등 코딩 에이전트가 세션 시작 시 자동으로 읽는 문서) |
-| 기준일 | 2026-10-01 |
+| 기준일 | 2026-10-02 |
 | 대상 | 이 저장소에서 작업하는 AI 에이전트, 처음 들어오는 사람 |
 
 이 문서는 저장소 전체 문서를 어디서 무엇을 보면 되는지 안내하고, 문서마다 반복 설명하지 않는 **공통 확정 규칙**과 **기능 개요**를 한 곳에 모은다. 여기 규칙이 다른 문서와 충돌하면 이 문서가 아니라 **구현 코드**가 기준이다.
@@ -25,15 +25,16 @@
 | 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`viewer` 역할 구분 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
 | 채팅(에이전트) | 자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환 | [chat.md](docs/features/chat.md) |
-| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 문서 그래프 기반 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
+| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
 | 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
-| Artifact/위젯 표시 | 채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·그래프 조회/전달 수·모델 사용 보고와 원문 근거 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
+| Artifact/위젯 표시 | 채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 자동 저장·새로고침 후 복원 | [stage.md](docs/features/stage.md) |
-| 프로젝트 문서 그래프(Graph RAG 준비) | 프로젝트별 문서 업로드 → Neo4j 적재 → 엔티티 추출 → Stage에서 그래프·본문 조회, 채팅에서 "문서에서 …" 질문에 엔티티·근거로 답변(`knowledge_qa`) | [graph-rag-sources.md](docs/features/graph-rag-sources.md) |
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |
 | 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정 | [admin.md](docs/features/admin.md) |
 
 데모 데이터셋은 두 개이며 동등하게 취급한다: `dbconn_demo`(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), `dbconn_global`(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(`cinamon`, `dbconn_skax_nms`)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.
+
+문서 업로드·엔티티 추출·문서 채팅·그래프 화면은 독립 `doc2graph`로 이동했다. 최소 그래프 기반은 `backend/app/graph_backend.py`에만 남겼으며 기본 미사용·UI 비표시다. 로컬 실행은 `.env.local`과 `sql2widget-local` Compose 이름으로 새 데이터를 사용한다. 토큰 issuer/브라우저 설정 키도 앱별로 분리했다.
 
 ---
 
@@ -54,6 +55,7 @@
 | 문서 | 역할 | 상태 |
 |------|------|------|
 | [docs/01-folder-structure.md](docs/01-folder-structure.md) | 폴더·파일 단위 설명 | 완료 |
+| [docs/project-separation-proposal.md](docs/project-separation-proposal.md) | DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록 | 구현 완료 — 로컬 독립 실행·테스트 검증, 운영 전환 미실행 |
 | [docs/features/*.md](docs/features/README.md) | 기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리) | 완료 — `docs/기능명세서.md` 대체함(삭제됨) |
 | [docs/progress.md](docs/progress.md) | 작업 진행 상황 (완료/진행중/예정/보류) | 완료 — `docs/현황.html` 대체함(삭제됨) |
 | [docs/dashboard.html](docs/dashboard.html) | `features/*.md` + `progress.md` 전체를 GitBook 스타일(좌측 목차 + 본문)로 묶어 보여주는 HTML 문서 | 완료 |

@@ -27,7 +27,7 @@ The agent proposes candidate widgets from a closed catalog. The user composes th
 
 ## Operating Context
 
-- Local evaluation is Docker Compose: Vite frontend on port 5173, FastAPI on port 8010.
+- Local evaluation is Docker Compose: Vite frontend on port 5173, FastAPI on port 8011.
 - Login demos: `admin@example.com` / `demo-password`, and `viewer@example.com`.
 - Two customer connections: `dbconn_demo` (SOC) and `dbconn_global` (Global Sales).
 - Chat always calls a real LLM (OpenAI-compatible or Gemini). No key or a failed call returns a clear error — the agent never guesses an answer.
@@ -52,7 +52,7 @@ Explicitly undecided:
 
 ## Brand Commitments
 
-Product name: agent4any. No binding visual identity was recorded in init. The incumbent UI exists in `frontend/` and must be treated as evidence, not as a locked brand system, until DESIGN.md documents it.
+Product name: sql2widget. No binding visual identity was recorded in init. The incumbent UI exists in `frontend/` and must be treated as evidence, not as a locked brand system, until DESIGN.md documents it.
 
 ## Evidence on Hand
 
@@ -68,3 +68,8 @@ Product name: agent4any. No binding visual identity was recorded in init. The in
 3. Catalog furniture, user layout: the agent proposes; the user composes.
 4. Closed types, open values: invent no charts or chrome; keep data honest.
 5. Project-scoped: one Stage per project, not a global dashboard library.
+
+
+## Separation (2026-10-02)
+
+Document upload, graph extraction and document chat now belong to doc2graph. Both applications retain chat and the same basic UI, with independent authentication, projects, settings and data. sql2widget displays widgets/Stage only and retains an unused optional graph connection foundation. Local UI is on 5175; no document graph is used in SQL planning.
