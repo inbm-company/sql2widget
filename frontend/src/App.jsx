@@ -21,8 +21,9 @@ import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
 import ChatTrace from "./ChatTrace.jsx";
 
 function LoginForm({ onSuccess }) {
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("demo-password");
+  // 개발 서버(vite dev)에서만 데모 계정을 미리 채운다. 운영 빌드에서는 빈 값이며 문자열도 번들에서 제거된다.
+  const [email, setEmail] = useState(import.meta.env.DEV ? (import.meta.env.VITE_DEV_ADMIN_EMAIL || "admin.local@example.com") : "");
+  const [password, setPassword] = useState(import.meta.env.DEV ? "demo-password" : "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 

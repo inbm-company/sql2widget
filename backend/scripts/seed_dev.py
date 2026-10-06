@@ -8,6 +8,8 @@ import psycopg
 
 from app.auth import hash_password
 from app.config import (
+    ADMIN_EMAIL,
+    VIEWER_EMAIL,
     DATABASE_URL,
     DEMO_CUSTOMER_DATABASE_URL,
     NORTHWIND_DATABASE_URL,
@@ -15,9 +17,7 @@ from app.config import (
 )
 from app.repositories import connections as conn_repo
 
-ADMIN_EMAIL = "admin@example.com"
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "demo-password")
-VIEWER_EMAIL = "viewer@example.com"
 VIEWER_PASSWORD = os.getenv("VIEWER_PASSWORD", "demo-password")
 TENANT_ID = "tenant_demo"
 USER_ID = "user_admin"
@@ -49,14 +49,35 @@ NORTHWIND_TABLES = [
 ]
 
 
+def seed_user(cur, user_id: str, email: str, password: str, role: str) -> None:
+    """Keep the seeded identity and password when changing its login email."""
+    if not email or "@" not in email:
+        raise RuntimeError("Seed account email must be a non-empty email address")
+    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+    owner = cur.fetchone()
+    if owner and owner[0] != user_id:
+        raise RuntimeError("Seed account email already belongs to another user")
+    cur.execute("SELECT tenant_id, role FROM users WHERE id = %s", (user_id,))
+    existing = cur.fetchone()
+    if existing:
+        if existing != (TENANT_ID, role):
+            raise RuntimeError("Existing seed account has a different tenant or role")
+        cur.execute("UPDATE users SET email = %s WHERE id = %s AND email <> %s", (email, user_id, email))
+    else:
+        cur.execute(
+            "INSERT INTO users (id, tenant_id, email, password_hash, role) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, TENANT_ID, email, hash_password(password), role),
+        )
+
+
 def main() -> None:
+    if ADMIN_EMAIL == VIEWER_EMAIL:
+        raise RuntimeError("Admin and viewer must use different email addresses")
     if os.getenv("APP_ENV") == "production" and (
         len(ADMIN_PASSWORD) < 16 or len(VIEWER_PASSWORD) < 16
         or len(os.getenv("APP_SECRET", "")) < 32
     ):
         raise RuntimeError("Production requires strong ADMIN_PASSWORD, VIEWER_PASSWORD and APP_SECRET")
-    password_hash = hash_password(ADMIN_PASSWORD)
-    viewer_hash = hash_password(VIEWER_PASSWORD)
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -67,33 +88,8 @@ def main() -> None:
                 """,
                 (TENANT_ID, "Demo Tenant"),
             )
-            cur.execute("SELECT id FROM users WHERE email = %s", (ADMIN_EMAIL,))
-            existing = cur.fetchone()
-            if existing:
-                print(f"user exists: {ADMIN_EMAIL}")
-            else:
-                cur.execute(
-                    """
-                    INSERT INTO users (id, tenant_id, email, password_hash, role)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (USER_ID, TENANT_ID, ADMIN_EMAIL, password_hash, "admin"),
-                )
-                print(f"created user {ADMIN_EMAIL}")
-
-            cur.execute("SELECT id FROM users WHERE email = %s", (VIEWER_EMAIL,))
-            viewer_existing = cur.fetchone()
-            if viewer_existing:
-                print(f"user exists: {VIEWER_EMAIL}")
-            else:
-                cur.execute(
-                    """
-                    INSERT INTO users (id, tenant_id, email, password_hash, role)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (VIEWER_ID, TENANT_ID, VIEWER_EMAIL, viewer_hash, "viewer"),
-                )
-                print(f"created user {VIEWER_EMAIL}")
+            seed_user(cur, USER_ID, ADMIN_EMAIL, ADMIN_PASSWORD, "admin")
+            seed_user(cur, VIEWER_ID, VIEWER_EMAIL, VIEWER_PASSWORD, "viewer")
 
             for user_id in (USER_ID, VIEWER_ID):
                 cur.execute(

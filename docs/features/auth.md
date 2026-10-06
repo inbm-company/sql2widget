@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 로그인/세션 |
-| 기준일 | 2026-10-02 (구현 기준, 기획과 다르면 코드가 맞음) |
+| 기준일 | 2026-10-06 (구현 기준, 기획과 다르면 코드가 맞음) |
 | 관련 문서 | [AGENTS.md](../../AGENTS.md), [01-folder-structure.md](../01-folder-structure.md) |
 | 관련 코드 | `backend/app/auth.py`, `backend/app/main.py`(`/api/auth/*`), `frontend/src/App.jsx`(`LoginForm`, `App`), `frontend/src/api.js` |
 
@@ -19,10 +19,11 @@
 | 출력 | `access_token`, `refresh_token`, `user { id, email, role, tenant_id }` |
 | 저장 | 브라우저 `localStorage` (`agent4any_access`, `agent4any_refresh`) |
 | 실패 | 401 `Invalid credentials` |
+| 입력란 초기값 | 개발 서버(`import.meta.env.DEV`)에서만 데모 계정(`admin.local@example.com`/`demo-password`)을 미리 채운다. 운영 빌드(`Dockerfile.production`의 `npm run build`)는 빈 값이며 해당 문자열이 번들에 포함되지 않는다. |
 
 - Access 토큰 만료: 기본 30분(`JWT_ACCESS_MINUTES`)
 - Refresh 토큰 만료: 기본 14일(`JWT_REFRESH_DAYS`)
-- `LoginForm`은 데모 값(`admin@example.com` / `demo-password`)을 기본으로 채워둔다.
+- `LoginForm`은 개발 서버에서만 로컬 데모 값을 채우며, 운영 빌드는 빈 입력란으로 시작한다. 로컬 관리자 이메일을 바꾸면 Compose가 `VITE_DEV_ADMIN_EMAIL`로 전달한다.
 
 ## F-02 세션 복원 / 토큰 갱신
 
@@ -33,11 +34,11 @@
 
 ## 역할과 권한
 
-| 역할 | 시드 계정 | 요약 |
+| 역할 | 로컬 시드 계정 | 요약 |
 |------|-----------|------|
-| `admin` | `admin@example.com` / `demo-password` | 채팅, Stage 편집, 대화/프로젝트 생성·수정·삭제, Admin 패널(연결·권한), Viewer 링크 |
+| `admin` | `admin.local@example.com` / `demo-password` | 채팅, Stage 편집, 대화/프로젝트 생성·수정·삭제, Admin 패널(연결·권한), Viewer 링크 |
 | `user` | 로그인 계정 없음(권한 테이블 행만 존재) | API 상 일반 사용자. 연결 생성·권한 변경·SQL 프리뷰는 403 |
-| `viewer` | `viewer@example.com` / `demo-password` | 본인 프로젝트의 Stage **조회만**. 채팅·DnD·리사이즈·프로젝트/대화 생성·수정·삭제 불가 |
+| `viewer` | `viewer.local@example.com` / `demo-password` | 본인 프로젝트의 Stage **조회만**. 채팅·DnD·리사이즈·프로젝트/대화 생성·수정·삭제 불가 |
 
 - 프론트에서 `isViewer = user.role === "viewer"`, `canEdit = !isViewer`(`frontend/src/App.jsx` `Workspace`)로 화면 요소를 토글한다. 이건 UX 편의이며 진짜 방어선이 아니다 — 실제 권한은 백엔드 라우트(`require_admin` 등)와 `table_permissions`가 최종 판단한다.
 - 모든 대화/프로젝트는 `tenant_id` + `user_id`로 격리된다. 남의 리소스 ID를 알아도 404.
@@ -71,3 +72,9 @@
 ## 독립 인증
 
 이 앱의 JWT issuer는 `sql2widget`로 고정한다. 서명뿐 아니라 issuer를 검증하여 다른 앱의 토큰을 거부한다. 브라우저 토큰 키는 `sql2widget_access` / `sql2widget_refresh`다. 계정·세션·프로젝트는 앱별 서비스 DB에서 관리하고 통합 로그인이나 기존 토큰 이전은 제공하지 않는다.
+
+## 로컬·운영 로그인 아이디 분리
+
+로컬 `.env.local`의 기본 아이디는 `admin.local@example.com`·`viewer.local@example.com`, 운영 서버 `.env`의 기본 아이디는 `admin@example.com`·`viewer@example.com`이다. `ADMIN_EMAIL`·`VIEWER_EMAIL`로 지정하며 이메일은 소문자·trim 처리한다. 운영 비밀번호는 서버 설정에서 별도로 관리한다.
+
+`backend/scripts/seed_dev.py`는 기존 `user_admin`·`user_viewer`의 이메일만 갱신한다. 비밀번호 해시·역할·tenant·내부 사용자 ID를 보존하므로 프로젝트·대화·Stage 소유권도 유지한다. 다른 사용자 이메일과 충돌하거나 기존 역할/tenant가 예상과 다르면 초기화를 중단한다.

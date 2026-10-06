@@ -153,6 +153,7 @@ services:
       dockerfile: Dockerfile
     environment:
       VITE_API_BASE: http://127.0.0.1:${API_PORT:-8011}
+      VITE_DEV_ADMIN_EMAIL: ${ADMIN_EMAIL:-admin.local@example.com}
     ports:
       - "${FRONTEND_PORT:-5175}:5173"
     volumes:

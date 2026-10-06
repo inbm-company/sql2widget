@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 작업 진행 상황 |
-| 기준일 | 2026-10-02 |
+| 기준일 | 2026-10-06 |
 | 관련 문서 | [AGENTS.md](../AGENTS.md), [docs/features/](features/README.md), [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
 
 상태 라벨은 4종 고정: `완료` / `진행중` / `예정` / `보류`. 이 문서는 `docs/현황.html`(2026-09-03 스냅샷)을 대체한다 — 이전 스냅샷 수치는 6절에 남겨둔다.
@@ -23,7 +23,7 @@
 
 | 항목 | 비고 |
 |------|------|
-| 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer) | [auth.md](features/auth.md) |
+| 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리 | [auth.md](features/auth.md) |
 | 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |
 | Artifact 위젯 렌더 + SQL 미리보기 | [widgets-artifact.md](features/widgets-artifact.md) |
 | Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 | [stage.md](features/stage.md) |

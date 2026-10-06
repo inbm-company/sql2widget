@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
+
+from app.config import ADMIN_EMAIL
 
 BASE = "http://127.0.0.1:8000"
 
@@ -32,7 +35,7 @@ def main() -> int:
     _, login = req(
         "POST",
         "/api/auth/login",
-        body={"email": "admin@example.com", "password": "demo-password"},
+        body={"email": ADMIN_EMAIL, "password": os.getenv("ADMIN_PASSWORD", "demo-password")},
     )
     token = login["access_token"]
     _, projects = req("GET", "/api/projects", token=token)

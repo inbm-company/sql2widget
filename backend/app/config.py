@@ -10,6 +10,8 @@ def env(name: str, default: str | None = None) -> str:
 
 JWT_ISSUER = "sql2widget"
 APP_ENV = env("APP_ENV", "development")
+ADMIN_EMAIL = env("ADMIN_EMAIL", "admin@example.com" if APP_ENV == "production" else "admin.local@example.com").strip().lower()
+VIEWER_EMAIL = env("VIEWER_EMAIL", "viewer@example.com" if APP_ENV == "production" else "viewer.local@example.com").strip().lower()
 APP_SECRET = env("APP_SECRET", "dev-secret-replace-with-at-least-32-chars!!")
 DATABASE_URL = env(
     "DATABASE_URL",

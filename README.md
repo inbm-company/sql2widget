@@ -12,7 +12,9 @@ docker compose --env-file .env.local up -d --build
 
 - UI: http://127.0.0.1:5175
 - API: http://127.0.0.1:8011/api/health
-- 기본 개발 로그인: `admin@example.com` / `demo-password`.
+- 기본 개발 로그인: `admin.local@example.com` / `demo-password`.
+- 로컬 Viewer: `viewer.local@example.com`. 운영 기본 아이디는 `admin@example.com` / `viewer@example.com`이며 운영 비밀번호는 서버에서 별도로 관리한다.
+- `.env.local`의 `ADMIN_EMAIL`·`VIEWER_EMAIL`로 로그인 아이디를 지정한다. 기존 시드 계정은 아이디(이메일)만 갱신하고 비밀번호·내부 사용자 ID·프로젝트·대화를 유지한다. 직접 Vite를 실행하면서 로컬 관리자 이메일을 바꾼 경우 `VITE_DEV_ADMIN_EMAIL`도 같은 값으로 지정한다.
 - 새 Compose 이름은 `sql2widget-local`이다. 이전 `sql2widget_*` 볼륨을 삭제하거나 이전하지 않고 새 로컬 데이터로 시작한다.
 - 서비스 DB 5544, SOC 5546, Global 5547, Northwind 5548, SKAX NMS 5549, pgvector 5550. 포트는 Compose의 `*_PORT` 변수로 조정할 수 있다.
 - `.env.local`은 A 전용이며 B 설정을 공유하지 않는다. 운영 파일은 별도의 강한 비밀번호·APP_SECRET과 이미지명을 요구한다.

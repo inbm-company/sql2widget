@@ -8,6 +8,8 @@ import sys
 
 import httpx
 
+from app.config import ADMIN_EMAIL
+
 BASE = os.getenv("SMOKE_API_BASE", "http://127.0.0.1:8000")
 
 QUESTIONS = [
@@ -28,7 +30,7 @@ def main() -> int:
     client = httpx.Client(base_url=BASE, timeout=30.0)
     r = client.post(
         "/api/auth/login",
-        json={"email": "admin@example.com", "password": "demo-password"},
+        json={"email": ADMIN_EMAIL, "password": os.getenv("ADMIN_PASSWORD", "demo-password")},
     )
     r.raise_for_status()
     tokens = r.json()

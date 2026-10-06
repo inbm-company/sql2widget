@@ -48,14 +48,17 @@ AI 키를 등록하지 않는 CI의 채팅 smoke는 `smoke_eval.py --expect-ai-e
 ```dotenv
 POSTGRES_PASSWORD=<random-password>
 APP_SECRET=<at-least-32-random-characters>
+ADMIN_EMAIL=admin@example.com
+VIEWER_EMAIL=viewer@example.com
 ADMIN_PASSWORD=<at-least-16-random-characters>
 VIEWER_PASSWORD=<at-least-16-random-characters>
 PUBLIC_ORIGIN=https://your-domain
 APP_PORT=3003
 ```
 
-운영 초기 계정의 이메일은 `admin@example.com`, `viewer@example.com`이며,
-비밀번호는 위 환경 변수로만 초기화합니다. 기존 계정 비밀번호를 매번 덮어쓰지 않습니다.
+운영 기본 아이디는 `admin@example.com`, `viewer@example.com`이고, 로컬 기본 아이디는 `admin.local@example.com`, `viewer.local@example.com`입니다.
+`ADMIN_EMAIL`·`VIEWER_EMAIL`을 바꾸면 기존 시드 계정의 이메일만 갱신하며 내부 사용자 ID·프로젝트·대화·비밀번호는 유지합니다. 다른 사용자가 이미 사용하는 이메일은 거부합니다.
+비밀번호는 최초 생성 시 위 환경 변수로만 초기화하며 기존 계정 비밀번호를 덮어쓰지 않습니다. 운영에는 로컬 `.env.local`을 복사하지 마세요.
 채팅 의도 라우팅에 쓰는 TypeSafe Jev 키는 서버 `.env`의 `TYPESAFE_API_KEY`에 넣습니다(선택). 비워 두면 Jev 없이 채팅 LLM이 경로를 판단합니다(`meta.route_source = llm_fallback`). `TYPESAFE_BASE_URL`, `TYPESAFE_MODEL`, `ROUTE_MIN_CONFIDENCE`는 compose가 전달하지 않으므로 코드 기본값을 씁니다. 키를 바꾼 뒤에는 백엔드 컨테이너를 재생성해야 합니다.
 로그인 후 Admin → AI 연결에 Gemini API 키를 입력합니다.
 현재 API 키는 해당 브라우저 localStorage에 저장됩니다. 채팅 요청에만 전달되고,

@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | sql2widget 폴더 구조 |
-| 기준일 | 2026-10-02 |
+| 기준일 | 2026-10-06 |
 | 관련 문서 | [AGENTS](../AGENTS.md), [기능 색인](features/README.md) |
 
 | 경로 | 역할 |
@@ -14,6 +14,7 @@
 | `backend/app/repositories/` | 프로젝트·대화와 앱 전용 데이터 접근, 순수 SQL |
 | `backend/sql/migrations/` | 앱별 서비스 DB 스키마. 문서 그래프 테이블 제외 |
 | `backend/scripts/` | 마이그레이션·독립 계정 초기화, 고객 DB/벡터 시드·스모크 |
+| `backend/tests/test_seed_accounts.py` | 환경별 로그인 아이디 기본값·실 PostgreSQL 임시 테이블에서 계정 보존/충돌 검사 |
 | `backend/tests/` | 앱별 기능·권한·독립성·토큰 격리 검증 |
 | `frontend/src/App.jsx` | 같은 기본 로그인·사이드바·채팅·설정·분할 패널 UI |
 | `frontend/src/StageCanvas.jsx` | 위젯 핀보드, 그래프 탭 없음 |
