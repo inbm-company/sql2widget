@@ -24,7 +24,7 @@
 | `frontend/src/styles.css`, `DESIGN.md` | 동일 기본 디자인에서 시작한 앱 스타일 |
 | `frontend/tests/` | AI 설정 테스트 |
 | `docker-compose.yml` | 새 독립 로컬 볼륨·포트, Neo4j 미필수 |
-| `compose.production.yml` | 독립 운영 구성 템플릿. 이번 작업에서 배포하지 않음 |
+| `compose.production.yml` | 독립 운영 구성. 2026-10-06 sql2widget VPS 배포 확인 |
 | `.github/workflows/` | 기존 SQL 테스트·이미지·배포 파이프라인의 기능 경계 갱신 |
 | `docs/features/`, `docs/progress.md` | 구현 명세·현재 상태 |
 | `docs/dashboard.html`, `docs/kanban.html` | 위 마크다운의 정적 스냅샷 |

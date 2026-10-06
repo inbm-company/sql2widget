@@ -55,7 +55,7 @@
 | 문서 | 역할 | 상태 |
 |------|------|------|
 | [docs/01-folder-structure.md](docs/01-folder-structure.md) | 폴더·파일 단위 설명 | 완료 |
-| [docs/project-separation-proposal.md](docs/project-separation-proposal.md) | DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록 | 구현 완료 — 로컬 독립 실행·테스트 검증, 운영 전환 미실행 |
+| [docs/project-separation-proposal.md](docs/project-separation-proposal.md) | DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록 | 구현 완료 — 로컬 독립 실행·테스트와 sql2widget 운영 배포 검증 |
 | [docs/features/*.md](docs/features/README.md) | 기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리) | 완료 — `docs/기능명세서.md` 대체함(삭제됨) |
 | [docs/progress.md](docs/progress.md) | 작업 진행 상황 (완료/진행중/예정/보류) | 완료 — `docs/현황.html` 대체함(삭제됨) |
 | [docs/dashboard.html](docs/dashboard.html) | `features/*.md` + `progress.md` 전체를 GitBook 스타일(좌측 목차 + 본문)로 묶어 보여주는 HTML 문서 | 완료 |
