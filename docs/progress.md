@@ -23,7 +23,7 @@
 
 | 항목 | 비고 |
 |------|------|
-| 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리 | [auth.md](features/auth.md) |
+| 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리 | [auth.md](features/auth.md). 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인 |
 | 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |
 | Artifact 위젯 렌더 + SQL 미리보기 | [widgets-artifact.md](features/widgets-artifact.md) |
 | Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 | [stage.md](features/stage.md) |
