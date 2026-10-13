@@ -27,6 +27,8 @@ AI 설정에서 Gemini/OpenAI 호환/로컬 모델을 지정하거나 `.env.loca
 
 SQL 테이블 선택은 유사 예상 질문을 사용하고 매칭이 없으면 전체 허용 스키마를 전달한다. 문서 그래프를 조회하지 않는다. 기존 SOC 고정 데모 출처 보조 기능은 유지한다.
 
+채팅은 요청을 계획·분류·실행한 뒤 원래 목표를 평가하고 부족한 작업을 최대 5회 재계획한다. 데이터 요청은 위젯 선택과 SQL 생성을 별도 호출로 처리하며 SQL 복구도 같은 위젯을 유지한다. 180초 예산·단계 한도·반복에서 중단하면 부분 결과와 미완료 사유를 표시한다. 상세 조건은 [채팅 명세](docs/features/chat.md)를 따른다.
+
 최소 그래프 연결·읽기 기반은 `backend/app/graph_backend.py`에 남겼다. 기본 `GRAPH_ENABLED=false`이고 서버 시작/DB 채팅에서 Neo4j에 접속하지 않는다. 그래프 UI·문서 API·문서 적재 기능은 없다.
 
 상태관리: 서버 fetch는 useSWR, 전역 UI 슬롯은 useStore, 입력·드래그 로컬 상태는 useState. React JavaScript/FastAPI/psycopg 순수 SQL을 사용한다.

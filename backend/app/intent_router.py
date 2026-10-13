@@ -9,19 +9,14 @@ import httpx
 
 from app import config
 from app.llm import _error_message, json_with_llm
-from app.prompts import ROUTE_HINT
+from app.prompts import ROUTE_CRITERIA, ROUTE_HINT
 from app.providers import transport
 
 ANSWER_ROUTES = ('data_query', 'schema_qa', 'general_chat')
 CHOICE_ROUTES = ANSWER_ROUTES
 ROUTE_LABELS = {'data_query': '데이터를 조회해 차트·표로 보기', 'schema_qa': '테이블 구조 설명 듣기',
                 'general_chat': '일반 대화로 답하기'}
-JEV_CRITERIA = {
-    'data_query': '현재 연결한 고객 DB의 실제 데이터를 숫자·표·차트로 조회하는 요청',
-    'schema_qa': '현재 연결한 DB의 실제 테이블·컬럼·관계 구조 질문',
-    'general_chat': '인사·잡담·일반 지식·개념 설명처럼 현재 고객 DB 조회나 구조 확인이 필요 없는 대화. SQL 일반 개념 설명도 포함',
-    'other': '위 어디에도 맞지 않거나 문맥을 확인해도 의도가 불분명한 입력',
-}
+JEV_CRITERIA = ROUTE_CRITERIA
 MAX_RETRIES = 2  # 첫 시도 이후 재시도 횟수
 RETRYABLE_STATUS = {429, 529}
 JEV_TIMEOUT = 10.0
@@ -45,7 +40,7 @@ def _jev_choice(state: dict[str, Any], *, api_key: str | None = None) -> dict[st
         "state": state,
         "questions": {"route": {
             "type": "choice",
-            "instructions": "이 채팅 메시지를 어떤 방식으로 처리해야 하는가?",
+            "instructions": "공유 기준으로 현재 하위 요청을 분류하세요. 원래 요청·최근 대화는 문맥 해석용이며 계획의 예상 경로와 다르면 교정하세요.",
             "criteria": JEV_CRITERIA,
         }},
     }
@@ -77,7 +72,7 @@ def route_with_jev(state: dict[str, Any], *, api_key: str | None = None) -> dict
 
 
 def route_with_llm(state: dict[str, Any], llm_context: dict[str, Any]) -> dict[str, Any]:
-    result = json_with_llm(ROUTE_HINT, state, **llm_context)
+    result = json_with_llm(ROUTE_HINT, {**state, "route_criteria": ROUTE_CRITERIA}, **llm_context)
     route = (result.get("result") or {}).get("route")
     if route not in JEV_CRITERIA:
         raise RouteError(result.get("error") or f"LLM returned unknown route: {route}")
@@ -101,6 +96,8 @@ def decide_route(
     history: list[dict[str, Any]] | None = None,
     last_route: str | None = None,
     jev_api_key: str | None = None,
+    expected_route: str | None = None,
+    original_request: str | None = None,
 ) -> dict[str, Any]:
     """Return {route, source, confidence, probabilities, clarify, jev_error?}.
 
@@ -113,7 +110,8 @@ def decide_route(
         return {"route": forced_route, "source": "user_choice", "clarify": False}
 
     state = {"question": message, "tables": sorted(tables),
-             "recent_turns": history or [], "last_route": last_route}
+             "recent_turns": history or [], "last_route": last_route,
+             "expected_route": expected_route, "original_request": original_request}
     jev_error = None
     jev_key = (jev_api_key or "").strip() or config.TYPESAFE_API_KEY
     if jev_key:

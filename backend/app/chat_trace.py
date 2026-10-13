@@ -7,7 +7,7 @@ def message_meta(meta: dict) -> dict:
     # Never persist request headers, credentials, raw provider errors or SQL plans here.
     result = {key: deepcopy(meta[key]) for key in (
         "route", "route_source", "route_confidence", "route_candidate",
-        "model", "retried", "connection_id",
+        "model", "retried", "connection_id", "plan", "steps", "loop_stop", "replans",
     ) if key in meta}
     if meta.get("model"):
         result["provider"] = meta.get("provider")
@@ -15,6 +15,8 @@ def message_meta(meta: dict) -> dict:
         result["route_fallback"] = True
     for section, keys in (
         ("schema_link", ("source", "reason", "total", "tables", "escalated_to_full")),
+        ("widget_selection", ("count", "components")),
+        ("sql_generation", ("count", "repaired")),
     ):
         if section in meta:
             result[section] = {key: deepcopy(meta[section][key]) for key in keys if key in meta[section]}

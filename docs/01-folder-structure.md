@@ -9,7 +9,9 @@
 | 경로 | 역할 |
 |------|------|
 | `backend/app/main.py` | 이 앱의 인증·프로젝트·대화·채팅 API와 DB/Stage API |
-| `backend/app/agent_service.py` | data_query/schema_qa/general_chat 오케스트레이션, 일반 대화는 SQL·위젯 없이 전체 본문 답변 |
+| `backend/app/agent_service.py` | 계획·단계별 분류/실행·평가·재계획 루프와 결과 병합, data_query/schema_qa/general_chat 실행 |
+| `backend/app/agent_plan.py` | 원래 요청의 단계 계획·목표 평가·재계획 결정, 모델 시간 예산과 루프 상한 |
+| `backend/app/data_plan.py` | 위젯 목적·종류 선택과 고정 선택 결과에 대한 SQL 생성의 별도 모델 호출·검증 |
 | `backend/app/widget_queries.py` | 데이터 없는 위젯 정의 정규화·Stage 저장, 현재 권한으로 SQL 조회 |
 | `backend/app/widget_props.py` | 모든 SQL 위젯의 실행 시점 props 변환, 분석 4종의 별칭·수치 검증 |
 | `backend/app/chat_flow.py` | 현재 대화의 같은 DB 응답 이력·직전 경로·위젯 SQL/본문을 후속 질문 문맥으로 구성 |

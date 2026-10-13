@@ -772,6 +772,21 @@ button {
   letter-spacing: 0.04em;
 }
 
+.artifact-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.artifact-copy-status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.artifact-copy-status:empty {
+  display: none;
+}
+
 .segmented {
   display: inline-flex;
   background: var(--surface);

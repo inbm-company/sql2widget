@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import secrets
+import time
 from typing import Any
 
 from app.agent import sanitize_artifact
+from app.agent_plan import (BudgetExceeded, LOOP_SECONDS, PlanError,
+                            SAFETY_STEPS, evaluate, make_plan, model_context, single_step_plan)
 from app import question_similarity, schema_linking
 from app.chat_flow import conversation_flow
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
+from app.data_plan import DataPlanError, generate_sql, select_widgets
 from app.intent_router import RouteError, choices_for, decide_route
-from app.llm import effective_provider, json_with_llm, plan_with_llm
+from app.llm import effective_provider, json_with_llm
 from app.prompts import GENERAL_CHAT_HINT, SCHEMA_QA_HINT
 from app.query import QueryError, execute_readonly
 from app.widget_props import rows_to_props
@@ -96,6 +100,8 @@ def _materialize_plan(
     allowed_tables: set[str] | None,
     message: str,
     connection_id: str | None = None,
+    evidence: list[dict[str, Any]] | None = None,
+    deadline: float | None = None,
 ) -> tuple[str, dict[str, Any]]:
     summary = plan.get("summary") or "결과를 준비했습니다."
     widgets_in = plan.get("widgets") or []
@@ -113,8 +119,17 @@ def _materialize_plan(
         if sql:
             # Validate execution and the result contract for the existing repair
             # path, then discard rows. Renderers fetch their own current data.
-            rows = execute_readonly(db_url, sql, allowed_tables=allowed_tables)
+            timeout_seconds = 10
+            if deadline is not None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise BudgetExceeded("실행 시간 한도에 도달했습니다.")
+                timeout_seconds = min(10, max(1, int(remaining)))
+            rows = execute_readonly(db_url, sql, allowed_tables=allowed_tables, timeout_seconds=timeout_seconds)
             rows_to_props(component, rows, title)
+            if evidence is not None:
+                evidence.append({"component": component, "title": title, "sql": sql,
+                                 "columns": list(rows[0]) if rows else [], "row_count": len(rows)})
             props = display_props(component, props)
         widgets.append(
             {
@@ -227,7 +242,7 @@ def _answer_general(
     return content.strip(), {"type": "answer", "widgets": []}, meta
 
 
-def run_agent(
+def _run_single(
     message: str,
     *,
     tenant_id: str,
@@ -240,6 +255,9 @@ def run_agent(
     forced_route: str | None = None,
     project_id: str | None = None,
     messages: list[dict[str, Any]] | None = None,
+    expected_route: str | None = None,
+    original_request: str | None = None,
+    deadline: float,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
@@ -258,9 +276,10 @@ def run_agent(
     }
     try:
         decision = decide_route(
-            message, tables=allowed or set(), forced_route=forced_route, llm_context=llm_context,
+            message, tables=allowed or set(), forced_route=forced_route, llm_context=model_context(llm_context, deadline),
             history=history, last_route=flow["last_route"],
             jev_api_key=runtime_llm.get("jev_api_key"),
+            expected_route=expected_route, original_request=original_request,
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -278,11 +297,11 @@ def run_agent(
             message, decision.get("probabilities"), meta,
         )
     if decision["route"] == "general_chat":
-        return _answer_general(message, llm_context, meta, history=history)
+        return _answer_general(message, model_context(llm_context, deadline), meta, history=history)
 
     schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
     if decision["route"] == "schema_qa":
-        return _answer_schema(message, schema_text, llm_context, meta, history=history)
+        return _answer_schema(message, schema_text, model_context(llm_context, deadline), meta, history=history)
 
     # Expected-question similarity is only used here, to plan the SQL.
     retrieval = {"status": "no_connection", "matches": []}
@@ -307,64 +326,150 @@ def run_agent(
     plan_schema = schema_text if link["source"] == "full" else _schema_text_for_connection(
         tenant_id, used_conn, link["tables"])
 
-    llm_result = plan_with_llm(
-        message,
-        schema_text=plan_schema,
-        tenant_id=tenant_id,
-        user_id=user_id,
-        conversation_id=conversation_id,
-        runtime_provider=runtime_llm.get("provider"),
-        runtime_api_key=runtime_llm.get("api_key"),
-        runtime_model=runtime_llm.get("model"),
-        runtime_base_url=runtime_llm.get("base_url"),
-        matched_questions=references,
-        history=history,
-    )
-    plan = llm_result.get("plan")
-    if not plan:
-        raise AgentRunError(
-            f"{llm_result.get('provider') or 'LLM'} request failed: "
-            f"{llm_result.get('error') or 'No AI provider configured'}"
-        )
+    selection, selected_model = select_widgets(message, schema=plan_schema, history=history,
+        references=references, context=llm_context, deadline=deadline)
+    meta["widget_selection"] = {"count": len(selection["widgets"]),
+                                "components": [w["component"] for w in selection["widgets"]]}
+    meta.update(selected_model)
+    evidence: list[dict[str, Any]] = []
 
     try:
+        plan, sql_model = generate_sql(message, selection, schema=plan_schema, history=history,
+            references=references, context=llm_context, deadline=deadline)
         summary, artifact = _materialize_plan(
-            plan, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn
+            plan, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn,
+            evidence=evidence, deadline=deadline,
         )
-        meta["provider"] = llm_result.get("provider")
-        meta["model"] = llm_result.get("model")
+        meta.update(sql_model)
+        meta["sql_generation"] = {"count": len(selection["widgets"]), "repaired": False}
+        meta["result_evidence"] = evidence
         return summary, artifact, meta
+    except BudgetExceeded:
+        raise
     except Exception as first_exc:  # noqa: BLE001
-        # The narrowed schema may have hidden a needed table: retry with the full one.
+        # Repair SQL against the full schema without changing widget selection.
         meta["schema_link"]["escalated_to_full"] = link["source"] != "full"
-        repair = plan_with_llm(
-            message,
-            schema_text=schema_text,
-            tenant_id=tenant_id,
-            user_id=user_id,
-            conversation_id=conversation_id,
-            repair_hint=f"Previous SQL/plan failed: {first_exc}. Fix SQL and JSON.",
-            runtime_provider=runtime_llm.get("provider"),
-            runtime_api_key=runtime_llm.get("api_key"),
-            runtime_model=runtime_llm.get("model"),
-            runtime_base_url=runtime_llm.get("base_url"),
-            matched_questions=references,
-            history=history,
-        )
-        plan2 = repair.get("plan")
-        if not plan2:
-            raise AgentRunError(
-                f"SQL/plan failed and repair attempt returned no plan: {first_exc}"
-            ) from first_exc
         try:
+            plan2, repair_model = generate_sql(message, selection, schema=schema_text, history=history,
+                references=references, context=llm_context, deadline=deadline,
+                repair_hint=f"Previous SQL/result contract failed: {first_exc}. Fix SQL and JSON.")
+            evidence = []
             summary, artifact = _materialize_plan(
-                plan2, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn
+                plan2, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn,
+                evidence=evidence, deadline=deadline,
             )
-            meta["provider"] = repair.get("provider")
-            meta["model"] = repair.get("model")
+            meta.update(repair_model)
             meta["retried"] = True
+            meta["sql_generation"] = {"count": len(selection["widgets"]), "repaired": True}
+            meta["result_evidence"] = evidence
             return summary, artifact, meta
+        except BudgetExceeded:
+            raise
         except Exception as second_exc:  # noqa: BLE001
             raise AgentRunError(
                 f"SQL/plan failed after repair attempt: {second_exc}"
             ) from second_exc
+
+
+def _merge_outputs(outputs):
+    if len(outputs) == 1:
+        return outputs[0]
+    widgets = [widget for _, artifact in outputs for widget in artifact.get("widgets") or []]
+    content = "\n\n".join(text for text, _ in outputs if text)
+    if widgets:
+        return content, sanitize_artifact({"type": "dashboard", "widgets": widgets})
+    return content, {"type": "answer", "widgets": []}
+
+
+def run_agent(
+    message: str, *, tenant_id: str, user_id: str, user_role: str = "user",
+    conversation_id: str | None = None, connection_id: str | None = None,
+    llm_settings: dict[str, str] | None = None, embedding_result: dict[str, Any] | None = None,
+    forced_route: str | None = None, project_id: str | None = None,
+    messages: list[dict[str, Any]] | None = None,
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Plan → route → execute → evaluate; replan missing work within fixed limits."""
+    deadline = time.monotonic() + LOOP_SECONDS
+    settings = llm_settings or {}
+    context = {"tenant_id": tenant_id, "user_id": user_id, "conversation_id": conversation_id,
+        "runtime_provider": settings.get("provider"), "runtime_api_key": settings.get("api_key"),
+        "runtime_model": settings.get("model"), "runtime_base_url": settings.get("base_url")}
+    _, used_conn, _ = _resolve_db_url(tenant_id, connection_id, role=user_role)
+    current_messages = list(messages or [])
+    flow = conversation_flow(current_messages, used_conn)
+    meta: dict[str, Any] = {"provider": effective_provider(), "connection_id": used_conn, "steps": []}
+    outputs, done, seen = [], [], set()
+    replans, stop, stop_reason = 0, "done", None
+    try:
+        plan = single_step_plan(forced_route, message) if forced_route else make_plan(message, flow, context, deadline)
+        meta["plan"] = plan
+        pending = list(plan["steps"])
+        while pending:
+            step = pending.pop(0)
+            if time.monotonic() >= deadline or len(done) >= SAFETY_STEPS:
+                stop, stop_reason = "budget", "실행 시간 또는 단계 한도에 도달했습니다."
+                break
+            if (step["route"], step["query"]) in seen:
+                stop, stop_reason = "no_progress", "같은 작업이 반복되어 진행하지 못했습니다."
+                break
+            seen.add((step["route"], step["query"]))
+            try:
+                content, artifact, step_meta = _run_single(step["query"], tenant_id=tenant_id, user_id=user_id,
+                    user_role=user_role, conversation_id=conversation_id, connection_id=connection_id,
+                    llm_settings=settings, embedding_result=embedding_result if step["query"] == message else None,
+                    forced_route=forced_route, project_id=project_id, messages=current_messages,
+                    expected_route=step["route"], original_request=message, deadline=deadline)
+            except (AgentRunError, DataPlanError) as exc:
+                if not outputs:
+                    raise AgentRunError(str(exc)) from exc
+                stop, stop_reason = "incomplete", "남은 단계의 AI 처리 또는 SQL 생성에 실패했습니다."
+                meta["steps"].append({"expected_route": step["route"], "status": "error",
+                                      "verdict": "incomplete", "reason": stop_reason})
+                break
+            evidence = step_meta.pop("result_evidence", [])
+            meta.update(step_meta)
+            if artifact.get("type") == "choices":
+                stop, stop_reason = "clarify", "처리 경로를 확인해야 합니다."
+                meta["steps"].append({"expected_route": step["route"], "route": "clarify",
+                                      "status": "needs_user", "verdict": "pause", "reason": stop_reason})
+                if not outputs:
+                    meta["loop_stop"] = "clarify"
+                    return content, artifact, meta
+                break
+            route = step_meta["route"]
+            record = {"query": step["query"], "route": route, "expected_route": step["route"],
+                      "expect": step["expect"], "status": "ok", "content": content,
+                      "widgets": artifact.get("widgets") or [], "sql_results": evidence}
+            done.append(record)
+            outputs.append((content, artifact))
+            current_messages.extend([{"role": "user", "content": step["query"]},
+                {"role": "assistant", "content": content, "artifact": artifact, "meta": step_meta}])
+            step_trace = {"route": route, "expected_route": step["route"], "status": "ok",
+                          "verdict": "incomplete", "reason": "목표 평가를 완료하지 못했습니다.",
+                          **{key: step_meta[key] for key in ("widget_selection", "sql_generation") if key in step_meta}}
+            meta["steps"].append(step_trace)
+            verdict = evaluate(plan, done, len(pending), replans, context, deadline, user_request=message)
+            step_trace.update(verdict=verdict["verdict"], reason=verdict["reason"])
+            if verdict["verdict"] == "replan":
+                pending = verdict["steps"]
+                replans += 1
+                meta["plan"] = {**plan, "replans": replans}
+            elif verdict["verdict"] == "incomplete":
+                stop, stop_reason = "incomplete", verdict["reason"]
+                break
+        meta["loop_stop"] = stop
+    except BudgetExceeded:
+        stop, stop_reason = "budget", "실행 시간 한도에 도달했습니다."
+        meta["loop_stop"] = stop
+    except PlanError as exc:
+        if not outputs:
+            raise AgentRunError(str(exc)) from exc
+        stop, stop_reason = "incomplete", "원래 요청의 목표 충족 여부를 평가하지 못했습니다."
+        meta["loop_stop"] = stop
+    meta["replans"] = replans
+    content, artifact = _merge_outputs(outputs) if outputs else ("", {"widgets": []})
+    if stop_reason:
+        notice = f"요청을 완료하지 못했습니다: {stop_reason}\n처리할 경로를 선택해 이어서 진행하세요."
+        content = f"{content}\n\n{notice}" if content else notice
+        artifact = {**artifact, "type": "choices", "choices": choices_for(message)}
+    return content, artifact, meta

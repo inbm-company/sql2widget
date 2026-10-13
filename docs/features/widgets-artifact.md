@@ -21,9 +21,12 @@
 
 ## F-09 Artifact 표시
 
+채팅의 데이터 위젯은 위젯 목적·종류 선택과 SQL 생성을 별도 모델 호출로 처리한다. SQL 단계는 선택한 컴포넌트를 변경하지 않고 서버가 인덱스로 SQL을 연결한다. 실행·결과 형식 실패 시 같은 선택 결과로 SQL만 수정한다. 에이전트 루프의 여러 단계 결과도 하나의 Artifact로 모으되 아래 데이터 없는 정의·위젯별 현재 조회 방식을 유지한다. 자세한 흐름은 [채팅 명세](chat.md#위젯-선택과-sql-생성-분리)를 따른다.
+
 - 어시스턴트 메시지에 Artifact가 있으면(`artifact.widgets.length` 또는 `artifact_id` 존재) **Widget / JSON** 세그먼트 토글이 뜬다(`AssistantAnswer`).
 - Widget 뷰: 위젯마다 `ArtifactPreviewCard` — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.
 - JSON 뷰: Artifact의 위젯 정의를 pretty-print. 조회 결과 행·차트 데이터·KPI 값은 포함하지 않는다.
+- JSON 뷰의 "JSON 복사" 버튼은 화면에 표시한 Artifact JSON 전체를 들여쓰기와 함께 클립보드에 복사한다. 복사 중에는 중복 클릭을 막고 성공·실패 상태를 표시한다. 클립보드 접근이 불가능하면 JSON을 선택해 직접 복사하도록 안내한다. 읽기 전용 사용자도 복사할 수 있다.
 - SQL 보기 가능 여부(`canShowSql`)는 `widget.sql`/`widget.query_ref.sql`/`widget.props.__query_ref.sql`/`widget.props.__sql` 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram)에 속할 때다. `MarkdownBlock`/`SourceList`는 SQL 없음.
 - 실제 SQL 문자열은 `resolveWidgetSql()`이 반환한다: 위젯에 백엔드가 직접 붙인 `sql`/`query_ref.sql`/`props.__query_ref.sql`/`props.__sql`만 보여준다 — 없으면 빈 문자열이고 SQL 토글이 숨는다. 추측한 SQL을 대신 보여주지 않는다(2026-09-22, 옛 `FALLBACK_BY_TITLE`/`FALLBACK_BY_COMPONENT` 하드코딩 테이블 삭제).
 - 미리보기 카드는 `draggable`(SQL 보기 중이거나 viewer면 제외). viewer는 드래그 핸들도, "Add to stage" 버튼도 없다.

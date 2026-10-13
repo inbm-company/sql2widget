@@ -152,8 +152,8 @@ export const api = {
   chat: (conversationId, message, connectionId, route = null) =>
     request("/api/chat", {
       method: "POST",
-      // Gemini can take up to 60s, and the backend may run one repair attempt.
-      timeoutMs: 150000,
+      // Allow the 180s agent loop plus embeddings and in-flight request overhead.
+      timeoutMs: 360000,
       body: JSON.stringify({
         conversation_id: conversationId,
         message,
