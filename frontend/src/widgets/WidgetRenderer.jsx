@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { Chart } from "@tanstack/charts/react";
+import { createBarChartDefinition } from "./tanstackBarChart.js";
 import {
   Bar,
   BarChart,
@@ -78,22 +81,13 @@ function RankList({ props }) {
 }
 
 function BarChartWidget({ props }) {
-  const categories = props?.categories || [];
-  const series = props?.series?.[0];
-  const data = categories.map((c, i) => ({
-    name: c,
-    value: series?.data?.[i] ?? 0,
-  }));
+  const definition = useMemo(() => createBarChartDefinition(props), [props]);
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-        <XAxis dataKey="name" stroke={MUTED} fontSize={12} />
-        <YAxis stroke={MUTED} fontSize={12} allowDecimals={false} />
-        <Tooltip />
-        <Bar dataKey="value" fill={ACCENT} radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <Chart
+      definition={definition}
+      ariaLabel={props?.series?.[0]?.name || "막대 차트"}
+      style={{ height: "100%", minWidth: 0, minHeight: 0, fontSize: 12 }}
+    />
   );
 }
 

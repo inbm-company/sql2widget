@@ -91,6 +91,8 @@ def decide_route(
     tables: set[str],
     forced_route: str | None,
     llm_context: dict[str, Any],
+    history: list[dict[str, Any]] | None = None,
+    last_route: str | None = None,
 ) -> dict[str, Any]:
     """Return {route, source, confidence, probabilities, clarify, jev_error?}.
 
@@ -102,7 +104,8 @@ def decide_route(
     if forced_route in ANSWER_ROUTES:
         return {"route": forced_route, "source": "user_choice", "clarify": False}
 
-    state = {"question": message, "tables": sorted(tables)}
+    state = {"question": message, "tables": sorted(tables),
+             "recent_turns": history or [], "last_route": last_route}
     jev_error = None
     if config.TYPESAFE_API_KEY:
         try:

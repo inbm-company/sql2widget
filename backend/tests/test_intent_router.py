@@ -54,7 +54,7 @@ def test_expected_questions_are_searched_only_when_planning_sql(monkeypatch):
     searched = []
     monkeypatch.setattr(agent_service.question_similarity, "search_questions",
                         lambda *a, **k: searched.append(1) or {"status": "matched", "matches": []})
-    monkeypatch.setattr(agent_service, "_answer_schema", lambda *a: ("답", {"widgets": []}, a[-1]))
+    monkeypatch.setattr(agent_service, "_answer_schema", lambda *a, **k: ("답", {"widgets": []}, a[-1]))
     monkeypatch.setattr(agent_service, "plan_with_llm", lambda *a, **k: {"plan": {"widgets": []}, "provider": "x"})
     monkeypatch.setattr(agent_service, "_materialize_plan", lambda *a, **k: ("ok", {"widgets": []}))
     for route in ("schema_qa", "other"):

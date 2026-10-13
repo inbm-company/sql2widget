@@ -255,6 +255,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
             embedding_result=embed_result,
             forced_route=body.route,
             project_id=conv.get("project_id"),
+            messages=conv.get("messages"),
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

@@ -7,6 +7,7 @@ from typing import Any
 
 from app.agent import sanitize_artifact
 from app import question_similarity, schema_linking
+from app.chat_flow import conversation_flow
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.intent_router import RouteError, choices_for, decide_route
@@ -301,10 +302,11 @@ def _clarify(
 
 def _answer_schema(
     message: str, schema_text: str, llm_context: dict[str, Any], meta: dict[str, Any],
+    *, history: list[dict[str, Any]] | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     """Explain the permitted schema in text; no SQL is run."""
     result = json_with_llm(
-        SCHEMA_QA_HINT, {"question": message, "schema": schema_text}, **llm_context,
+        SCHEMA_QA_HINT, {"question": message, "schema": schema_text, "history": history or []}, **llm_context,
     )
     answer = result.get("result") or {}
     if not answer.get("markdown"):
@@ -337,10 +339,13 @@ def run_agent(
     embedding_result: dict[str, Any] | None = None,
     forced_route: str | None = None,
     project_id: str | None = None,
+    messages: list[dict[str, Any]] | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
     meta["connection_id"] = used_conn
+    flow = conversation_flow(messages, used_conn)
+    history = flow["history"]
 
     runtime_llm = llm_settings or {}
     schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
@@ -355,6 +360,7 @@ def run_agent(
     try:
         decision = decide_route(
             message, tables=allowed or set(), forced_route=forced_route, llm_context=llm_context,
+            history=history, last_route=flow["last_route"],
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -372,7 +378,7 @@ def run_agent(
             message, decision.get("probabilities"), meta,
         )
     if decision["route"] == "schema_qa":
-        return _answer_schema(message, schema_text, llm_context, meta)
+        return _answer_schema(message, schema_text, llm_context, meta, history=history)
 
     # Expected-question similarity is only used here, to plan the SQL.
     retrieval = {"status": "no_connection", "matches": []}
@@ -392,7 +398,7 @@ def run_agent(
 
     link = schema_linking.link_schema(
         message, retrieval["matches"], allowed or set(), tenant_id=tenant_id,
-        project_id=project_id, llm_context=llm_context)
+        project_id=project_id, llm_context=llm_context, history=history)
     meta["schema_link"] = {key: sorted(value) if key == "tables" else value for key, value in link.items()}
     plan_schema = schema_text if link["source"] == "full" else _schema_text_for_connection(
         tenant_id, used_conn, link["tables"])
@@ -408,6 +414,7 @@ def run_agent(
         runtime_model=runtime_llm.get("model"),
         runtime_base_url=runtime_llm.get("base_url"),
         matched_questions=references,
+        history=history,
     )
     plan = llm_result.get("plan")
     if not plan:
@@ -438,6 +445,7 @@ def run_agent(
             runtime_model=runtime_llm.get("model"),
             runtime_base_url=runtime_llm.get("base_url"),
             matched_questions=references,
+            history=history,
         )
         plan2 = repair.get("plan")
         if not plan2:

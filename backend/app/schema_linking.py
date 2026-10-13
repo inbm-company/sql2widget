@@ -43,6 +43,14 @@ def link_from_matches(matches: list[dict[str, Any]], allowed_tables: set[str]) -
 
 
 
-def link_schema(message, matches, allowed_tables, **context):
+def link_schema(message, matches, allowed_tables, *, history=None, **context):
     """Use expected questions or the full allowed schema; never read document graphs."""
-    return link_from_matches(matches, allowed_tables)
+    link = link_from_matches(matches, allowed_tables)
+    if link["source"] == "similarity":
+        permitted = {table.lower() for table in allowed_tables}
+        # A short follow-up may match another catalog question. Keep the prior
+        # query's permitted tables available so narrowing cannot hide its subject.
+        for turn in history or []:
+            for widget in turn.get("widgets") or []:
+                link["tables"] |= referenced_tables(widget.get("sql") or "") & permitted
+    return link

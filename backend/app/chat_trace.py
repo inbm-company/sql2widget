@@ -7,7 +7,7 @@ def message_meta(meta: dict) -> dict:
     # Never persist request headers, credentials, raw provider errors or SQL plans here.
     result = {key: deepcopy(meta[key]) for key in (
         "route", "route_source", "route_confidence", "route_candidate",
-        "model", "retried",
+        "model", "retried", "connection_id",
     ) if key in meta}
     if meta.get("model"):
         result["provider"] = meta.get("provider")

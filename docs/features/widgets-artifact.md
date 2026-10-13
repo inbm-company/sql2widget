@@ -3,9 +3,9 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Artifact 표시 및 위젯 카탈로그 |
-| 기준일 | 2026-09-21 (구현 기준) |
+| 기준일 | 2026-10-13 (구현 기준) |
 | 관련 문서 | [chat.md](chat.md)(Artifact 생성), [stage.md](stage.md)(Stage로 이동) |
-| 관련 코드 | `backend/app/config.py`(`ALLOWED_COMPONENTS`), `backend/app/agent.py`(`sanitize_artifact`), `backend/app/agent_service.py`(`rows_to_props`), `frontend/src/widgets/WidgetRenderer.jsx`, `frontend/src/sqlHelpers.js`, `frontend/src/App.jsx`(`AssistantAnswer`, `ArtifactPreviewCard`) |
+| 관련 코드 | `backend/app/config.py`(`ALLOWED_COMPONENTS`), `backend/app/agent.py`(`sanitize_artifact`), `backend/app/agent_service.py`(`rows_to_props`), `frontend/src/widgets/WidgetRenderer.jsx`, `frontend/src/widgets/tanstackBarChart.js`, `frontend/src/sqlHelpers.js`, `frontend/src/App.jsx`(`AssistantAnswer`, `ArtifactPreviewCard`) |
 
 ---
 
@@ -49,7 +49,18 @@
 | `PieTable` | 파이 + 표 (컨테이너 쿼리로 레이아웃 전환) | `slices[], columns?, rows?` |
 | `BarTable` | 막대 + 표 (+선택 KPI 헤더) | `label?,value?,categories[],series[],columns?,rows?` |
 
-렌더링은 Recharts(`WidgetRenderer.jsx`). `PieTable`/`BarTable`/`KpiSparkline`은 자체 CSS(`cq-composite`)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.
+`BarChart`는 TanStack Charts 1.1.0의 React/SVG 렌더러를 사용한다. 나머지 차트와 합성 위젯은 Recharts(`WidgetRenderer.jsx`)를 사용한다. `PieTable`/`BarTable`/`KpiSparkline`은 자체 CSS(`cq-composite`)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.
+
+### TanStack Charts 적용 범위 (2026-10-13)
+
+- 기존 `BarChart`의 `categories[]`, `series[0].data[]` props와 저장 형태를 유지한다. 카탈로그는 12개이며 첫 번째 시리즈만 표시한다.
+- `tanstackBarChart.js`가 고정된 막대 차트 정의를 만든다. LLM이 임의의 TanStack 정의·색상·차트 타입을 생성하는 경로는 없다.
+- 채팅 미리보기·Stage·Viewer가 같은 렌더러를 공유한다. 카드의 너비와 높이 변화는 라이브러리의 ResizeObserver가 처리하고, 툴팁은 포인터와 키보드로 확인할 수 있다.
+- 중복 항목명은 별도 막대로 유지한다. 0·음수·소수·숫자 문자열을 표시하고, 누락된 값은 기존처럼 0으로 처리한다. 숫자가 아닌 값은 막대에서 제외한다.
+- 프런트 테스트 8개(기존 4개 + 차트 4개), Vite 빌드 및 검증용 브라우저 화면의 크기 변경·데이터 갱신·빈 결과·키보드 툴팁·StrictMode 재마운트를 확인했다. 실제 DB/LLM 질문 및 Stage 저장 API는 이번 적용에서 미검증이다.
+- Recharts와 함께 사용하므로 빌드의 압축 JS는 적용 전 218.59KB에서 260.33KB로 증가했다. 전체 차트 교체와 신규 위젯 추가는 별도 범위다.
+
+공식 자료: [개요](https://tanstack.com/charts/latest/docs/overview), [React 빠른 시작](https://tanstack.com/charts/latest/docs/framework/react/quick-start).
 
 ### 화이트리스트 위반 시 동작이 다르다
 
