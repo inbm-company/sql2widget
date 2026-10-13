@@ -86,7 +86,7 @@ test("the server catalog, frontend registry, schema prompt, and documented catal
   const prompt = read("../../backend/app/prompts.py").match(/"component": "([^"]+)"/)[1].split("|").sort();
   const catalog = read("../../docs/features/widgets-artifact.md").split("## 허용 위젯 카탈로그")[1].split("### TanStack")[0];
   const documented = [...catalog.matchAll(/^\| `(\w+)` \|/gm)].map((m) => m[1]).sort();
-  assert.equal(server.length, 16);
+  assert.equal(server.length, 26);
   assert.deepEqual(frontend, server);
   assert.deepEqual(prompt, server);
   assert.deepEqual(documented, server);

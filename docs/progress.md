@@ -32,7 +32,7 @@
 | Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기 | [admin.md](features/admin.md) |
 | SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성 | `docker-compose.yml` |
 | Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록 | `backend/scripts/seed_northwind_recent.py`, `seed_skax_nms.py` |
-| 실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제) | [chat.md](features/chat.md) |
+| 실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 결과 기반 SQL 수정·위젯 재선택, 미완료 시 부분 결과·사유 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제) | [chat.md](features/chat.md) |
 | Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장 | 2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. [admin.md](features/admin.md) |
 | `llm_usage` 사용량 기록 골격(테이블 적재) | [admin.md](features/admin.md) 데이터 모델 |
 | 문서 체계 정비 — `AGENTS.md`/`CLAUDE.md`, `docs/01-folder-structure.md`, `docs/features/*.md`, 본 문서, `docs/dashboard.html`, `docs/kanban.html` | 이번 문서화 작업 1~5번 전체 완료 |
@@ -41,7 +41,7 @@
 | 큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도 | 단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. [chat.md](features/chat.md) |
 | 채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조 | `messages.meta` 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. [chat.md](features/chat.md) |
 | 일반 대화 — 인사·잡담·일반 지식·개념 설명 | 2026-10-13 `general_chat` 경로·Jev/LLM 분류·세 경로 선택지·전체 본문 답변·처리 내역 표시 구현. 고객 DB 스키마 조회는 DB 경로에서만 수행. 사용자 요청에 따라 테스트·빌드·브라우저 검증 미실행. [chat.md](features/chat.md) |
-| 에이전트 루프 및 위젯 선택·SQL 생성 분리 | 2026-10-13 계획·단계별 실행·목표 평가·최대 5회 재계획·반복/시간/단계 중단·부분 결과 보존 구현. 위젯을 먼저 선택하고 별도 SQL 생성·같은 위젯의 SQL 복구, 처리 내역 저장/표시. 사용자 요청에 따라 테스트·빌드·브라우저 검증 미실행. [chat.md](features/chat.md) |
+| 에이전트 루프 및 위젯 선택·SQL 생성 분리 | 2026-10-13 SQL 데이터셋 생성·실행 후 실제 컬럼·타입·행 수로 복수 위젯 선택·개별 생성. 각 실제 호출 결과에서 다음 작업 결정, 같은 SQL의 여러 위젯 컬럼 연결·Stage 보존. 도구 호출 순서·SQL 수·생성 위젯 수·판단 호출·재계획 구분, 부분 결과·한도·반복 중단 구현. 테스트·검증용 빌드·브라우저 검증은 사용자 승인 전 미실행. [chat.md](features/chat.md) |
 | 대화 문맥·후속 질문 처리 및 IME 조합 중 전송 방지 | 최근 20개 메시지 범위의 같은 DB 응답 이력을 라우터·SQL 계획·복구·구조 답변에 전달. 다른 DB·DB 정보 없는 과거 이력은 제외. 2026-10-13 관련 백엔드 테스트 70개, 프런트 테스트 4개, Vite 빌드 통과. 테스트 대역으로 검증했고 실모델·브라우저 IME·실 DB 재조회 검증은 미실행. [chat.md](features/chat.md) |
 | 운영 배포 파이프라인 | 2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. [deployment/README.md](../deployment/README.md) |
 | DB/문서 프로젝트 분리 및 독립 실행 | sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 2026-10-06 sql2widget 운영 전환 완료(6a88140): CI 테스트·이미지 게시·VPS 배포, HTTPS/API·기존 계정/프로젝트/대화 보존 확인. 실모델 유료 호출은 미실행 |
@@ -51,7 +51,7 @@
 | 항목 | 비고 |
 |------|------|
 | 채팅 메시지 임베딩·유사도 검색(pgvector, `chat_vector` DB) | 백엔드 저장·검색(`message_embeddings.py`)까지 완료, API가 `related_messages` 반환. **프론트 미표시** — `App.jsx`가 아직 렌더링 안 함 |
-| 실 LLM 경로 하드닝 | 기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
+| 실 LLM 경로 하드닝 | 데이터 호출 루프·단계당 SQL 수정 5회·시간/호출 제한은 구현, 실모델 검증과 레이트리밋/서킷브레이커는 미완료. [PROJECT_HANDOFF.md](../PROJECT_HANDOFF.md) |
 
 ## 4. 예정
 

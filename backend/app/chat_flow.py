@@ -29,6 +29,9 @@ def conversation_flow(
             for widget in (message.get("artifact") or {}).get("widgets") or []:
                 reference = {key: widget[key] for key in ("component", "title", "sql") if widget.get(key)}
                 markdown = (widget.get("props") or {}).get("markdown")
+                mapping = (widget.get("props") or {}).get("column_map")
+                if isinstance(mapping, dict):
+                    reference["column_map"] = mapping
                 if markdown:
                     reference["markdown"] = markdown
                 if reference:

@@ -7,6 +7,9 @@ export function widgetDefinition(widget, connectionId = null) {
   if (!sql && !SQL_COMPONENTS.has(widget.component)) return { ...widget };
   const reference = widget.query_ref || widget.props?.__query_ref;
   const props = {};
+  if (widget.props?.column_map && typeof widget.props.column_map === "object" && !Array.isArray(widget.props.column_map)) {
+    props.column_map = { ...widget.props.column_map };
+  }
   if (DISPLAY_KEYS[widget.component]) {
     for (const key of DISPLAY_KEYS[widget.component]) {
       if (typeof widget.props?.[key] === "string") props[key] = widget.props[key];

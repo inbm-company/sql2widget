@@ -79,6 +79,7 @@ def execute_readonly(
     allowed_tables: set[str] | None = None,
     row_limit: int = 1000,
     timeout_seconds: int = 10,
+    result_metadata: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     clean = validate_readonly_select(sql, allowed_tables=allowed_tables)
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
@@ -87,4 +88,16 @@ def execute_readonly(
             cur.execute(f"SET statement_timeout = '{int(timeout_seconds) * 1000}'")
             cur.execute(clean)
             rows = cur.fetchmany(row_limit)
+            if result_metadata is not None:
+                def column_type(oid):
+                    if oid in {20, 21, 23, 700, 701, 1700}:
+                        return "numeric"
+                    if oid in {1082, 1083, 1114, 1184, 1266}:
+                        return "datetime"
+                    return "boolean" if oid == 16 else "text"
+                result_metadata.update(
+                    columns=[{"name": column.name, "type": column_type(column.type_code)}
+                             for column in cur.description or []],
+                    row_count=len(rows), row_limit=row_limit,
+                )
             return [{k: jsonable(v) for k, v in row.items()} for row in rows]

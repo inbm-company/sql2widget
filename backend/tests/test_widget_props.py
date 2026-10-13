@@ -88,7 +88,7 @@ def test_sql_artifact_and_stage_json_roundtrip(monkeypatch, component, rows, exp
     assert widget["props"] == {"xLabel": "기준", "yLabel": "수치"}
     assert widget["query_ref"] == {"connection_id": "sales", "sql": sql}
     assert "fake" not in json.dumps(widget)
-    assert calls == [{"allowed_tables": {"allowed_table"}}]
+    assert calls == [{"allowed_tables": {"allowed_table"}, "timeout_seconds": 10}]
 
     class Cursor:
         def __enter__(self): return self

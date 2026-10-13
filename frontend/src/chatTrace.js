@@ -7,3 +7,5 @@ export const LOOP_STOP_NAMES = {
   no_progress: "같은 작업 반복으로 중단", budget: "시간 또는 단계 한도 도달",
 };
 export const VERDICT_NAMES = {next: "다음 단계", done: "완료", pause: "사용자 확인 대기", replan: "재계획", incomplete: "미완료"};
+export const ACTION_NAMES = {generate_sql: "SQL 생성", execute_sql: "SQL 실행", select_widgets: "위젯 선택", create_widget: "위젯 생성", evaluate: "목표 평가"};
+export const ACTION_STATUS_NAMES = {ok: "완료", error: "실패", incomplete: "미완료"};

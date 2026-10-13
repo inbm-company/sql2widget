@@ -36,7 +36,8 @@ export function StatusSummary({ props }) {
 export function EventTimeline({ props }) {
   const items = props?.items || [];
   return <div className="catalog-card">{items.length ? <ol className="event-timeline">
-    {items.map((item, i) => <li key={i}><time dateTime={item.occurredAt}>{new Date(item.occurredAt).toLocaleString("ko-KR")}</time>
+    {items.map((item, i) => <li key={i}><time dateTime={item.occurredAt}>{item.occurredAt.length === 10
+      ? new Date(item.occurredAt).toLocaleDateString("ko-KR") : new Date(item.occurredAt).toLocaleString("ko-KR")}</time>
       <strong>{item.title}</strong>{item.description ? <p>{item.description}</p> : null}</li>)}
   </ol> : <div className="widget-empty">결과 없음</div>}</div>;
 }

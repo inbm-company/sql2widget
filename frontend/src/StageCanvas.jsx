@@ -251,7 +251,9 @@ export async function addWidgetToStage(projectId, widgetPayload, mutateStage) {
     0
   );
   const definition = widgetDefinition(widgetPayload);
-  const composite = ["BarTable", "PieTable", "KpiSparkline"].includes(
+  const composite = ["BarTable", "PieTable", "KpiSparkline", "CompareCard", "PivotTable",
+    "StatusSummary", "EventTimeline", "KpiGroup", "DetailCard", "HorizontalBarChart",
+    "ComboChart", "BoxPlot", "Treemap"].includes(
     widgetPayload.component
   );
   await api.addStageWidget(projectId, {

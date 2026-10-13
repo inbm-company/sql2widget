@@ -4,7 +4,7 @@ import time
 
 from app.intent_router import ANSWER_ROUTES
 from app.llm import json_with_llm
-from app.prompts import EVALUATE_HINT, PLAN_HINT, ROUTE_CRITERIA
+from app.prompts import DATA_ACTION_HINT, EVALUATE_HINT, PLAN_HINT, ROUTE_CRITERIA
 
 MAX_STEPS = 20
 MAX_REPLANS = 5
@@ -87,3 +87,20 @@ def evaluate(plan, done, pending, replans, context, deadline, *, user_request):
         return {"verdict": "replan", "reason": reason, "steps": missing}
     limit = "재계획 횟수 한도에 도달했습니다." if replans >= MAX_REPLANS else "계속할 작업을 정하지 못했습니다."
     return {"verdict": "incomplete", "reason": f"{reason} {limit}"}
+
+
+def choose_data_action(message, state, history, context, deadline, *, original_request=None):
+    """Inspect actual tool outcomes and choose the next supported action."""
+    data = _ask(DATA_ACTION_HINT, {"user_request": original_request or message, "task": message,
+                                 "state": state, "history": history}, context, deadline)
+    action = data.get("action")
+    if action not in ("generate_sql", "execute_sql", "select_widgets", "create_widget", "finish", "incomplete"):
+        raise PlanError("지원하지 않는 데이터 작업이 선택됐습니다.")
+    result = {"action": action, "reason": str(data.get("reason") or "")[:200],
+              "request": str(data.get("request") or message)}
+    for key in ("query_id", "widget_id"):
+        if data.get(key) is not None:
+            if not isinstance(data[key], str):
+                raise PlanError("데이터 작업의 참조 ID가 올바르지 않습니다.")
+            result[key] = data[key]
+    return result

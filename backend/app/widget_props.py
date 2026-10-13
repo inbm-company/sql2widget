@@ -126,8 +126,8 @@ def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dic
         return {"columns": [{"key": key, "label": key} for key in keys], "rows": rows}
     if component == "RankList":
         label_key = "hostname" if "hostname" in keys else keys[0]
-        value_key = "attack_count" if "attack_count" in keys else keys[-1]
-        meta_key = "top_method" if "top_method" in keys else None
+        value_key = "attack_count" if "attack_count" in keys else ("value" if "value" in keys else keys[-1])
+        meta_key = "top_method" if "top_method" in keys else ("meta" if "meta" in keys else None)
         items = []
         for i, r in enumerate(rows, start=1):
             items.append(

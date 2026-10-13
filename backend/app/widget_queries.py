@@ -5,6 +5,7 @@ from app.query import QueryError, execute_readonly
 from app.repositories import connections
 from app.widget_props import ANALYTICAL_COMPONENTS, rows_to_props
 from app.catalog_props import DISPLAY_KEYS
+from app.widget_bindings import map_widget_rows
 
 
 SQL_COMPONENTS = ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList"}
@@ -12,7 +13,10 @@ SQL_COMPONENTS = ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList"}
 
 def display_props(component, props):
     """SQL widgets store only supported display settings, never result values."""
-    return {key: props[key] for key in DISPLAY_KEYS.get(component, ()) if isinstance(props.get(key), str)}
+    result = {key: props[key] for key in DISPLAY_KEYS.get(component, ()) if isinstance(props.get(key), str)}
+    if component in SQL_COMPONENTS and isinstance(props.get("column_map"), dict):
+        result["column_map"] = dict(props["column_map"])
+    return result
 
 
 def widget_definition(widget, connection_id=None):
@@ -64,7 +68,8 @@ def load_widget_data(widget, user):
         raise WidgetDataError(403, "이 DB에서 조회할 수 있는 테이블 권한이 없습니다.")
     try:
         rows = execute_readonly(connections.connection_url(connection), reference["sql"], allowed_tables=allowed)
-        props = {**definition["props"], **rows_to_props(component, rows, definition.get("title") or component)}
+        mapped = map_widget_rows(component, rows, definition["props"].get("column_map"))
+        props = {**definition["props"], **rows_to_props(component, mapped, definition.get("title") or component)}
     except QueryError as exc:
         raise WidgetDataError(400, str(exc)) from exc
     except ValueError as exc:

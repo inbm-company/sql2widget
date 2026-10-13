@@ -13,12 +13,14 @@ from app import question_similarity, schema_linking
 from app.chat_flow import conversation_flow
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
-from app.data_plan import DataPlanError, generate_sql, select_widgets
+from app.data_plan import DataPlanError
+from app.data_agent import run_data_agent
 from app.intent_router import RouteError, choices_for, decide_route
 from app.llm import effective_provider, json_with_llm
 from app.prompts import GENERAL_CHAT_HINT, SCHEMA_QA_HINT
 from app.query import QueryError, execute_readonly
 from app.widget_props import rows_to_props
+from app.widget_bindings import map_widget_rows
 from app.widget_queries import SQL_COMPONENTS, display_props
 from app.repositories import connections as conn_repo
 
@@ -102,6 +104,8 @@ def _materialize_plan(
     connection_id: str | None = None,
     evidence: list[dict[str, Any]] | None = None,
     deadline: float | None = None,
+    prepared_results: dict[str, list[dict[str, Any]]] | None = None,
+    include_sources: bool = True,
 ) -> tuple[str, dict[str, Any]]:
     summary = plan.get("summary") or "결과를 준비했습니다."
     widgets_in = plan.get("widgets") or []
@@ -117,16 +121,19 @@ def _materialize_plan(
         if component in SQL_COMPONENTS and not sql:
             raise QueryError("Data widgets require a read-only SQL query")
         if sql:
-            # Validate execution and the result contract for the existing repair
-            # path, then discard rows. Renderers fetch their own current data.
-            timeout_seconds = 10
-            if deadline is not None:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise BudgetExceeded("실행 시간 한도에 도달했습니다.")
-                timeout_seconds = min(10, max(1, int(remaining)))
-            rows = execute_readonly(db_url, sql, allowed_tables=allowed_tables, timeout_seconds=timeout_seconds)
-            rows_to_props(component, rows, title)
+            # Validate the result contract without repeating a completed query.
+            # Renderers fetch their own current data after definitions are saved.
+            if prepared_results is not None and sql in prepared_results:
+                rows = prepared_results[sql]
+            else:
+                timeout_seconds = 10
+                if deadline is not None:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise BudgetExceeded("실행 시간 한도에 도달했습니다.")
+                    timeout_seconds = min(10, max(1, int(remaining)))
+                rows = execute_readonly(db_url, sql, allowed_tables=allowed_tables, timeout_seconds=timeout_seconds)
+            rows_to_props(component, map_widget_rows(component, rows, props.get("column_map")), title)
             if evidence is not None:
                 evidence.append({"component": component, "title": title, "sql": sql,
                                  "columns": list(rows[0]) if rows else [], "row_count": len(rows)})
@@ -144,10 +151,10 @@ def _materialize_plan(
 
     # Document grounding for attack-like questions
     provider = get_document_provider()
-    sources = provider.search(message, tenant_id="demo", limit=3)
-    if "공격" in message or "attack" in message.lower() or any(
+    sources = provider.search(message, tenant_id="demo", limit=3) if include_sources else []
+    if include_sources and ("공격" in message or "attack" in message.lower() or any(
         "공격" in (w.get("title") or "") for w in widgets
-    ):
+    )):
         solution = build_solution_from_sources(sources)
         widgets.append(
             {
@@ -258,6 +265,7 @@ def _run_single(
     expected_route: str | None = None,
     original_request: str | None = None,
     deadline: float,
+    execution_state: dict[str, int],
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
@@ -326,49 +334,27 @@ def _run_single(
     plan_schema = schema_text if link["source"] == "full" else _schema_text_for_connection(
         tenant_id, used_conn, link["tables"])
 
-    selection, selected_model = select_widgets(message, schema=plan_schema, history=history,
-        references=references, context=llm_context, deadline=deadline)
-    meta["widget_selection"] = {"count": len(selection["widgets"]),
-                                "components": [w["component"] for w in selection["widgets"]]}
-    meta.update(selected_model)
-    evidence: list[dict[str, Any]] = []
+    def create_widget(spec, result):
+        widget = {"component": spec["component"], "title": spec["title"],
+                  "props": spec["props"], "sql": result["sql"]}
+        _, artifact = _materialize_plan({"widgets": [widget]}, db_url=db_url, allowed_tables=allowed,
+            message=message, connection_id=used_conn, prepared_results={result["sql"]: result["rows"]},
+            include_sources=False, deadline=deadline)
+        return artifact["widgets"][0]
 
-    try:
-        plan, sql_model = generate_sql(message, selection, schema=plan_schema, history=history,
-            references=references, context=llm_context, deadline=deadline)
-        summary, artifact = _materialize_plan(
-            plan, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn,
-            evidence=evidence, deadline=deadline,
-        )
-        meta.update(sql_model)
-        meta["sql_generation"] = {"count": len(selection["widgets"]), "repaired": False}
-        meta["result_evidence"] = evidence
-        return summary, artifact, meta
-    except BudgetExceeded:
-        raise
-    except Exception as first_exc:  # noqa: BLE001
-        # Repair SQL against the full schema without changing widget selection.
+    plan, data_meta, prepared = run_data_agent(message, schema=plan_schema, full_schema=schema_text,
+        history=history, references=references, context=llm_context, deadline=deadline,
+        db_url=db_url, allowed_tables=allowed, create_widget=create_widget, execution_state=execution_state,
+        original_request=original_request)
+    meta.update(data_meta)
+    if data_meta["sql_generation"]["repaired"]:
+        meta["retried"] = True
         meta["schema_link"]["escalated_to_full"] = link["source"] != "full"
-        try:
-            plan2, repair_model = generate_sql(message, selection, schema=schema_text, history=history,
-                references=references, context=llm_context, deadline=deadline,
-                repair_hint=f"Previous SQL/result contract failed: {first_exc}. Fix SQL and JSON.")
-            evidence = []
-            summary, artifact = _materialize_plan(
-                plan2, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn,
-                evidence=evidence, deadline=deadline,
-            )
-            meta.update(repair_model)
-            meta["retried"] = True
-            meta["sql_generation"] = {"count": len(selection["widgets"]), "repaired": True}
-            meta["result_evidence"] = evidence
-            return summary, artifact, meta
-        except BudgetExceeded:
-            raise
-        except Exception as second_exc:  # noqa: BLE001
-            raise AgentRunError(
-                f"SQL/plan failed after repair attempt: {second_exc}"
-            ) from second_exc
+    summary, artifact = _materialize_plan(plan, db_url=db_url, allowed_tables=allowed, message=message,
+        connection_id=used_conn, prepared_results=prepared, include_sources=bool(plan["widgets"]), deadline=deadline)
+    if data_meta["data_stop"] != "done" and not plan["widgets"]:
+        summary = ""
+    return summary, artifact, meta
 
 
 def _merge_outputs(outputs):
@@ -399,6 +385,7 @@ def run_agent(
     flow = conversation_flow(current_messages, used_conn)
     meta: dict[str, Any] = {"provider": effective_provider(), "connection_id": used_conn, "steps": []}
     outputs, done, seen = [], [], set()
+    execution_state = {"calls": 0}
     replans, stop, stop_reason = 0, "done", None
     try:
         plan = single_step_plan(forced_route, message) if forced_route else make_plan(message, flow, context, deadline)
@@ -418,7 +405,8 @@ def run_agent(
                     user_role=user_role, conversation_id=conversation_id, connection_id=connection_id,
                     llm_settings=settings, embedding_result=embedding_result if step["query"] == message else None,
                     forced_route=forced_route, project_id=project_id, messages=current_messages,
-                    expected_route=step["route"], original_request=message, deadline=deadline)
+                    expected_route=step["route"], original_request=message, deadline=deadline,
+                    execution_state=execution_state)
             except (AgentRunError, DataPlanError) as exc:
                 if not outputs:
                     raise AgentRunError(str(exc)) from exc
@@ -427,6 +415,8 @@ def run_agent(
                                       "verdict": "incomplete", "reason": stop_reason})
                 break
             evidence = step_meta.pop("result_evidence", [])
+            data_stop = step_meta.pop("data_stop", "done")
+            data_reason = step_meta.pop("data_stop_reason", None)
             meta.update(step_meta)
             if artifact.get("type") == "choices":
                 stop, stop_reason = "clarify", "처리 경로를 확인해야 합니다."
@@ -446,8 +436,13 @@ def run_agent(
                 {"role": "assistant", "content": content, "artifact": artifact, "meta": step_meta}])
             step_trace = {"route": route, "expected_route": step["route"], "status": "ok",
                           "verdict": "incomplete", "reason": "목표 평가를 완료하지 못했습니다.",
-                          **{key: step_meta[key] for key in ("widget_selection", "sql_generation") if key in step_meta}}
+                          **{key: step_meta[key] for key in ("widget_selection", "sql_generation", "widget_creation",
+                                                             "actions", "decision_calls") if key in step_meta}}
             meta["steps"].append(step_trace)
+            if data_stop != "done":
+                stop, stop_reason = data_stop, data_reason or "데이터 조회와 위젯 생성을 완료하지 못했습니다."
+                step_trace.update(status="incomplete", verdict="incomplete", reason=stop_reason)
+                break
             verdict = evaluate(plan, done, len(pending), replans, context, deadline, user_request=message)
             step_trace.update(verdict=verdict["verdict"], reason=verdict["reason"])
             if verdict["verdict"] == "replan":
@@ -467,6 +462,14 @@ def run_agent(
         stop, stop_reason = "incomplete", "원래 요청의 목표 충족 여부를 평가하지 못했습니다."
         meta["loop_stop"] = stop
     meta["replans"] = replans
+    meta["tool_calls"] = execution_state["calls"]
+    meta["decision_calls"] = sum(step.get("decision_calls", 0) for step in meta["steps"])
+    data_steps = [step for step in meta["steps"] if "sql_generation" in step]
+    if data_steps:
+        repairs = sum(step["sql_generation"].get("repairs", 0) for step in data_steps)
+        meta["sql_generation"] = {"count": sum(step["sql_generation"]["count"] for step in data_steps),
+                                  "repaired": bool(repairs), "repairs": repairs}
+        meta["widget_creation"] = {"count": sum(step["widget_creation"]["count"] for step in data_steps)}
     content, artifact = _merge_outputs(outputs) if outputs else ("", {"widgets": []})
     if stop_reason:
         notice = f"요청을 완료하지 못했습니다: {stop_reason}\n처리할 경로를 선택해 이어서 진행하세요."

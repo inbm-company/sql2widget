@@ -18,7 +18,11 @@ export default function DataTable({ props, filterable = false }) {
   const visible = filtered.slice(current * pageSize, (current + 1) * pageSize);
   const values = filterKey ? [...new Set(rows.map((row) => String(row[filterKey] ?? "")))] : [];
   return (
-    <div className="data-table-widget">
+    <div className="data-table-widget" onMouseDown={(event) => {
+      if (event.target.closest("button, input, select")) event.stopPropagation();
+    }} onDragStart={(event) => {
+      if (event.target.closest("button, input, select")) event.preventDefault();
+    }}>
       <div className="table-controls">
         <input aria-label="표 검색" placeholder="검색" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
         {filterable ? <>
