@@ -212,9 +212,14 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
             <span className="artifact-type">{artifact.type || "artifact"}</span>
             <div className="artifact-view-actions">
               {view === "json" ? (
-                <button type="button" className="text-btn" onClick={copyJson} disabled={copyStatus === "copying"}>
-                  {copyStatus === "copying" ? "복사 중…" : copyStatus === "copied" ? "복사됨" : "JSON 복사"}
-                </button>
+                <>
+                  <span className="artifact-copy-status" role="status">
+                    {copyStatus === "copied" ? "JSON을 복사했습니다." : copyStatus === "error" ? "복사하지 못했습니다. JSON을 선택해 직접 복사해 주세요." : ""}
+                  </span>
+                  <button type="button" className="text-btn" onClick={copyJson} disabled={copyStatus === "copying"}>
+                    {copyStatus === "copying" ? "복사 중…" : copyStatus === "copied" ? "복사됨" : "JSON 복사"}
+                  </button>
+                </>
               ) : null}
               <div className="segmented" role="group" aria-label="View mode">
                 <button
@@ -236,12 +241,7 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
           </div>
 
           {view === "json" ? (
-            <>
-              <span className="artifact-copy-status" role="status">
-                {copyStatus === "copied" ? "JSON을 복사했습니다." : copyStatus === "error" ? "복사하지 못했습니다. JSON을 선택해 직접 복사해 주세요." : ""}
-              </span>
-              <pre className="artifact-json">{jsonText}</pre>
-            </>
+            <pre className="artifact-json">{jsonText}</pre>
           ) : (
             <div className="artifact-widgets">
               {(artifact.widgets || []).map((w) => (

@@ -2,6 +2,7 @@
 
 import math
 from typing import Any
+from app.catalog_props import EXTRA_COMPONENTS, extra_rows_to_props
 
 
 ANALYTICAL_COMPONENTS = frozenset({"StackedBarChart", "Heatmap", "ScatterChart", "Histogram"})
@@ -91,6 +92,8 @@ def analytical_rows_to_props(component, rows):
 
 
 def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dict[str, Any]:
+    if component in EXTRA_COMPONENTS:
+        return extra_rows_to_props(component, rows, title)
     if component in ANALYTICAL_COMPONENTS:
         return analytical_rows_to_props(component, rows)
     if not rows:
@@ -98,6 +101,8 @@ def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dic
             return {"label": title, "value": 0}
         if component == "DataTable":
             return {"columns": [{"key": "info", "label": "Info"}], "rows": [{"info": "결과 없음"}]}
+        if component == "FilterBar":
+            return {"columns": [], "rows": []}
         if component == "BarChart":
             return {"categories": [], "series": [{"name": "value", "data": []}]}
         if component == "LineChart":
@@ -117,6 +122,8 @@ def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dic
             "columns": [{"key": k, "label": k} for k in keys],
             "rows": [{k: r.get(k) for k in keys} for r in rows],
         }
+    if component == "FilterBar":
+        return {"columns": [{"key": key, "label": key} for key in keys], "rows": rows}
     if component == "RankList":
         label_key = "hostname" if "hostname" in keys else keys[0]
         value_key = "attack_count" if "attack_count" in keys else keys[-1]
@@ -140,6 +147,22 @@ def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dic
             "series": [{"name": val_key, "data": [r.get(val_key) or 0 for r in rows]}],
         }
     if component == "LineChart":
+        if "series" in keys:
+            if "x" not in keys or "y" not in keys:
+                raise ValueError("Multi-series LineChart SQL requires x, y, series columns")
+            from app.catalog_props import number
+            names, positions, points = {}, {}, {}
+            for row in rows:
+                if row["series"] is None or row["x"] is None:
+                    continue
+                name, x = str(row["series"]), str(row["x"])
+                if (name, x) in points:
+                    raise ValueError("LineChart SQL must return unique x/series pairs")
+                names.setdefault(name, None)
+                positions.setdefault(x, None)
+                points[name, x] = number(row["y"], "y")
+            return {"series": [{"name": name, "points": [{"x": x, "y": points.get((name, x))}
+                               for x in positions]} for name in names]}
         x_key = "x" if "x" in keys else keys[0]
         y_key = "y" if "y" in keys else keys[-1]
         return {

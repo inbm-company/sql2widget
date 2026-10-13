@@ -1,18 +1,14 @@
 import { resolveWidgetSql } from "../sqlHelpers.js";
-
-const ANALYTICAL = new Set(["StackedBarChart", "Heatmap", "ScatterChart", "Histogram"]);
-const SQL_COMPONENTS = new Set([
-  "KpiStat", "DataTable", "RankList", "BarChart", "LineChart", "PieChart", "KpiSparkline",
-  "PieTable", "BarTable", ...ANALYTICAL,
-]);
+import { DISPLAY_KEYS, SQL_COMPONENTS } from "./catalogSettings.js";
 
 export function widgetDefinition(widget, connectionId = null) {
   const sql = resolveWidgetSql(widget);
+  if (widget.component === "FilterBar" && !sql) return { ...widget };
   if (!sql && !SQL_COMPONENTS.has(widget.component)) return { ...widget };
   const reference = widget.query_ref || widget.props?.__query_ref;
   const props = {};
-  if (ANALYTICAL.has(widget.component)) {
-    for (const key of ["xLabel", "yLabel"]) {
+  if (DISPLAY_KEYS[widget.component]) {
+    for (const key of DISPLAY_KEYS[widget.component]) {
       if (typeof widget.props?.[key] === "string") props[key] = widget.props[key];
     }
   }
@@ -25,6 +21,7 @@ export function widgetDefinition(widget, connectionId = null) {
 }
 
 export function widgetDataUrl(widget, { projectId, conversationId } = {}) {
+  if (widget.component === "FilterBar" && !resolveWidgetSql(widget)) return null;
   if (!resolveWidgetSql(widget) && !SQL_COMPONENTS.has(widget.component)) return null;
   if (conversationId && widget.widget_id) {
     return `/api/conversations/${encodeURIComponent(conversationId)}/widgets/${encodeURIComponent(widget.widget_id)}/data`;

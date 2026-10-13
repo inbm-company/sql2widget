@@ -7,7 +7,7 @@ You are a data analyst agent. Return ONLY valid JSON with this shape:
   "artifact_type": "widget|dashboard|report",
   "widgets": [
     {
-      "component": "KpiStat|DataTable|RankList|BarChart|LineChart|PieChart|MarkdownBlock|SourceList|FilterBar|KpiSparkline|PieTable|BarTable|StackedBarChart|Heatmap|ScatterChart|Histogram",
+      "component": "KpiStat|DataTable|RankList|BarChart|LineChart|PieChart|MarkdownBlock|SourceList|FilterBar|KpiSparkline|PieTable|BarTable|StackedBarChart|Heatmap|ScatterChart|Histogram|CompareCard|PivotTable|StatusSummary|EventTimeline|KpiGroup|DetailCard|HorizontalBarChart|ComboChart|BoxPlot|Treemap",
       "title": "string",
       "sql": "optional SELECT only",
       "props": {}
@@ -37,7 +37,7 @@ Analytical widget contracts (optional props xLabel/yLabel are axis titles):
 Rules:
 - Data widgets MUST have SQL. Their result rows/values are fetched by each widget
   and never belong in the plan. For SQL widgets, props contains only optional
-  xLabel/yLabel display settings for the four analytical widget types above.
+  whitelisted display labels; never SQL result values.
 - Customer DB is PostgreSQL. SQL must be a single read-only SELECT/WITH.
 - The user prompt contains the only allowed tables, columns, and relationships.
 - Never use a table or column not present in that supplied schema.
@@ -144,8 +144,9 @@ Choose display widgets for the user's data request. Return ONLY JSON:
 Use only allowed_components. Respect requested chart types, dates, filters and
 comparisons. Use the schema, history and matched_questions as reference data.
 Select widgets and describe their data needs only. DO NOT generate SQL, rows,
-numeric results, chart series or query_ref. props may contain xLabel/yLabel only
-for analytical widgets. SQL is generated in a separate call after this selection.
+numeric results, chart series or query_ref. props may contain whitelisted display labels only: xLabel/yLabel for charts,
+currentLabel/previousLabel for CompareCard, and secondaryYLabel/barLabel/lineLabel
+for ComboChart. SQL is generated in a separate call after this selection.
 Use at most max_widgets and avoid redundant widgets.
 """
 
@@ -167,7 +168,9 @@ Result contracts:
   are supported aliases for the existing SOC rank renderer.
 - BarChart/BarTable: category first, numeric value last; hostname/attack_count
   are supported SOC aliases. For BarTable use label/value for other datasets.
-- LineChart/KpiSparkline: x and numeric y, ordered by x; KpiSparkline may add value.
+- LineChart: x, numeric y, optional series; group by x/series and ORDER BY x.
+  Return unique x/series pairs for multiple comparison lines.
+- KpiSparkline: x and numeric y ordered by x; may add value.
 - PieChart/PieTable: label first, numeric value last; use label/value aliases.
 - StackedBarChart: category, series, value; aggregate by category AND series.
 - Heatmap: x, y, value; aggregate by both categorical axes.
@@ -192,11 +195,55 @@ Do not produce near-duplicate questions with only changed wording.
 Use only supplied tables, columns and relationships and single read-only SELECTs.
 Use relative dates for relative questions. Never invent data rows or credentials.
 Allowed components: KpiStat, DataTable, RankList, BarChart, LineChart, PieChart,
-KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram.
+KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram,
+CompareCard, PivotTable, StatusSummary, EventTimeline, KpiGroup, DetailCard,
+HorizontalBarChart, ComboChart, BoxPlot, Treemap, FilterBar.
 For StackedBarChart return SQL aliases category, series, value; aggregate by both.
 For Heatmap return SQL aliases x, y, value; aggregate by both categorical axes.
 For ScatterChart return numeric x, y, optionally label, preserving paired observations.
 For Histogram return numeric bin_start, bin_end, count; bins must have positive width,
 be non-overlapping [start,end) intervals, and have nonnegative integer counts.
 Compute bins in SQL, not raw observations; handle constant values with a positive width.
+"""
+
+
+ADDITIONAL_WIDGET_CONTRACTS = """
+Additional closed SQL result contracts:
+- CompareCard: exactly one row with numeric current and previous, optional label/unit.
+  Compute BOTH comparison periods in SQL. The server calculates delta and percent;
+  previous=0 yields no percentage. Do not invent a comparison value or target.
+- PivotTable: row, column, numeric value; aggregate by both categories. The server
+  builds the matrix and row/column totals. Use for numeric cross-tab comparisons.
+- StatusSummary: status, nonnegative integer count; GROUP BY status.
+- EventTimeline: occurred_at (ISO date/timestamp), title, optional description;
+  use actual event dates and descriptions. Do not invent milestones or actions.
+- KpiGroup: label, numeric value, optional unit; one row per metric. Use UNION ALL
+  of independent SELECT aggregates when metrics need different calculations.
+- DetailCard: at most one record with meaningful named columns; include an explicit
+  deterministic filter/LIMIT 1. Never silently replace a requested list by one record.
+- HorizontalBarChart: label, numeric value, ordered by the requested ranking.
+- ComboChart: x, bar_value, line_value; aggregate both metrics on the SAME x grouping
+  and ORDER BY x. Axis titles yLabel/secondaryYLabel and barLabel/lineLabel must identify
+  the metrics and their units. Do not imply two different units share a scale.
+- BoxPlot: label, minimum, q1, median, q3, maximum, optional numeric array outliers.
+  Compute quartiles in PostgreSQL over the complete permitted data using percentile_cont.
+  minimum/maximum are observed Tukey whiskers inside q1-1.5*IQR / q3+1.5*IQR;
+  optional outliers contains observations outside these whiskers. Never calculate
+  statistics from a limited raw sample. SQL may use nested subqueries for quartiles.
+- Treemap: group, label, nonnegative value; aggregate by group/label. Use hierarchical
+  contributions; do not use it for negative amounts.
+- FilterBar: SELECT meaningful named columns for a dataset the user can inspect
+  and filter inside that widget. Filtering/search/sorting are local to fetched rows
+  (up to 1000), not cross-widget or a database-wide filter.
+- LineChart supports x, y, optional series. SQL must return unique x/series pairs
+  and order by x. Missing series observations are gaps, not fabricated zeroes.
+All data values, labels and units must come from SQL or the user's stated context.
+Fixed widget definitions never accept executable HTML, CSS, color or chart code.
+"""
+SCHEMA_HINT += ADDITIONAL_WIDGET_CONTRACTS
+SQL_GENERATION_HINT += ADDITIONAL_WIDGET_CONTRACTS
+QUESTION_CATALOG_HINT += ADDITIONAL_WIDGET_CONTRACTS
+WIDGET_SELECTION_HINT += ADDITIONAL_WIDGET_CONTRACTS + """
+The result contracts above describe data NEEDS only. In this selection step do not
+write SQL, observations or numeric values; describe each widget's purpose instead.
 """

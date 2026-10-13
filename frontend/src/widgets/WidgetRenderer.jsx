@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { Chart } from "@tanstack/charts/react";
 import { createBarChartDefinition } from "./tanstackBarChart.js";
+import DataTable from "./DataTable.jsx";
+import { CompareCard, KpiGroup, StatusSummary, EventTimeline, DetailCard } from "./CatalogCards.jsx";
+import { createHorizontalBarDefinition, createComboDefinition, createBoxPlotDefinition, createTreemapDefinition } from "./tanstackCatalogCharts.js";
+import { lineChartData } from "./tableData.js";
 import {
   createStackedBarDefinition,
   createHeatmapDefinition,
@@ -39,33 +43,6 @@ function KpiStat({ props }) {
         {unit ? <span className="kpi-unit">{unit}</span> : null}
       </div>
       {delta != null ? <div className="kpi-delta">{delta}</div> : null}
-    </div>
-  );
-}
-
-function DataTable({ props }) {
-  const columns = props?.columns || [];
-  const rows = props?.rows || [];
-  return (
-    <div className="table-wrap">
-      <table className="data-table">
-        <thead>
-          <tr>
-            {columns.map((c) => (
-              <th key={c.key}>{c.label || c.key}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, idx) => (
-            <tr key={idx}>
-              {columns.map((c) => (
-                <td key={c.key}>{String(row[c.key] ?? "")}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
@@ -113,24 +90,24 @@ function AnalyticalChart({ props, createDefinition, label, dataKey }) {
 
 function LineChartWidget({ props }) {
   const seriesList = props?.series || [];
-  const points = seriesList[0]?.points || [];
-  const data = points.map((p) => ({ name: p.x, value: p.y }));
+  const data = useMemo(() => lineChartData(seriesList), [seriesList]);
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-        <XAxis dataKey="name" stroke={MUTED} fontSize={12} />
+        <XAxis dataKey="x" stroke={MUTED} fontSize={12} />
         <YAxis stroke={MUTED} fontSize={12} />
         <Tooltip />
         <Legend />
-        <Line
+        {seriesList.map((series, index) => <Line
+          key={index}
           type="monotone"
-          dataKey="value"
-          name={seriesList[0]?.name || "value"}
-          stroke={ACCENT}
+          dataKey={`s${index}`}
+          name={series.name || `시리즈 ${index + 1}`}
+          stroke={PALETTE[index % PALETTE.length]}
           strokeWidth={2}
           dot={{ fill: INK, r: 3 }}
-        />
+        />)}
       </LineChart>
     </ResponsiveContainer>
   );
@@ -331,6 +308,7 @@ function SourceList({ props }) {
 }
 
 function FilterBar({ props }) {
+  if (Array.isArray(props?.rows)) return <DataTable props={props} filterable />;
   const filters = props?.filters || [];
   return (
     <div className="filter-bar">
@@ -360,6 +338,16 @@ const REGISTRY = {
   Heatmap: ({ props }) => <AnalyticalChart props={props} createDefinition={createHeatmapDefinition} label="히트맵" dataKey="cells" />,
   ScatterChart: ({ props }) => <AnalyticalChart props={props} createDefinition={createScatterDefinition} label="산점도" dataKey="points" />,
   Histogram: ({ props }) => <AnalyticalChart props={props} createDefinition={createHistogramDefinition} label="히스토그램" dataKey="bins" />,
+  CompareCard,
+  PivotTable: DataTable,
+  StatusSummary,
+  EventTimeline,
+  KpiGroup,
+  DetailCard,
+  HorizontalBarChart: ({ props }) => <AnalyticalChart props={props} createDefinition={createHorizontalBarDefinition} label="가로 막대" dataKey="categories" />,
+  ComboChart: ({ props }) => <AnalyticalChart props={props} createDefinition={createComboDefinition} label="막대와 선 복합 차트" dataKey="points" />,
+  BoxPlot: ({ props }) => <AnalyticalChart props={props} createDefinition={createBoxPlotDefinition} label="박스플롯" dataKey="boxes" />,
+  Treemap: ({ props }) => <AnalyticalChart props={props} createDefinition={createTreemapDefinition} label="트리맵" dataKey="nodes" />,
 };
 
 export default function WidgetRenderer({ component, props, compact = false }) {

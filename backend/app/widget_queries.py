@@ -4,15 +4,15 @@ from app.config import ALLOWED_COMPONENTS
 from app.query import QueryError, execute_readonly
 from app.repositories import connections
 from app.widget_props import ANALYTICAL_COMPONENTS, rows_to_props
+from app.catalog_props import DISPLAY_KEYS
 
 
-SQL_COMPONENTS = ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList", "FilterBar"}
+SQL_COMPONENTS = ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList"}
 
 
 def display_props(component, props):
     """SQL widgets store only supported display settings, never result values."""
-    return {key: props[key] for key in ("xLabel", "yLabel")
-            if component in ANALYTICAL_COMPONENTS and isinstance(props.get(key), str)}
+    return {key: props[key] for key in DISPLAY_KEYS.get(component, ()) if isinstance(props.get(key), str)}
 
 
 def widget_definition(widget, connection_id=None):
@@ -23,7 +23,7 @@ def widget_definition(widget, connection_id=None):
     legacy_sql = props.pop("__sql", None)
     sql = (reference.get("sql") or widget.get("sql") or legacy_sql or "").strip()
     result = {**widget, "props": props}
-    if widget.get("component") in SQL_COMPONENTS:
+    if widget.get("component") in SQL_COMPONENTS and not (widget.get("component") == "FilterBar" and not sql):
         result["props"] = display_props(widget["component"], props)
     if sql:
         result.update(sql=sql, query_ref={

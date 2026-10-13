@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import agent_service, main, widget_queries
+from app.catalog_props import DISPLAY_KEYS
 from app.auth import get_current_user
 from app.query import validate_readonly_select
 from app.repositories import conversations, stages
@@ -29,7 +30,7 @@ def test_sql_widgets_discard_embedded_data_and_keep_query_identity(component):
     assert "old-result" not in json.dumps(definition)
     assert "value" not in definition["props"]
     assert definition["query_ref"]["connection_id"] == "sales"
-    expected = {"xLabel": "기준", "yLabel": "금액"} if component in widget_queries.ANALYTICAL_COMPONENTS else {}
+    expected = {key: data[key] for key in DISPLAY_KEYS.get(component, ()) if key in data}
     assert definition["props"] == expected
     assert "__query_ref" in widget_queries.stored_widget_props(definition)
 

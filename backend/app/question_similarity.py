@@ -10,7 +10,7 @@ from app.contracts import QuestionIn
 from app.query import QueryError, execute_readonly, validate_readonly_select
 from app.repositories import connections, question_catalog
 
-SQL_COMPONENTS = config.ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList", "FilterBar"}
+SQL_COMPONENTS = config.ALLOWED_COMPONENTS - {"MarkdownBlock", "SourceList"}
 TABLES_PER_BATCH = 4
 
 

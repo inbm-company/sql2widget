@@ -80,5 +80,7 @@ ALLOWED_COMPONENTS = frozenset(
         "Heatmap",
         "ScatterChart",
         "Histogram",
+        "CompareCard", "PivotTable", "StatusSummary", "EventTimeline", "KpiGroup",
+        "DetailCard", "HorizontalBarChart", "ComboChart", "BoxPlot", "Treemap",
     }
 )

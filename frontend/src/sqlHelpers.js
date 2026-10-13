@@ -1,19 +1,4 @@
-const SQL_COMPONENTS = new Set([
-  "KpiStat",
-  "DataTable",
-  "RankList",
-  "BarChart",
-  "LineChart",
-  "PieChart",
-  "FilterBar",
-  "KpiSparkline",
-  "PieTable",
-  "BarTable",
-  "StackedBarChart",
-  "Heatmap",
-  "ScatterChart",
-  "Histogram",
-]);
+import { SQL_COMPONENTS } from "./widgets/catalogSettings.js";
 
 export function canShowSql(widget) {
   if (!widget) return false;

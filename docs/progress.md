@@ -25,7 +25,7 @@
 |------|------|
 | 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리 | [auth.md](features/auth.md). 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인 |
 | 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |
-| Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가 | 2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. [widgets-artifact.md](features/widgets-artifact.md) |
+| Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가 | 2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 버튼 왼쪽 10px 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. [widgets-artifact.md](features/widgets-artifact.md) |
 | 위젯 자체 데이터 조회 — 결과 비저장·원본 DB/SQL 정의 저장 | 2026-10-13 채팅·Stage·Viewer의 위젯별 GET·새로고침·로딩/오류 구현. 현재 소유자·tenant·역할 테이블 권한 검사, 기존 위젯 DB 정보 복원. 실제 Global Sales DB 7종 SELECT·임시 Stage 결과 비저장 검증, 브라우저 대역의 조회/새로고침/오류 복구/Viewer 확인. 전체 백엔드 169개 통과·기존 일반 대화 기대값 불일치 2개 실패, 프런트 23개·빌드 통과. 실 LLM·운영 배포는 미실행. [widgets-artifact.md](features/widgets-artifact.md) |
 | Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절 | [stage.md](features/stage.md) |
 | Viewer 읽기 전용 화면(`/p/:id/view`) | [viewer.md](features/viewer.md) |
