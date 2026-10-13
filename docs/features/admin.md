@@ -3,13 +3,13 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 관리자 패널 |
-| 기준일 | 2026-10-02 (구현 기준) |
+| 기준일 | 2026-10-13 (Jev 공통 키 입력·저장 포함) |
 | 관련 문서 | [chat.md](chat.md)(연결·권한·AI 설정이 실제로 쓰이는 곳) |
 | 관련 코드 | `backend/app/repositories/connections.py`, `backend/app/crypto.py`, `backend/app/local_models.py`, `backend/app/main.py`(`/api/ai/local-models`, `/api/database-connections*`, `/api/table-permissions`), `frontend/src/AdminPanel.jsx`, `frontend/src/api.js`(`getAiSettings`/`setAiSettings`) |
 
 액터: 대부분 `admin`만. 그 외 역할은 403(패널 자체가 사이드바에 노출되지 않음, § [auth.md](auth.md)).
 
-사이드바 하단에는 기존 `Admin` 버튼과 별도로 `AI 설정`, `DB 관리` 버튼이 있다. `Admin`은 기존 전체 설정을 유지한다. `AI 설정` 패널은 Provider별 AI 연결 설정만, `DB 관리` 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.
+사이드바 하단에는 기존 `Admin` 버튼과 별도로 `AI 설정`, `DB 관리` 버튼이 있다. `Admin`은 기존 전체 설정을 유지한다. `AI 설정` 패널은 Provider별 AI 연결 설정과 Jev 공통 키 입력, `DB 관리` 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.
 
 드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.
 
@@ -46,7 +46,7 @@
 
 ## AI 연결 설정 (브라우저 로컬)
 
-Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 `localStorage`(`sql2widget_ai_settings`)에 `{ provider, profiles: { gemini, openai, local } }` 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, **AI 설정 저장**을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.
+Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 `localStorage`(`sql2widget_ai_settings`)에 `{ provider, profiles: { gemini, openai, local }, jevApiKey }` 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, **AI 설정 저장**을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.
 
 | 필드 | 동작 |
 |------|------|
@@ -55,6 +55,7 @@ Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델�
 | Base URL | OpenAI·로컬에서 입력 가능. 로컬 기본 `http://host.docker.internal:11434/v1`, Gemini는 Google 호환 URL 고정 |
 | API key | `type="password"`, 로컬에서는 선택 사항 |
 | Embedding model | 로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음 |
+| Jev API key | `type="password"`, Provider 공통 의도 분류 키. 공백 제거 후 저장, 빈 값은 서버 설정 사용 |
 
 - 저장한 값은 채팅과 예상 질문 생성·검색 요청의 `X-LLM-Provider`, `X-LLM-API-Key`, `X-LLM-Model`, `X-LLM-Base-URL`, `X-LLM-Embedding-Model` 헤더로 전달된다. 요청 설정이 서버 환경변수보다 우선한다.
 - URL은 브라우저가 아니라 **백엔드에서 접근하는 주소**다. Docker Desktop에서는 호스트 서버에 `host.docker.internal`로 연결한다. 직접 실행하는 백엔드는 `http://localhost:11434/v1` 등을 쓴다. 서버는 별도로 실행해야 한다.
@@ -62,6 +63,15 @@ Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델�
 - 로컬 임베딩 벡터의 길이는 `CHAT_EMBEDDING_DIM`(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.
 - 키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.
 - 이전 Gemini 모델 `gemini-2.5-flash`는 기존 동작대로 `gemini-3.6-flash`로 마이그레이션한다(`aiSettings.js`).
+
+## Jev 의도 분류 연결
+
+관리자의 **AI 설정 → Jev API key**에 키를 입력하고 **AI 설정 저장**을 누르면 다음 채팅 요청부터 사용한다. 모든 Provider가 이 앱의 공통 Jev 키를 사용하므로 Provider 전환과 새로고침 후에도 유지된다. doc2graph의 키를 자동으로 가져오지 않는다.
+
+- 브라우저 키는 `POST /api/chat`의 `X-Jev-API-Key` 헤더로만 전달한다. 메시지 본문, 예상 질문 생성·검색, DB 연결 조회, 로컬 모델 목록 요청에는 넣지 않는다.
+- 요청 키를 우선 사용하며 비어 있거나 헤더가 없으면 서버 `TYPESAFE_API_KEY`를 사용한다. 서버 키도 없거나 Jev가 실패하면 기존처럼 채팅 LLM이 분류한다.
+- 브라우저와 서버는 8,192자 이하의 한 줄 문자열만 허용한다. 저장 오류는 설정 화면에 표시하고, 잘못된 헤더는 메시지를 저장하기 전에 HTTP 400으로 거부한다.
+- 키는 Jev 인증에만 사용한다. 분류 payload, SQL 계획·복구·답변·임베딩 모델 입력, 응답·대화·표시용 처리 내역에는 포함하지 않는다. Provider별 모델 API 키는 기존 방식으로 별도 사용한다.
 
 ---
 

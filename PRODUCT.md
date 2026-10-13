@@ -39,8 +39,9 @@ Confirmed:
 
 - One Stage per project (`project_id`). A project contains multiple conversations.
 - Stage layout is `react-grid-layout`; layout persists and restores.
-- Widgets must be on the server whitelist. Unknown component names are rejected or fall back to `DataTable`. Current catalog includes KPI, tables, rank lists, bar/line/pie (and table companions), markdown, sources, filters, sparklines.
+- Widgets must be on the server whitelist. Unknown component names are rejected or fall back to `DataTable`. The 16-component catalog includes KPI, tables, rank lists, bar/line/pie (and table companions), stacked bars, heatmaps, scatterplots, histograms, markdown, sources, filters, sparklines. Bar and the four new analytical charts use fixed TanStack Charts definitions.
 - Customer DBs are read-only `SELECT`.
+- Chat also supports greetings, small talk and general concept explanations with conversation history. General chat returns a full text answer without querying customer DBs or generating widgets.
 - Agent JSON is closed furniture: unknown keys/types dropped; no invented chart types, free layout strings, hex/CSS/HTML. Data values are open; column shapes are closed.
 - Density caps apply (for example stack max 3). Recommended fail: drop the bad slot, do not blank the whole widget.
 

@@ -208,6 +208,10 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    jev_key = request.headers.get("X-Jev-API-Key", "")
+    if len(jev_key) > 8192 or "\r" in jev_key or "\n" in jev_key:
+        raise HTTPException(status_code=400, detail="Jev API 키는 8,192자 이하의 한 줄 문자열이어야 합니다.")
+
     user_msg = conv_repo.add_message(body.conversation_id, "user", body.message, None)
     conv_repo.touch_title_from_message(body.conversation_id, body.message)
 
@@ -217,6 +221,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         "model": request.headers.get("X-LLM-Model", ""),
         "base_url": request.headers.get("X-LLM-Base-URL", ""),
         "embedding_model": request.headers.get("X-LLM-Embedding-Model"),
+        "jev_api_key": jev_key.strip(),
     }
 
     related_messages: list[dict] = []

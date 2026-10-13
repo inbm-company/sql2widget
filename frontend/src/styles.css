@@ -1014,6 +1014,15 @@ button {
   height: 180px;
 }
 
+.widget-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* Composite widgets */
 .cq-composite {
   container-type: size;

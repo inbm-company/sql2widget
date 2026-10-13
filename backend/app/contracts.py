@@ -38,7 +38,7 @@ class ChatRequest(BaseModel):
     conversation_id: str
     message: str
     connection_id: str | None = None
-    route: Literal["data_query", "schema_qa"] | None = None
+    route: Literal["data_query", "schema_qa", "general_chat"] | None = None
 
 
 class QuestionWidgetIn(BaseModel):

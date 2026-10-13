@@ -245,7 +245,7 @@
 </tr>
 <tr>
 <td>관리자 — DB 연결/권한/AI 설정</td>
-<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정</td>
+<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장</td>
 <td><a href="features/admin.md">admin.md</a></td>
 </tr>
 </tbody>
@@ -843,7 +843,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <section id="chat"><h1>기능: DB 채팅</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능: DB 채팅</td></tr>
-<tr><td>기준일</td><td>2026-10-13 (대화 문맥·후속 질문 처리 포함)</td></tr>
+<tr><td>기준일</td><td>2026-10-13 (대화 문맥·후속 질문·Jev 키 설정 포함)</td></tr>
 <tr><td>관련 문서</td><td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td></tr>
 </tbody></table>
 <h2>DB 선택과 질문</h2>
@@ -870,56 +870,30 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <h2>저장과 AI 설정</h2>
 <p>대화 메시지·Artifact·표시용 처리 내역은 서비스 DB에 저장한다. 처리 내역에는 경로·모델·SQL 테이블 선택·유사 질문·복구 결과를 표시하며 meta의 <code>connection_id</code>는 문맥의 DB 범위를 확인하는 데 사용한다. API 키·원시 오류·참조 SQL 계획은 표시용 meta에 저장하지 않는다.</p>
 <p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
-<p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p></section>
+<p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p>
+<p>같은 설정의 Provider 공통 <code>jevApiKey</code>는 AI 설정 패널의 <code>Jev API key</code> 입력란에서 저장하고 채팅의 <code>X-Jev-API-Key</code> 헤더로만 전달한다. 요청 키를 우선 사용하며 빈 값·헤더 생략 시 서버 <code>TYPESAFE_API_KEY</code>를 사용한다. Jev 키는 모델 프롬프트나 대화 기록에 저장하지 않는다. 길이·줄바꿈 형식 오류는 메시지를 저장하기 전에 HTTP 400으로 거부한다. 자세한 동작은 <a href="features/admin.md#jev-의도-분류-연결">Jev 의도 분류 연결</a>을 따른다.</p></section>
 <section id="widgets-artifact"><h1>기능: Artifact / 위젯 카탈로그</h1>
 <table>
 <thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
+<tr><th>항목</th><th>내용</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-13 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>rows_to_props</code>), <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/widgets/tanstackBarChart.js</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td>
-</tr>
+<tr><td>문서명</td><td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td></tr>
+<tr><td>기준일</td><td>2026-10-13 (구현 기준)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>rows_to_props</code>), <code>backend/app/widget_props.py</code>, <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/widgets/tanstackBarChart.js</code>, <code>frontend/src/widgets/tanstackAnalyticalCharts.js</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td></tr>
 </tbody>
 </table>
 <hr />
 <h2>용어</h2>
 <table>
 <thead>
-<tr>
-<th>용어</th>
-<th>의미</th>
-</tr>
+<tr><th>용어</th><th>의미</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>Artifact</td>
-<td>채팅 한 번의 답변에 묶인 위젯 집합. <code>artifact_id</code>, <code>type</code>(<code>widget</code>/<code>dashboard</code>/<code>report</code>), <code>widgets[]</code></td>
-</tr>
-<tr>
-<td>Widget</td>
-<td>허용 컴포넌트 하나. <code>widget_id</code>, <code>component</code>, <code>title</code>, <code>props</code>, 선택적 <code>sql</code></td>
-</tr>
-<tr>
-<td>Furniture</td>
-<td>에이전트가 내는 닫힌 카탈로그 JSON을 부르는 제품 용어. 모르는 키/타입은 버려진다</td>
-</tr>
+<tr><td>Artifact</td><td>채팅 한 번의 답변에 묶인 위젯 집합. <code>artifact_id</code>, <code>type</code>(<code>widget</code>/<code>dashboard</code>/<code>report</code>), <code>widgets[]</code></td></tr>
+<tr><td>Widget</td><td>허용 컴포넌트 하나. <code>widget_id</code>, <code>component</code>, <code>title</code>, <code>props</code>, 선택적 <code>sql</code></td></tr>
+<tr><td>Furniture</td><td>에이전트가 내는 닫힌 카탈로그 JSON을 부르는 제품 용어. 모르는 키/타입은 버려진다</td></tr>
 </tbody>
 </table>
 <hr />
@@ -928,116 +902,77 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <li>어시스턴트 메시지에 Artifact가 있으면(<code>artifact.widgets.length</code> 또는 <code>artifact_id</code> 존재) <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다(<code>AssistantAnswer</code>).</li>
 <li>Widget 뷰: 위젯마다 <code>ArtifactPreviewCard</code> — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.</li>
 <li>JSON 뷰: Artifact 전체를 pretty-print.</li>
-<li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
+<li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
 <li>실제 SQL 문자열은 <code>resolveWidgetSql()</code>이 반환한다: 위젯에 백엔드가 직접 붙인 <code>sql</code>/<code>query_ref.sql</code>/<code>props.__sql</code>만 보여준다 — 없으면 빈 문자열이고 SQL 토글이 숨는다. 추측한 SQL을 대신 보여주지 않는다(2026-09-22, 옛 <code>FALLBACK_BY_TITLE</code>/<code>FALLBACK_BY_COMPONENT</code> 하드코딩 테이블 삭제).</li>
 <li>미리보기 카드는 <code>draggable</code>(SQL 보기 중이거나 viewer면 제외). viewer는 드래그 핸들도, "Add to stage" 버튼도 없다.</li>
 </ul>
 <hr />
 <h2>허용 위젯 카탈로그</h2>
-<p>서버 <code>ALLOWED_COMPONENTS</code>(<code>backend/app/config.py</code>)가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 <code>REGISTRY</code>도 정확히 이 12개와 1:1로 대응한다.</p>
+<p>서버 <code>ALLOWED_COMPONENTS</code>(<code>backend/app/config.py</code>)가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 <code>REGISTRY</code>도 정확히 이 16개와 1:1로 대응한다.</p>
 <table>
 <thead>
-<tr>
-<th>컴포넌트</th>
-<th>용도</th>
-<th>대표 props</th>
-</tr>
+<tr><th>컴포넌트</th><th>용도</th><th>대표 props</th></tr>
 </thead>
 <tbody>
-<tr>
-<td><code>KpiStat</code></td>
-<td>단일 수치</td>
-<td><code>label, value, unit?, delta?</code></td>
-</tr>
-<tr>
-<td><code>DataTable</code></td>
-<td>표</td>
-<td><code>columns[{key,label}], rows[]</code></td>
-</tr>
-<tr>
-<td><code>RankList</code></td>
-<td>순위 목록</td>
-<td><code>items[{rank,label,value,meta?}]</code></td>
-</tr>
-<tr>
-<td><code>BarChart</code></td>
-<td>막대</td>
-<td><code>categories[], series[0]{name,data[]}</code></td>
-</tr>
-<tr>
-<td><code>LineChart</code></td>
-<td>추이</td>
-<td><code>series[]{name,points[{x,y}]}</code></td>
-</tr>
-<tr>
-<td><code>PieChart</code></td>
-<td>비중</td>
-<td><code>slices[{label,value}]</code></td>
-</tr>
-<tr>
-<td><code>MarkdownBlock</code></td>
-<td>설명·보고서 텍스트</td>
-<td><code>markdown, citations[]</code></td>
-</tr>
-<tr>
-<td><code>SourceList</code></td>
-<td>문서 출처</td>
-<td><code>sources[{title,version?,section?}]</code></td>
-</tr>
-<tr>
-<td><code>FilterBar</code></td>
-<td>필터 칩 UI(카탈로그 예약)</td>
-<td><code>filters[{label,value}]</code></td>
-</tr>
-<tr>
-<td><code>KpiSparkline</code></td>
-<td>KPI + 미니 추이</td>
-<td><code>label,value,unit?,delta?,points[{x,y}]</code></td>
-</tr>
-<tr>
-<td><code>PieTable</code></td>
-<td>파이 + 표 (컨테이너 쿼리로 레이아웃 전환)</td>
-<td><code>slices[], columns?, rows?</code></td>
-</tr>
-<tr>
-<td><code>BarTable</code></td>
-<td>막대 + 표 (+선택 KPI 헤더)</td>
-<td><code>label?,value?,categories[],series[],columns?,rows?</code></td>
-</tr>
+<tr><td><code>KpiStat</code></td><td>단일 수치</td><td><code>label, value, unit?, delta?</code></td></tr>
+<tr><td><code>DataTable</code></td><td>표</td><td><code>columns[{key,label}], rows[]</code></td></tr>
+<tr><td><code>RankList</code></td><td>순위 목록</td><td><code>items[{rank,label,value,meta?}]</code></td></tr>
+<tr><td><code>BarChart</code></td><td>막대</td><td><code>categories[], series[0]{name,data[]}</code></td></tr>
+<tr><td><code>LineChart</code></td><td>추이</td><td><code>series[]{name,points[{x,y}]}</code></td></tr>
+<tr><td><code>PieChart</code></td><td>비중</td><td><code>slices[{label,value}]</code></td></tr>
+<tr><td><code>MarkdownBlock</code></td><td>설명·보고서 텍스트</td><td><code>markdown, citations[]</code></td></tr>
+<tr><td><code>SourceList</code></td><td>문서 출처</td><td><code>sources[{title,version?,section?}]</code></td></tr>
+<tr><td><code>FilterBar</code></td><td>필터 칩 UI(카탈로그 예약)</td><td><code>filters[{label,value}]</code></td></tr>
+<tr><td><code>KpiSparkline</code></td><td>KPI + 미니 추이</td><td><code>label,value,unit?,delta?,points[{x,y}]</code></td></tr>
+<tr><td><code>PieTable</code></td><td>파이 + 표 (컨테이너 쿼리로 레이아웃 전환)</td><td><code>slices[], columns?, rows?</code></td></tr>
+<tr><td><code>BarTable</code></td><td>막대 + 표 (+선택 KPI 헤더)</td><td><code>label?,value?,categories[],series[],columns?,rows?</code></td></tr>
+<tr><td><code>StackedBarChart</code></td><td>시리즈별 기여도를 누적한 막대</td><td><code>categories[], series[{name,data[]}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>Heatmap</code></td><td>두 범주 축의 수치 강도</td><td><code>cells[{x,y,value}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>ScatterChart</code></td><td>두 수치의 관계·이상치</td><td><code>points[{x,y,label?}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>Histogram</code></td><td>숫자 구간별 빈도</td><td><code>bins[{start,end,count}], xLabel?, yLabel?</code></td></tr>
 </tbody>
 </table>
-<p><code>BarChart</code>는 TanStack Charts 1.1.0의 React/SVG 렌더러를 사용한다. 나머지 차트와 합성 위젯은 Recharts(<code>WidgetRenderer.jsx</code>)를 사용한다. <code>PieTable</code>/<code>BarTable</code>/<code>KpiSparkline</code>은 자체 CSS(<code>cq-composite</code>)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.</p>
+<p><code>BarChart</code>·<code>StackedBarChart</code>·<code>Heatmap</code>·<code>ScatterChart</code>·<code>Histogram</code>은 TanStack Charts 1.1.0의 React/SVG 렌더러를 사용한다. 나머지 차트와 합성 위젯은 Recharts(<code>WidgetRenderer.jsx</code>)를 사용한다. <code>PieTable</code>/<code>BarTable</code>/<code>KpiSparkline</code>은 자체 CSS(<code>cq-composite</code>)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.</p>
 <h3>TanStack Charts 적용 범위 (2026-10-13)</h3>
 <ul>
-<li>기존 <code>BarChart</code>의 <code>categories[]</code>, <code>series[0].data[]</code> props와 저장 형태를 유지한다. 카탈로그는 12개이며 첫 번째 시리즈만 표시한다.</li>
-<li><code>tanstackBarChart.js</code>가 고정된 막대 차트 정의를 만든다. LLM이 임의의 TanStack 정의·색상·차트 타입을 생성하는 경로는 없다.</li>
+<li>기존 <code>BarChart</code>의 <code>categories[]</code>, <code>series[0].data[]</code> props와 저장 형태를 유지하며 첫 번째 시리즈만 표시한다. 여러 시리즈의 기여도는 신규 <code>StackedBarChart</code>로 표시한다.</li>
+<li><code>tanstackBarChart.js</code>와 <code>tanstackAnalyticalCharts.js</code>가 고정된 차트 정의를 만든다. LLM이 임의의 TanStack 정의·색상·차트 타입을 생성하는 경로는 없다.</li>
 <li>채팅 미리보기·Stage·Viewer가 같은 렌더러를 공유한다. 카드의 너비와 높이 변화는 라이브러리의 ResizeObserver가 처리하고, 툴팁은 포인터와 키보드로 확인할 수 있다.</li>
 <li>중복 항목명은 별도 막대로 유지한다. 0·음수·소수·숫자 문자열을 표시하고, 누락된 값은 기존처럼 0으로 처리한다. 숫자가 아닌 값은 막대에서 제외한다.</li>
-<li>프런트 테스트 8개(기존 4개 + 차트 4개), Vite 빌드 및 검증용 브라우저 화면의 크기 변경·데이터 갱신·빈 결과·키보드 툴팁·StrictMode 재마운트를 확인했다. 실제 DB/LLM 질문 및 Stage 저장 API는 이번 적용에서 미검증이다.</li>
-<li>Recharts와 함께 사용하므로 빌드의 압축 JS는 적용 전 218.59KB에서 260.33KB로 증가했다. 전체 차트 교체와 신규 위젯 추가는 별도 범위다.</li>
+<li>프런트 테스트 14개, 신규 위젯 백엔드 테스트 26개, Vite 빌드와 브라우저 화면의 크기 변경·빈 결과·키보드 툴팁·StrictMode 재마운트를 확인했다. 로컬 Compose를 띄운 뒤 백엔드 전체 124개 테스트가 통과했다. 실제 Global Sales 데모 DB의 SELECT 결과로 신규 4종을 만들고 Stage 추가/재조회 API 및 Viewer 화면을 확인했다(6개월 누적 매출, 지역·제품 24셀, 판매량·매출 288관측, 매출 9구간). 이 실데이터 화면은 SQL 직접 검증 결과이며 AI가 생성한 응답이 아니다. 서버·현재 브라우저에 AI 키가 없어 실 LLM 호출은 아직 미검증이다.</li>
+<li>Recharts와 함께 사용하므로 빌드의 압축 JS는 최초 적용 전 218.59KB에서 4종 추가 후 264.54KB로 증가했다. 기존 BarChart 적용 대비 추가 증가는 약 4.2KB다.</li>
 </ul>
 <p>공식 자료: <a href="https://tanstack.com/charts/latest/docs/overview">개요</a>, <a href="https://tanstack.com/charts/latest/docs/framework/react/quick-start">React 빠른 시작</a>.</p>
+<h3>신규 분석 위젯의 SQL 계약</h3>
+<p>채팅 계획과 DB별 예상 질문 생성 모두 다음 별칭을 사용한다. 예상 질문의 SQL 위젯 목록은 13개이며 <code>MarkdownBlock</code>·<code>SourceList</code>·<code>FilterBar</code>를 제외한다.</p>
+<table>
+<thead>
+<tr><th>컴포넌트</th><th>SQL 결과 별칭</th><th>변환 규칙</th></tr>
+</thead>
+<tbody>
+<tr><td><code>StackedBarChart</code></td><td><code>category</code>, <code>series</code>, <code>value</code></td><td>같은 범주·시리즈를 합산하고 누락된 조합은 0으로 채운다. 음수는 0 아래에 별도 누적한다.</td></tr>
+<tr><td><code>Heatmap</code></td><td><code>x</code>, <code>y</code>, <code>value</code></td><td>같은 좌표를 합산한다. 수치의 최솟값~최댓값을 고정 파란색 강도와 범례로 표시하며, 누락된 좌표는 빈 공간으로 남긴다.</td></tr>
+<tr><td><code>ScatterChart</code></td><td>숫자 <code>x</code>, 숫자 <code>y</code>, 선택적 <code>label</code></td><td>같은 행의 좌표 쌍을 유지하고 중복 좌표도 보존한다.</td></tr>
+<tr><td><code>Histogram</code></td><td><code>bin_start</code>, <code>bin_end</code>, <code>count</code></td><td>DB가 계산한 <code>[start,end)</code> 구간을 시작값 순으로 표시한다. 동일 구간은 합산한다. 겹친 구간·폭 0 이하·음수 또는 소수 빈도는 오류다.</td></tr>
+</tbody>
+</table>
+<ul>
+<li>필수 별칭이 없거나 유한한 숫자가 아닌 값이 있으면 오류를 반환해 기존 계획 복구 경로로 전달한다. NULL 관측은 제외하며 임의의 0으로 대체하지 않는다.</li>
+<li>축 이름은 계획의 <code>props.xLabel</code>·<code>props.yLabel</code> 문자열만 유지하고, 데이터 props는 SQL 결과로 새로 만든다.</li>
+<li>히스토그램은 PostgreSQL에서 구간별 집계를 수행한다. 상수 데이터에도 양의 구간 폭을 쓰며, 사용자가 요청하면 빈 구간을 0건으로 포함한다. 원시 관측을 프런트에서 임의로 구간화하지 않는다.</li>
+</ul>
 <h3>화이트리스트 위반 시 동작이 다르다</h3>
 <table>
 <thead>
-<tr>
-<th>경로</th>
-<th>목록 밖 컴포넌트 처리</th>
-</tr>
+<tr><th>경로</th><th>목록 밖 컴포넌트 처리</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>채팅 Artifact (<code>sanitize_artifact</code>)</td>
-<td><code>DataTable</code>로 치환. 원래 <code>props</code>에 <code>columns</code>가 없으면 "Unsupported component fell back to table" 안내 행으로 대체</td>
-</tr>
-<tr>
-<td>Stage 저장 (<code>stages.add_widget</code> / <code>replace_stage_widgets</code>)</td>
-<td><code>ValueError</code> → API가 <strong>400</strong>으로 거부. 폴백 없음</td>
-</tr>
+<tr><td>채팅 Artifact (<code>sanitize_artifact</code>)</td><td><code>DataTable</code>로 치환. 원래 <code>props</code>에 <code>columns</code>가 없으면 "Unsupported component fell back to table" 안내 행으로 대체</td></tr>
+<tr><td>Stage 저장 (<code>stages.add_widget</code> / <code>replace_stage_widgets</code>)</td><td><code>ValueError</code> → API가 <strong>400</strong>으로 거부. 폴백 없음</td></tr>
 </tbody>
 </table>
 <h3>빈 결과일 때 props (<code>rows_to_props</code>, 실 LLM 경로)</h3>
-<p>SQL 실행 결과가 0행이면 컴포넌트별로 빈 상태 props를 만든다: <code>KpiStat</code>은 <code>value: 0</code>, <code>DataTable</code>은 "결과 없음" 안내 행, <code>BarChart</code>/<code>LineChart</code>/<code>RankList</code>/<code>PieChart</code>는 빈 배열.</p>
+<p>SQL 실행 결과가 0행이면 컴포넌트별로 빈 상태 props를 만든다: <code>KpiStat</code>은 <code>value: 0</code>, <code>DataTable</code>은 "결과 없음" 안내 행, <code>BarChart</code>/<code>LineChart</code>/<code>RankList</code>/<code>PieChart</code>는 빈 배열. 신규 분석 위젯은 각각 빈 <code>categories/series</code>, <code>cells</code>, <code>points</code>, <code>bins</code>를 만들고 "결과 없음"을 표시한다.</p>
 <hr />
 <h2>관련 자료</h2>
 <ul>
@@ -1248,73 +1183,24 @@ stage_widgets(
 </tbody>
 </table></section>
 <section id="admin"><h1>기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — 관리자 패널</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-02 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>문서명</td><td>기능 문서 — 관리자 패널</td></tr>
+<tr><td>기준일</td><td>2026-10-13 (Jev 공통 키 입력·저장 포함)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td></tr>
+</tbody></table>
 <p>액터: 대부분 <code>admin</code>만. 그 외 역할은 403(패널 자체가 사이드바에 노출되지 않음, § <a href="features/auth.md">auth.md</a>).</p>
-<p>사이드바 하단에는 기존 <code>Admin</code> 버튼과 별도로 <code>AI 설정</code>, <code>DB 관리</code> 버튼이 있다. <code>Admin</code>은 기존 전체 설정을 유지한다. <code>AI 설정</code> 패널은 Provider별 AI 연결 설정만, <code>DB 관리</code> 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
+<p>사이드바 하단에는 기존 <code>Admin</code> 버튼과 별도로 <code>AI 설정</code>, <code>DB 관리</code> 버튼이 있다. <code>Admin</code>은 기존 전체 설정을 유지한다. <code>AI 설정</code> 패널은 Provider별 AI 연결 설정과 Jev 공통 키 입력, <code>DB 관리</code> 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
 <p>드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.</p>
-<hr />
+<hr>
 <h2>F-13 DB 연결 관리</h2>
-<table>
-<thead>
-<tr>
-<th>API</th>
-<th>기능</th>
-<th>권한</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GET /api/database-connections</code></td>
-<td>테넌트 연결 목록(비밀번호 비노출)</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections</code></td>
-<td>연결 추가(host, port, database_name, username, password, sslmode)</td>
-<td>admin</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections/{id}/test</code></td>
-<td><code>SELECT 1</code>로 연결 테스트</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>GET /api/database-connections/{id}/tables</code></td>
-<td><code>information_schema.tables</code> 베이스 테이블 목록</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections/{id}/preview-sql</code></td>
-<td>검증된 SELECT 실행(디버그용)</td>
-<td>admin</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead><tbody>
+<tr><td><code>GET /api/database-connections</code></td><td>테넌트 연결 목록(비밀번호 비노출)</td><td>로그인</td></tr>
+<tr><td><code>POST /api/database-connections</code></td><td>연결 추가(host, port, database_name, username, password, sslmode)</td><td>admin</td></tr>
+<tr><td><code>POST /api/database-connections/{id}/test</code></td><td><code>SELECT 1</code>로 연결 테스트</td><td>로그인</td></tr>
+<tr><td><code>GET /api/database-connections/{id}/tables</code></td><td><code>information_schema.tables</code> 베이스 테이블 목록</td><td>로그인</td></tr>
+<tr><td><code>POST /api/database-connections/{id}/preview-sql</code></td><td>검증된 SELECT 실행(디버그용)</td><td>admin</td></tr>
+</tbody></table>
 <ul>
 <li>비밀번호는 <code>APP_SECRET</code>에서 유도한 키로 Fernet 대칭암호화해 <code>password_encrypted</code>에 저장(<code>crypto.encrypt_secret</code>). 조회 응답에는 절대 포함하지 않는다.</li>
 <li><code>connection_url()</code>이 요청 시점에 복호화해 <code>postgresql://user:pass@host:port/db?sslmode=...</code> 형태로 조립.</li>
@@ -1323,27 +1209,10 @@ stage_widgets(
 <li>SKAX NMS는 로컬·운영에서 <code>SKAX NMS DB</code>(<code>dbconn_skax_nms</code>) 연결로 자동 등록한다. 운영은 별도 <code>db-skax-nms</code> 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 <code>cinamon</code> 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. <a href="../deployment/README.md#skax-nms-cinamon-운영-db">운영 절차</a>.</li>
 </ul>
 <h2>F-14 테이블 권한</h2>
-<table>
-<thead>
-<tr>
-<th>API</th>
-<th>기능</th>
-<th>권한</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GET /api/table-permissions?connection_id=</code></td>
-<td>연결별 역할-테이블 매핑 조회</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>PUT /api/table-permissions</code></td>
-<td><code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체 교체</td>
-<td>admin</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead><tbody>
+<tr><td><code>GET /api/table-permissions?connection_id=</code></td><td>연결별 역할-테이블 매핑 조회</td><td>로그인</td></tr>
+<tr><td><code>PUT /api/table-permissions</code></td><td><code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체 교체</td><td>admin</td></tr>
+</tbody></table>
 <ul>
 <li>저장은 delete-then-insert: 해당 <code>(tenant_id, connection_id, role)</code> 행을 지우고 새로 넣는다(<code>replace_table_permissions</code>).</li>
 <li>현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능(체크박스 목록). <code>admin</code>/<code>viewer</code>용 허용 테이블은 시드 스크립트(<code>backend/scripts/seed_dev.py</code> 등)가 넣어둔 값을 UI에서 바꿀 방법이 아직 없다 — API 자체는 임의 role을 받는다.</li>
@@ -1351,37 +1220,15 @@ stage_widgets(
 <li><code>schema_metadata()</code>가 이 허용 테이블만 골라 <code>information_schema</code>에서 컬럼·PK·FK를 읽어 실 LLM 프롬프트용 스키마 텍스트를 만든다 — 데이터 행은 절대 읽지 않는다.</li>
 </ul>
 <h2>AI 연결 설정 (브라우저 로컬)</h2>
-<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local } }</code> 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
-<table>
-<thead>
-<tr>
-<th>필드</th>
-<th>동작</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Provider</td>
-<td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td>
-</tr>
-<tr>
-<td>Model</td>
-<td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td>
-</tr>
-<tr>
-<td>Base URL</td>
-<td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td>
-</tr>
-<tr>
-<td>API key</td>
-<td><code>type="password"</code>, 로컬에서는 선택 사항</td>
-</tr>
-<tr>
-<td>Embedding model</td>
-<td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td>
-</tr>
-</tbody>
-</table>
+<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local }, jevApiKey }</code> 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
+<table><thead><tr><th>필드</th><th>동작</th></tr></thead><tbody>
+<tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
+<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
+<tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
+<tr><td>API key</td><td><code>type=&quot;password&quot;</code>, 로컬에서는 선택 사항</td></tr>
+<tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
+<tr><td>Jev API key</td><td><code>type=&quot;password&quot;</code>, Provider 공통 의도 분류 키. 공백 제거 후 저장, 빈 값은 서버 설정 사용</td></tr>
+</tbody></table>
 <ul>
 <li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달된다. 요청 설정이 서버 환경변수보다 우선한다.</li>
 <li>URL은 브라우저가 아니라 <strong>백엔드에서 접근하는 주소</strong>다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
@@ -1390,7 +1237,15 @@ stage_widgets(
 <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
 <li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
 </ul>
-<hr />
+<h2>Jev 의도 분류 연결</h2>
+<p>관리자의 <strong>AI 설정 → Jev API key</strong>에 키를 입력하고 <strong>AI 설정 저장</strong>을 누르면 다음 채팅 요청부터 사용한다. 모든 Provider가 이 앱의 공통 Jev 키를 사용하므로 Provider 전환과 새로고침 후에도 유지된다. doc2graph의 키를 자동으로 가져오지 않는다.</p>
+<ul>
+<li>브라우저 키는 <code>POST /api/chat</code>의 <code>X-Jev-API-Key</code> 헤더로만 전달한다. 메시지 본문, 예상 질문 생성·검색, DB 연결 조회, 로컬 모델 목록 요청에는 넣지 않는다.</li>
+<li>요청 키를 우선 사용하며 비어 있거나 헤더가 없으면 서버 <code>TYPESAFE_API_KEY</code>를 사용한다. 서버 키도 없거나 Jev가 실패하면 기존처럼 채팅 LLM이 분류한다.</li>
+<li>브라우저와 서버는 8,192자 이하의 한 줄 문자열만 허용한다. 저장 오류는 설정 화면에 표시하고, 잘못된 헤더는 메시지를 저장하기 전에 HTTP 400으로 거부한다.</li>
+<li>키는 Jev 인증에만 사용한다. 분류 payload, SQL 계획·복구·답변·임베딩 모델 입력, 응답·대화·표시용 처리 내역에는 포함하지 않는다. Provider별 모델 API 키는 기존 방식으로 별도 사용한다.</li>
+</ul>
+<hr>
 <h2>데이터 모델 (서비스 DB)</h2>
 <pre><code class="language-text">database_connections(id, tenant_id, name, host, port, database_name,
                       username, password_encrypted, sslmode, created_by, created_at)
@@ -1574,8 +1429,8 @@ docker compose exec backend pytest -q
 <td><a href="features/projects-conversations.md">projects-conversations.md</a></td>
 </tr>
 <tr>
-<td>Artifact 위젯 렌더 + SQL 미리보기 · BarChart에 TanStack Charts 적용</td>
-<td>2026-10-13 BarChart 렌더러 적용, 카탈로그 12개·저장 형태 유지. 프런트 8개 테스트·Vite 빌드·검증용 브라우저 화면 확인. DB/LLM·Stage 저장 API는 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
+<td>Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가</td>
+<td>2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
 </tr>
 <tr>
 <td>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</td>
@@ -1602,8 +1457,8 @@ docker compose exec backend pytest -q
 <td><a href="features/chat.md">chat.md</a></td>
 </tr>
 <tr>
-<td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select)</td>
-<td><a href="features/admin.md">admin.md</a></td>
+<td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장</td>
+<td>2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. <a href="features/admin.md">admin.md</a></td>
 </tr>
 <tr>
 <td><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</td>

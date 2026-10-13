@@ -76,5 +76,9 @@ ALLOWED_COMPONENTS = frozenset(
         "KpiSparkline",
         "PieTable",
         "BarTable",
+        "StackedBarChart",
+        "Heatmap",
+        "ScatterChart",
+        "Histogram",
     }
 )

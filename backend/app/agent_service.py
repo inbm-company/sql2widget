@@ -12,8 +12,9 @@ from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
 from app.documents import build_solution_from_sources, get_document_provider
 from app.intent_router import RouteError, choices_for, decide_route
 from app.llm import effective_provider, json_with_llm, plan_with_llm
-from app.prompts import SCHEMA_QA_HINT
+from app.prompts import GENERAL_CHAT_HINT, SCHEMA_QA_HINT
 from app.query import QueryError, execute_readonly
+from app.widget_props import ANALYTICAL_COMPONENTS, analytical_rows_to_props
 from app.repositories import connections as conn_repo
 
 
@@ -41,6 +42,8 @@ def _aid() -> str:
 
 
 def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dict[str, Any]:
+    if component in ANALYTICAL_COMPONENTS:
+        return analytical_rows_to_props(component, rows)
     if not rows:
         if component == "KpiStat":
             return {"label": title, "value": 0}
@@ -233,7 +236,9 @@ def _materialize_plan(
                 rows = execute_readonly(
                     db_url, sql, allowed_tables=allowed_tables
                 )
-                props = rows_to_props(component, rows, title)
+                labels = {key: props[key] for key in ("xLabel", "yLabel")
+                          if component in ANALYTICAL_COMPONENTS and isinstance(props.get(key), str)}
+                props = {**labels, **rows_to_props(component, rows, title)}
             except (QueryError, Exception) as exc:  # noqa: BLE001
                 sql_error = str(exc)
                 raise
@@ -327,6 +332,26 @@ def _answer_schema(
     return answer.get("summary") or "테이블 구조를 설명했습니다.", artifact, meta
 
 
+def _answer_general(
+    message: str, llm_context: dict[str, Any], meta: dict[str, Any],
+    *, history: list[dict[str, Any]] | None = None,
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Return a full conversational answer without SQL or widget generation."""
+    result = json_with_llm(
+        GENERAL_CHAT_HINT, {"question": message, "history": history or []}, **llm_context,
+    )
+    answer = result.get("result")
+    content = answer.get("answer") if isinstance(answer, dict) else None
+    if not isinstance(content, str) or not content.strip():
+        raise AgentRunError(
+            f"{result.get('provider') or 'LLM'} request failed: "
+            f"{result.get('error') or 'general answer was empty'}"
+        )
+    meta["provider"] = result.get("provider")
+    meta["model"] = result.get("model")
+    return content.strip(), {"type": "answer", "widgets": []}, meta
+
+
 def run_agent(
     message: str,
     *,
@@ -348,7 +373,6 @@ def run_agent(
     history = flow["history"]
 
     runtime_llm = llm_settings or {}
-    schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
 
     llm_context = {
         "tenant_id": tenant_id, "user_id": user_id, "conversation_id": conversation_id,
@@ -361,6 +385,7 @@ def run_agent(
         decision = decide_route(
             message, tables=allowed or set(), forced_route=forced_route, llm_context=llm_context,
             history=history, last_route=flow["last_route"],
+            jev_api_key=runtime_llm.get("jev_api_key"),
         )
     except RouteError as exc:
         raise AgentRunError(f"Could not decide how to handle the message: {exc}") from exc
@@ -377,6 +402,10 @@ def run_agent(
             "무엇을 원하시는지 확실하지 않아요. 어떤 방식으로 처리할까요?",
             message, decision.get("probabilities"), meta,
         )
+    if decision["route"] == "general_chat":
+        return _answer_general(message, llm_context, meta, history=history)
+
+    schema_text = _schema_text_for_connection(tenant_id, used_conn, allowed)
     if decision["route"] == "schema_qa":
         return _answer_schema(message, schema_text, llm_context, meta, history=history)
 

@@ -2,6 +2,12 @@ import { useMemo } from "react";
 import { Chart } from "@tanstack/charts/react";
 import { createBarChartDefinition } from "./tanstackBarChart.js";
 import {
+  createStackedBarDefinition,
+  createHeatmapDefinition,
+  createScatterDefinition,
+  createHistogramDefinition,
+} from "./tanstackAnalyticalCharts.js";
+import {
   Bar,
   BarChart,
   CartesianGrid,
@@ -86,6 +92,20 @@ function BarChartWidget({ props }) {
     <Chart
       definition={definition}
       ariaLabel={props?.series?.[0]?.name || "막대 차트"}
+      style={{ height: "100%", minWidth: 0, minHeight: 0, fontSize: 12 }}
+    />
+  );
+}
+
+function AnalyticalChart({ props, createDefinition, label, dataKey }) {
+  const definition = useMemo(() => createDefinition(props), [props, createDefinition]);
+  if (!props?.[dataKey]?.length) {
+    return <div className="widget-empty">결과 없음</div>;
+  }
+  return (
+    <Chart
+      definition={definition}
+      ariaLabel={label}
       style={{ height: "100%", minWidth: 0, minHeight: 0, fontSize: 12 }}
     />
   );
@@ -336,6 +356,10 @@ const REGISTRY = {
   KpiSparkline,
   PieTable,
   BarTable,
+  StackedBarChart: ({ props }) => <AnalyticalChart props={props} createDefinition={createStackedBarDefinition} label="누적 막대 차트" dataKey="categories" />,
+  Heatmap: ({ props }) => <AnalyticalChart props={props} createDefinition={createHeatmapDefinition} label="히트맵" dataKey="cells" />,
+  ScatterChart: ({ props }) => <AnalyticalChart props={props} createDefinition={createScatterDefinition} label="산점도" dataKey="points" />,
+  Histogram: ({ props }) => <AnalyticalChart props={props} createDefinition={createHistogramDefinition} label="히스토그램" dataKey="bins" />,
 };
 
 export default function WidgetRenderer({ component, props, compact = false }) {

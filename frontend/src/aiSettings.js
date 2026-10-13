@@ -18,6 +18,11 @@ function readSettings() {
   }
 }
 
+export function getJevApiKey() {
+  const value = readSettings().jevApiKey;
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export function getAiSettings(provider) {
   const saved = readSettings();
   const name = provider || saved.provider;
@@ -32,9 +37,16 @@ export function getAiSettings(provider) {
 }
 
 export function setAiSettings(settings) {
+  const { jevApiKey, ...profile } = settings;
+  if (jevApiKey !== undefined && (typeof jevApiKey !== "string"
+    || jevApiKey.trim().length > 8192 || /[\r\n]/.test(jevApiKey))) {
+    throw new Error("Jev API key는 8,192자 이하의 한 줄 문자열이어야 합니다.");
+  }
   const saved = readSettings();
   localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    ...saved,
     provider: settings.provider,
-    profiles: { ...saved.profiles, [settings.provider]: settings },
+    ...(jevApiKey !== undefined ? { jevApiKey: jevApiKey.trim() } : {}),
+    profiles: { ...saved.profiles, [settings.provider]: profile },
   }));
 }

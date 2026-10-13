@@ -21,7 +21,7 @@ docker compose --env-file .env.local up -d --build
 
 ## 기능과 설정
 
-DB 연결·테이블 권한·예상 질문·DB 조회/구조 질문·위젯·Stage·Viewer를 제공한다. SOC와 Global Sales는 동등한 데모이고 Northwind·SKAX NMS 샘플도 준비한다. 고객 DB는 읽기 전용 SELECT만 실행한다.
+DB 연결·테이블 권한·예상 질문·DB 조회/구조 질문·일반 대화·위젯·Stage·Viewer를 제공한다. 인사·잡담·일반 개념 설명은 SQL·위젯 생성 없이 대화 문맥을 참고한 전체 본문으로 답한다. SOC와 Global Sales는 동등한 데모이고 Northwind·SKAX NMS 샘플도 준비한다. 고객 DB는 읽기 전용 SELECT만 실행한다.
 
 AI 설정에서 Gemini/OpenAI 호환/로컬 모델을 지정하거나 `.env.local`의 LLM_PROVIDER/API_KEY/BASE_URL/MODEL을 설정한다. 로컬 서버는 OpenAI 호환 API를 별도로 제공해야 한다. 키가 없거나 호출이 실패하면 오류를 반환한다. 기존 메시지 임베딩과 예상 질문용 pgvector는 유지한다.
 

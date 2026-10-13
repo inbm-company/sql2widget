@@ -2,8 +2,8 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 const TOKEN_KEY = "sql2widget_access";
 const REFRESH_KEY = "sql2widget_refresh";
-export { getAiSettings, setAiSettings } from "./aiSettings";
-import { getAiSettings } from "./aiSettings";
+export { getAiSettings, getJevApiKey, setAiSettings } from "./aiSettings";
+import { getAiSettings, getJevApiKey } from "./aiSettings";
 
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -56,6 +56,10 @@ async function request(path, options = {}, { retry = true } = {}) {
   };
   const token = getAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (path === "/api/chat") {
+    const jevApiKey = getJevApiKey();
+    if (jevApiKey) headers["X-Jev-API-Key"] = jevApiKey;
+  }
   if (path === "/api/chat" || /^\/api\/database-connections\/[^/]+\/questions(?:\/|$)/.test(path)) {
     const ai = getAiSettings();
     if (ai.apiKey) headers["X-LLM-API-Key"] = ai.apiKey;

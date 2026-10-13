@@ -9,6 +9,10 @@ const SQL_COMPONENTS = new Set([
   "KpiSparkline",
   "PieTable",
   "BarTable",
+  "StackedBarChart",
+  "Heatmap",
+  "ScatterChart",
+  "Histogram",
 ]);
 
 export function canShowSql(widget) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { api, getAiSettings, setAiSettings } from "./api";
+import { api, getAiSettings, getJevApiKey, setAiSettings } from "./api";
 import { storeKeys, useSWR } from "./store";
 
 export default function AdminPanel({ open, onClose, mode = "admin", projectId, projectTitle }) {
@@ -24,6 +24,7 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
   const [seedResult, setSeedResult] = useState(null);
   const [aiSettings, setAiForm] = useState(() => getAiSettings(getAiSettings().provider || "gemini"));
   const [aiDrafts, setAiDrafts] = useState({});
+  const [jevApiKey, setJevApiKey] = useState(getJevApiKey);
   const [localModels, setLocalModels] = useState(null);
   const [localModelsError, setLocalModelsError] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);
@@ -195,8 +196,13 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
 
   function saveAiSettings(e) {
     e.preventDefault();
-    setAiSettings(aiSettings);
-    setStatus("AI 연결 설정을 저장했습니다.");
+    try {
+      setAiSettings({ ...aiSettings, jevApiKey });
+      setJevApiKey(jevApiKey.trim());
+      setStatus("AI 연결 설정과 Jev 키를 저장했습니다.");
+    } catch (error) {
+      setStatus(error.message);
+    }
   }
 
   if (!open) return null;
@@ -249,6 +255,9 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
               <p className="muted small">Base URL은 백엔드에서 접근할 주소입니다. Docker에서 호스트 서버에 연결할 때는 host.docker.internal을 사용하세요. 임베딩 모델이 없으면 채팅만 사용할 수 있습니다.</p>
             </> : null}
             <p className="muted small">설정은 Provider별로 이 브라우저에 저장됩니다. 저장한 Provider를 채팅과 예상 질문 생성·검색에 사용합니다.</p>
+            <label>Jev API key<input name="jevApiKey" type="password" value={jevApiKey}
+              maxLength={8192} autoComplete="off" onChange={(e) => setJevApiKey(e.target.value)} /></label>
+            <p className="muted small">Jev 키는 모든 Provider에서 공통으로 사용합니다. 비워 두면 서버에 설정된 Jev 키를 사용합니다.</p>
             <button type="submit" className="primary">AI 설정 저장</button>
           </form>
         </section> : null}

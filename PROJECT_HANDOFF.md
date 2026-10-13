@@ -8,6 +8,10 @@ DB SQL·예상 질문·위젯 Stage, 선택적 graph_backend. 자세한 범위�
 
 다음 유지보수에서는 반대쪽 기능을 다시 import하거나 브라우저 키/토큰 issuer/DB/볼륨을 공유하지 않는다. 최소 그래프는 기본 미사용이고 문서 그래프를 SQL 계획에 전달하지 않는다.
 
+2026-10-13 일반 대화 추가: `general_chat`을 API route·Jev/LLM 분류·되묻기 선택지에 추가했다. `_answer_general`은 같은 대화 문맥을 받아 실 LLM의 전체 텍스트를 메시지 본문으로 반환하며 SQL·예상 질문 검색·위젯을 만들지 않는다. 고객 DB 스키마 조회를 분류 뒤로 옮겨 일반 대화는 고객 DB에 접속하지 않는다. 처리 내역에는 “일반 대화 (DB 조회 아님)”으로 표시한다. 이번 변경은 사용자 요청에 따라 테스트·빌드·브라우저 검증을 실행하지 않았다.
+
+2026-10-13 Jev 설정 UI 이식: 관리자 AI 설정에 `Jev API key` 입력란을 추가했다. 키는 `sql2widget_ai_settings.jevApiKey`에 Provider 공통으로 저장하고 채팅의 `X-Jev-API-Key` 헤더로만 전달한다. 요청 키를 우선 사용하고 빈 값/헤더 생략 시 서버 `TYPESAFE_API_KEY`를 사용한다. 길이·줄바꿈 검사 후 메시지를 저장하며 키는 모델 입력·응답·대화 기록에 포함하지 않는다. doc2graph의 키를 가져오거나 기존 자격증명·서버 설정을 변경하지 않았다. 관련 백엔드 80개·프런트 8개 테스트와 빌드 통과, 실제 브라우저에서 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 테스트 설정을 복원했다. Jev 실키 호출은 미실행이며 대역으로 검증했다.
+
 2026-10-13 채팅 공통 기능 이식: `chat_flow.py`가 현재 대화 최근 20개 메시지 범위의 같은 DB 응답 이력을 구성하고, 질문·답변 본문과 위젯 종류·제목·SQL·Markdown을 라우터·SQL 계획/복구·구조 답변에 전달한다. 새 어시스턴트 meta의 `connection_id`로 DB 범위를 확인하며 다른 DB·DB 정보 없는 과거 응답에서 이력을 끊는다. 기존 메시지·DB를 소급 변환하지 않는다. SQL 스키마 축소 시 이전 SQL의 허용 테이블도 보존하고 IME 조합 중 Enter 전송을 막는다. 추가 모델 호출·여러 단계 계획/평가·일반 대화 경로는 추가하지 않았다. 관련 백엔드 테스트 70개(대역), 프런트 테스트 4개, Vite 빌드 통과. 실모델·브라우저 IME·실 DB 재조회 검증은 미실행이며 DB가 필요한 기존 이력 재조회 테스트 1개는 제외했다. 커밋·푸시·배포는 수행하지 않았다.
 
 2026-10-06 로그인 아이디 분리: 로컬 `admin.local@example.com`·`viewer.local@example.com`, 운영 `admin@example.com`·`viewer@example.com`. `.env.local`과 서버 `.env`의 `ADMIN_EMAIL`·`VIEWER_EMAIL`로 각각 관리한다. 기존 계정은 이메일만 갱신하고 비밀번호·내부 ID·프로젝트·대화는 유지한다. 운영 서버의 계정/비밀번호는 이번 변경에서 수정하지 않았다.
@@ -19,3 +23,7 @@ DB SQL·예상 질문·위젯 Stage, 선택적 graph_backend. 자세한 범위�
 2026-10-06 후속 조치(사용자 요청): 서버 컨테이너의 ADMIN_PASSWORD·VIEWER_PASSWORD를 기준으로 운영 `user_admin`·`user_viewer`의 비밀번호 해시를 동기화했다. 서버 `.env`와 로컬 비밀번호는 변경하지 않았다. 기존 갱신 토큰은 무효화했으며 내부 사용자 ID·역할·tenant·프로젝트·대화를 보존했다. 공개 HTTPS에서 관리자/Viewer 로그인·세션·프로젝트 조회 모두 200, 운영에서 로컬 아이디 401, 로컬 기존 로그인 200을 확인했다. 비밀번호 불일치는 해결됐고 다음 시드/배포도 기존 해시를 유지한다.
 
 2026-10-13 위젯 렌더러 시험 적용: 기존 `BarChart`만 `@tanstack/charts` 1.1.0 React/SVG로 전환했다. `frontend/src/widgets/tanstackBarChart.js`가 기존 categories/첫 번째 series를 변환하며 카탈로그 12개·SQL·Stage 저장 형태는 유지한다. 나머지 차트/합성 위젯은 Recharts다. 프런트 테스트 8개, Vite 빌드, 검증용 브라우저 화면에서 크기 변경·데이터 갱신·빈 결과·키보드 툴팁·StrictMode 재마운트를 확인했다. DB/실모델/Stage 저장 API 검증은 미실행. 압축 JS는 218.59KB → 260.33KB로 증가했으므로 전체 교체나 추가 타입 도입 시 번들 크기를 다시 확인한다.
+
+2026-10-13 추가 적용: `StackedBarChart`·`Heatmap`·`ScatterChart`·`Histogram`을 추가해 카탈로그가 16개다. `backend/app/widget_props.py`는 각각 category/series/value, x/y/value, 숫자 x/y, bin_start/bin_end/count 별칭을 검증하고 SQL 결과를 props로 만든다. 신규 4종의 렌더러는 `frontend/src/widgets/tanstackAnalyticalCharts.js`이며 SQL 미리보기·예상 질문 생성·Stage 허용 목록까지 연결했다. 기존 위젯 계약은 유지한다. 신규 백엔드 26개·프런트 14개 테스트 및 빌드, 브라우저 크기 변경·빈 결과·키보드 툴팁·재마운트 검증 완료. 전체 백엔드는 DB 미기동으로 DB 의존 테스트가 실패했고 이를 제외한 실행은 108개 통과/5개 건너뜀/1개 제외다. 실제 DB/LLM·Stage API 저장은 미검증(저장소 JSON 경로는 테스트 대역 사용). 압축 JS는 264.54KB다.
+
+2026-10-13 실동작 후속 검증: 로컬 Compose 전체를 최신 코드로 기동해 UI 5175/API 8011을 열었다. 백엔드 전체 124개 테스트 통과. Global Sales 데모 DB에 직접 읽기 전용 SELECT를 실행하고 신규 분석 4종을 프로젝트 `prj_85419654696b16a8`(실데이터 위젯 검증 · SQL 직접 조회)의 Stage에 저장/재조회했으며 `/p/prj_85419654696b16a8/view`에서 표시를 확인했다. 누적 막대 6개월, 히트맵 24셀, 산점도 288관측, 히스토그램 9구간. 이 프로젝트는 AI 생성 결과가 아닌 SQL 직접 검증이다. 서버·현재 앱 브라우저의 AI 키 미설정으로 실 LLM 검증은 사용자 설정을 기다린다. 실제 앱의 AI 설정 창을 열어 두었다.

@@ -12,10 +12,16 @@ from app.llm import _error_message, json_with_llm
 from app.prompts import ROUTE_HINT
 from app.providers import transport
 
-ANSWER_ROUTES = ('data_query', 'schema_qa')
+ANSWER_ROUTES = ('data_query', 'schema_qa', 'general_chat')
 CHOICE_ROUTES = ANSWER_ROUTES
-ROUTE_LABELS = {'data_query': '데이터를 조회해 차트·표로 보기', 'schema_qa': '테이블 구조 설명 듣기'}
-JEV_CRITERIA = {'data_query': 'DB 데이터를 숫자·표·차트로 조회하는 요청', 'schema_qa': '현재 연결한 DB의 테이블·컬럼·관계 구조 질문', 'other': '위 어디에도 맞지 않거나 불분명한 입력'}
+ROUTE_LABELS = {'data_query': '데이터를 조회해 차트·표로 보기', 'schema_qa': '테이블 구조 설명 듣기',
+                'general_chat': '일반 대화로 답하기'}
+JEV_CRITERIA = {
+    'data_query': '현재 연결한 고객 DB의 실제 데이터를 숫자·표·차트로 조회하는 요청',
+    'schema_qa': '현재 연결한 DB의 실제 테이블·컬럼·관계 구조 질문',
+    'general_chat': '인사·잡담·일반 지식·개념 설명처럼 현재 고객 DB 조회나 구조 확인이 필요 없는 대화. SQL 일반 개념 설명도 포함',
+    'other': '위 어디에도 맞지 않거나 문맥을 확인해도 의도가 불분명한 입력',
+}
 MAX_RETRIES = 2  # 첫 시도 이후 재시도 횟수
 RETRYABLE_STATUS = {429, 529}
 JEV_TIMEOUT = 10.0
@@ -31,8 +37,9 @@ def _retryable(exc: Exception) -> bool:
     return isinstance(exc, httpx.RequestError)
 
 
-def _jev_choice(state: dict[str, Any]) -> dict[str, Any]:
+def _jev_choice(state: dict[str, Any], *, api_key: str | None = None) -> dict[str, Any]:
     """Call Jev once; 429/529/network errors are retried with exponential backoff."""
+    api_key = config.TYPESAFE_API_KEY if api_key is None else api_key
     payload = {
         "model": config.TYPESAFE_MODEL,
         "state": state,
@@ -46,7 +53,7 @@ def _jev_choice(state: dict[str, Any]) -> dict[str, Any]:
         try:
             data = transport.post_json(
                 config.TYPESAFE_BASE_URL, "/v1/systemone",
-                api_key=config.TYPESAFE_API_KEY, payload=payload, timeout=JEV_TIMEOUT,
+                api_key=api_key, payload=payload, timeout=JEV_TIMEOUT,
             )
             break
         except Exception as exc:
@@ -59,8 +66,8 @@ def _jev_choice(state: dict[str, Any]) -> dict[str, Any]:
     return answer
 
 
-def route_with_jev(state: dict[str, Any]) -> dict[str, Any]:
-    answer = _jev_choice(state)
+def route_with_jev(state: dict[str, Any], *, api_key: str | None = None) -> dict[str, Any]:
+    answer = _jev_choice(state, api_key=api_key)
     return {
         "route": answer["choice"],
         "confidence": float(answer["confidence"]),
@@ -93,6 +100,7 @@ def decide_route(
     llm_context: dict[str, Any],
     history: list[dict[str, Any]] | None = None,
     last_route: str | None = None,
+    jev_api_key: str | None = None,
 ) -> dict[str, Any]:
     """Return {route, source, confidence, probabilities, clarify, jev_error?}.
 
@@ -107,11 +115,12 @@ def decide_route(
     state = {"question": message, "tables": sorted(tables),
              "recent_turns": history or [], "last_route": last_route}
     jev_error = None
-    if config.TYPESAFE_API_KEY:
+    jev_key = (jev_api_key or "").strip() or config.TYPESAFE_API_KEY
+    if jev_key:
         try:
-            decision = route_with_jev(state)
+            decision = route_with_jev(state, api_key=jev_key)
         except Exception as exc:
-            jev_error = _error_message(exc, config.TYPESAFE_API_KEY)
+            jev_error = _error_message(exc, jev_key)
     else:
         jev_error = "TYPESAFE_API_KEY is not configured"
     if jev_error:

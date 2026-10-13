@@ -1,6 +1,6 @@
 import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { getAiSettings, setAiSettings } from "../src/aiSettings.js";
+import { getAiSettings, getJevApiKey, setAiSettings } from "../src/aiSettings.js";
 
 const values = new Map();
 globalThis.localStorage = {
@@ -42,4 +42,26 @@ test("retired Gemini model migrates without removing other profiles", () => {
   assert.equal(getAiSettings().model, "gemini-3.6-flash");
   assert.equal(getAiSettings().apiKey, "test-key");
   assert.equal(getAiSettings("local").model, "local-model");
+});
+
+test("Jev key remains separate from model profiles across provider switches and model migration", () => {
+  setAiSettings({ provider: "gemini", model: "gemini-2.5-flash", apiKey: "model-test", jevApiKey: "  routing-test  " });
+  assert.equal(getJevApiKey(), "routing-test");
+  assert.equal(getAiSettings().model, "gemini-3.6-flash");
+  setAiSettings({ provider: "openai", apiKey: "openai-test" });
+  assert.equal(getJevApiKey(), "routing-test");
+  assert.ok(Object.values(JSON.parse(values.get("sql2widget_ai_settings")).profiles)
+    .every((profile) => !("jevApiKey" in profile)));
+  setAiSettings({ ...getAiSettings(), jevApiKey: "" });
+  assert.equal(getJevApiKey(), "");
+  assert.equal(getAiSettings("gemini").apiKey, "model-test");
+});
+
+test("invalid Jev keys do not overwrite saved settings", () => {
+  setAiSettings({ provider: "openai", jevApiKey: "original-test" });
+  const original = values.get("sql2widget_ai_settings");
+  for (const jevApiKey of [null, 42, "x".repeat(8193), "test\nkey", "test\rkey"]) {
+    assert.throws(() => setAiSettings({ provider: "gemini", jevApiKey }), /한 줄 문자열/);
+    assert.equal(values.get("sql2widget_ai_settings"), original);
+  }
 });
