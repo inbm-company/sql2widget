@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from psycopg.rows import dict_row
 
 from app import config, local_models, question_similarity
@@ -43,6 +44,7 @@ from app.repositories import message_embeddings as embed_repo
 from app.repositories import projects as project_repo
 from app.repositories import question_catalog
 from app.repositories import stages as stage_repo
+from app.widget_queries import WidgetDataError, load_widget_data, widget_definition
 
 
 @asynccontextmanager
@@ -461,6 +463,52 @@ def preview_sql(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+def _bind_stage_query(widget, project_id, user):
+    definition = widget_definition(widget)
+    reference = definition.get("query_ref") or {}
+    if reference.get("sql") and not reference.get("connection_id"):
+        source = conv_repo.find_source_widget(
+            project_id, definition.get("source_artifact_id"), definition.get("source_widget_id"),
+            user["tenant_id"], user["id"],
+        )
+        if source and (source.get("query_ref") or {}).get("sql") == reference["sql"]:
+            definition["query_ref"] = source["query_ref"]
+    return definition
+
+
+def _widget_data_response(widget, user):
+    try:
+        return JSONResponse(load_widget_data(widget, user), headers={"Cache-Control": "no-store"})
+    except WidgetDataError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@app.get("/api/conversations/{conversation_id}/widgets/{widget_id}/data")
+def conversation_widget_data(conversation_id: str, widget_id: str, user=Depends(get_current_user)):
+    conversation = conv_repo.get_conversation(conversation_id, user["tenant_id"], user["id"])
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    for message in conversation.get("messages") or []:
+        if message.get("role") != "assistant":
+            continue
+        for widget in (message.get("artifact") or {}).get("widgets") or []:
+            if widget.get("widget_id") == widget_id:
+                definition = widget_definition(widget, (message.get("meta") or {}).get("connection_id"))
+                return _widget_data_response(definition, user)
+    raise HTTPException(status_code=404, detail="Widget not found")
+
+
+@app.get("/api/projects/{project_id}/stage/widgets/{widget_id}/data")
+def stage_widget_data(project_id: str, widget_id: str, user=Depends(get_current_user)):
+    stage = stage_repo.get_or_create_stage(project_id, user["tenant_id"], user["id"])
+    if not stage:
+        raise HTTPException(status_code=404, detail="Project not found")
+    widget = next((item for item in stage["widgets"] if item["id"] == widget_id), None)
+    if not widget:
+        raise HTTPException(status_code=404, detail="Widget not found")
+    return _widget_data_response(_bind_stage_query(widget, project_id, user), user)
+
+
 @app.get("/api/projects/{project_id}/stage")
 def get_stage(project_id: str, user=Depends(get_current_user)):
     stage = stage_repo.get_or_create_stage(
@@ -468,7 +516,7 @@ def get_stage(project_id: str, user=Depends(get_current_user)):
     )
     if not stage:
         raise HTTPException(status_code=404, detail="Project not found")
-    return stage
+    return {**stage, "widgets": [_bind_stage_query(widget, project_id, user) for widget in stage["widgets"]]}
 
 
 @app.put("/api/projects/{project_id}/stage")
@@ -483,7 +531,7 @@ def put_stage(
     try:
         widgets = stage_repo.replace_stage_widgets(
             stage["id"],
-            [w.model_dump() for w in body.widgets],
+            [_bind_stage_query(w.model_dump(), project_id, user) for w in body.widgets],
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -500,7 +548,7 @@ def add_stage_widget(
     if not stage:
         raise HTTPException(status_code=404, detail="Project not found")
     try:
-        widget = stage_repo.add_widget(stage["id"], body.model_dump())
+        widget = stage_repo.add_widget(stage["id"], _bind_stage_query(body.model_dump(), project_id, user))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return widget
@@ -518,9 +566,13 @@ def patch_stage_widget(
     )
     if not stage:
         raise HTTPException(status_code=404, detail="Project not found")
-    widget = stage_repo.patch_widget(
-        stage["id"], widget_id, body.model_dump(exclude_unset=True)
-    )
+    patch = body.model_dump(exclude_unset=True)
+    existing = next((item for item in stage["widgets"] if item["id"] == widget_id), None)
+    if existing and patch.get("query_ref") is None:
+        reference = _bind_stage_query(existing, project_id, user).get("query_ref")
+        if reference:
+            patch["query_ref"] = reference
+    widget = stage_repo.patch_widget(stage["id"], widget_id, patch)
     if not widget:
         raise HTTPException(status_code=404, detail="Widget not found")
     return widget

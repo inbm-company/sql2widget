@@ -17,7 +17,7 @@ const SQL_COMPONENTS = new Set([
 
 export function canShowSql(widget) {
   if (!widget) return false;
-  if (widget.sql || widget.query_ref?.sql || widget.props?.__sql) return true;
+  if (widget.sql || widget.query_ref?.sql || widget.props?.__query_ref?.sql || widget.props?.__sql) return true;
   return SQL_COMPONENTS.has(widget.component);
 }
 
@@ -25,6 +25,6 @@ export function canShowSql(widget) {
 // a guessed/hardcoded stand-in. If none was attached, the caller hides the toggle.
 export function resolveWidgetSql(widget) {
   if (!widget) return "";
-  const direct = widget.sql || widget.query_ref?.sql || widget.props?.__sql;
+  const direct = widget.query_ref?.sql || widget.sql || widget.props?.__query_ref?.sql || widget.props?.__sql;
   return direct ? String(direct).trim() : "";
 }

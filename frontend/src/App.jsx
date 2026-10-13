@@ -17,7 +17,8 @@ import StageCanvas, { addWidgetToStage } from "./StageCanvas.jsx";
 import ViewerStagePage from "./ViewerStagePage.jsx";
 import { canShowSql, resolveWidgetSql } from "./sqlHelpers.js";
 import { storeKeys, useSWR } from "./store";
-import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
+import QueryWidget from "./widgets/QueryWidget.jsx";
+import { widgetDefinition } from "./widgets/widgetData.js";
 import ChatTrace from "./ChatTrace.jsx";
 
 function LoginForm({ onSuccess }) {
@@ -88,7 +89,7 @@ function LoginForm({ onSuccess }) {
   );
 }
 
-function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = false }) {
+function ArtifactPreviewCard({ widget, artifact, projectId, conversationId, onAdded, readOnly = false }) {
   const [showSql, setShowSql] = useState(false);
   const sql = resolveWidgetSql(widget);
   const sqlAvailable = canShowSql(widget) && Boolean(sql);
@@ -97,11 +98,8 @@ function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = 
     e.dataTransfer.setData(
       "application/x-agent4any-widget",
       JSON.stringify({
-        widget_id: widget.widget_id,
+        ...widgetDefinition(widget),
         artifact_id: artifact.artifact_id,
-        component: widget.component,
-        title: widget.title,
-        props: widget.props,
         sql,
       })
     );
@@ -110,11 +108,8 @@ function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = 
 
   async function addDirect() {
     await addWidgetToStage(projectId, {
-      widget_id: widget.widget_id,
+      ...widgetDefinition(widget),
       artifact_id: artifact.artifact_id,
-      component: widget.component,
-      title: widget.title,
-      props: widget.props,
       sql,
     });
     onAdded?.();
@@ -167,13 +162,13 @@ function ArtifactPreviewCard({ widget, artifact, projectId, onAdded, readOnly = 
       {showSql && sqlAvailable ? (
         <pre className="sql-panel">{sql}</pre>
       ) : (
-        <WidgetRenderer component={widget.component} props={widget.props} compact />
+        <QueryWidget widget={widget} projectId={projectId} conversationId={conversationId} compact />
       )}
     </div>
   );
 }
 
-function AssistantAnswer({ content, artifact, meta, projectId, onAdded, onChoose, readOnly = false }) {
+function AssistantAnswer({ content, artifact, meta, projectId, conversationId, onAdded, onChoose, readOnly = false }) {
   const [view, setView] = useState("widget");
   const hasArtifact = Boolean(artifact?.widgets?.length || artifact?.artifact_id);
 
@@ -231,6 +226,7 @@ function AssistantAnswer({ content, artifact, meta, projectId, onAdded, onChoose
                   widget={w}
                   artifact={artifact}
                   projectId={projectId}
+                  conversationId={conversationId}
                   onAdded={onAdded}
                   readOnly={readOnly}
                 />
@@ -776,6 +772,7 @@ function Workspace({ user, onLogout }) {
                       artifact={m.artifact}
                       meta={m.meta}
                       projectId={activeProjectId}
+                      conversationId={activeId}
                       onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
                       onChoose={(choice) => sendMessage(choice.message, choice.route)}
                       readOnly={isViewer || sending}

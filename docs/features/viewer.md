@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Viewer 전용 화면 |
-| 기준일 | 2026-09-21 (구현 기준) |
+| 기준일 | 2026-10-13 (위젯별 조회 포함) |
 | 관련 문서 | [stage.md](stage.md), [auth.md](auth.md)(역할/권한) |
 | 관련 코드 | `frontend/src/ViewerStagePage.jsx`, `frontend/src/StageCanvas.jsx`(`readOnly`/`variant` props), `frontend/src/main.jsx`(라우팅) |
 
@@ -14,7 +14,7 @@
 - 경로: `/p/{projectId}/view`. `viewer` 역할 전용 화면이 아니라 **누구나** 갈 수 있는 읽기 전용 뷰(§ [auth.md](auth.md) 화면 권한 표 — admin도 "Open viewer" 링크로 들어간다).
 - `StageCanvas`를 `readOnly` + `variant="orion"`으로 감싸기만 하는 얇은 페이지(`ViewerStagePage.jsx`, 33줄).
 - 헤더: `← Editor`(워크스페이스로 복귀), 프로젝트 Stage 제목, 기간 표시용 pill("Period: Last 12 months" — 고정 텍스트, 실제 기간 필터는 아직 없음), 로그인 사용자 이메일, Sign out.
-- 본문은 Stage 그리드만 전체 화면으로 표시. 채팅 패널·사이드바 없음.
+- 본문은 Stage 그리드만 전체 화면으로 표시. 채팅 패널·사이드바 없음. 각 위젯은 서버의 조회 API로 현재 데이터를 가져오며 로딩·조회 오류·데이터 새로고침 버튼을 표시한다. 이 새로고침은 읽기 전용 SELECT이며 레이아웃이나 위젯 정의를 수정하지 않는다.
 
 ### `readOnly`가 실제로 끄는 것 (`StageCanvas.jsx`)
 
@@ -38,8 +38,9 @@
 
 ## API
 
-Viewer 화면이 쓰는 API는 Stage 조회 하나뿐이다.
+Viewer 화면은 Stage 정의를 읽고 위젯별로 데이터를 조회한다. 현재 로그인 역할의 테이블 권한을 적용한다.
 
 | Method | Path |
 |--------|------|
 | GET | `/api/projects/{id}/stage` |
+| GET | `/api/projects/{id}/stage/widgets/{widget_id}/data` |

@@ -35,6 +35,9 @@ Analytical widget contracts (optional props xLabel/yLabel are axis titles):
   Bins are [start,end). Include zero-count bins when requested. All bins must have
   positive width; use an explicit positive width for constant-valued data.
 Rules:
+- Data widgets MUST have SQL. Their result rows/values are fetched by each widget
+  and never belong in the plan. For SQL widgets, props contains only optional
+  xLabel/yLabel display settings for the four analytical widget types above.
 - Customer DB is PostgreSQL. SQL must be a single read-only SELECT/WITH.
 - The user prompt contains the only allowed tables, columns, and relationships.
 - Never use a table or column not present in that supplied schema.

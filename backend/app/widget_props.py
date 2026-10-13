@@ -1,6 +1,7 @@
-"""Closed SQL result contracts for the additional analytical widgets."""
+"""Convert SQL results into runtime props for the fixed widget catalog."""
 
 import math
+from typing import Any
 
 
 ANALYTICAL_COMPONENTS = frozenset({"StackedBarChart", "Heatmap", "ScatterChart", "Histogram"})
@@ -87,3 +88,127 @@ def analytical_rows_to_props(component, rows):
             raise ValueError("Histogram SQL must return non-overlapping bins")
         result.append({"start": start, "end": end, "count": count})
     return {"bins": result}
+
+
+def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dict[str, Any]:
+    if component in ANALYTICAL_COMPONENTS:
+        return analytical_rows_to_props(component, rows)
+    if not rows:
+        if component == "KpiStat":
+            return {"label": title, "value": 0}
+        if component == "DataTable":
+            return {"columns": [{"key": "info", "label": "Info"}], "rows": [{"info": "결과 없음"}]}
+        if component == "BarChart":
+            return {"categories": [], "series": [{"name": "value", "data": []}]}
+        if component == "LineChart":
+            return {"series": [{"name": title, "points": []}]}
+        if component == "RankList":
+            return {"items": []}
+        if component == "PieChart":
+            return {"slices": []}
+        return {}
+
+    keys = list(rows[0].keys())
+    if component == "KpiStat":
+        value_key = "value" if "value" in keys else keys[-1]
+        return {"label": title, "value": rows[0][value_key], "unit": rows[0].get("unit")}
+    if component == "DataTable":
+        return {
+            "columns": [{"key": k, "label": k} for k in keys],
+            "rows": [{k: r.get(k) for k in keys} for r in rows],
+        }
+    if component == "RankList":
+        label_key = "hostname" if "hostname" in keys else keys[0]
+        value_key = "attack_count" if "attack_count" in keys else keys[-1]
+        meta_key = "top_method" if "top_method" in keys else None
+        items = []
+        for i, r in enumerate(rows, start=1):
+            items.append(
+                {
+                    "rank": i,
+                    "label": str(r.get(label_key)),
+                    "value": r.get(value_key),
+                    "meta": str(r.get(meta_key)) if meta_key else None,
+                }
+            )
+        return {"items": items}
+    if component == "BarChart":
+        cat_key = "hostname" if "hostname" in keys else keys[0]
+        val_key = "attack_count" if "attack_count" in keys else keys[-1]
+        return {
+            "categories": [str(r.get(cat_key)) for r in rows],
+            "series": [{"name": val_key, "data": [r.get(val_key) or 0 for r in rows]}],
+        }
+    if component == "LineChart":
+        x_key = "x" if "x" in keys else keys[0]
+        y_key = "y" if "y" in keys else keys[-1]
+        return {
+            "series": [
+                {
+                    "name": title,
+                    "points": [{"x": str(r.get(x_key)), "y": r.get(y_key)} for r in rows],
+                }
+            ]
+        }
+    if component == "PieChart":
+        label_key = keys[0]
+        value_key = keys[-1]
+        return {
+            "slices": [
+                {"label": str(r.get(label_key)), "value": r.get(value_key) or 0} for r in rows
+            ]
+        }
+    if component == "PieTable":
+        label_key = "label" if "label" in keys else keys[0]
+        value_key = "value" if "value" in keys else keys[-1]
+        slices = [
+            {"label": str(r.get(label_key)), "value": r.get(value_key) or 0} for r in rows
+        ]
+        return {
+            "slices": slices,
+            "columns": [
+                {"key": "label", "label": label_key},
+                {"key": "value", "label": value_key},
+            ],
+            "rows": slices,
+        }
+    if component == "BarTable":
+        cat_key = "hostname" if "hostname" in keys else ("label" if "label" in keys else keys[0])
+        val_key = "attack_count" if "attack_count" in keys else ("value" if "value" in keys else keys[-1])
+        meta_key = "top_method" if "top_method" in keys else None
+        categories = [str(r.get(cat_key)) for r in rows]
+        data = [r.get(val_key) or 0 for r in rows]
+        table_rows = [
+            {
+                "label": str(r.get(cat_key)),
+                "value": r.get(val_key),
+                **({"meta": r.get(meta_key)} if meta_key else {}),
+            }
+            for r in rows
+        ]
+        cols = [
+            {"key": "label", "label": cat_key},
+            {"key": "value", "label": val_key},
+        ]
+        if meta_key:
+            cols.append({"key": "meta", "label": meta_key})
+        return {
+            "label": title,
+            "value": sum(data) if data else 0,
+            "categories": categories,
+            "series": [{"name": val_key, "data": data}],
+            "columns": cols,
+            "rows": table_rows,
+        }
+    if component == "KpiSparkline":
+        value_key = "value" if "value" in keys else keys[-1]
+        points = []
+        if "x" in keys and "y" in keys:
+            points = [{"x": str(r.get("x")), "y": r.get("y")} for r in rows]
+        return {
+            "label": title,
+            "value": rows[0].get(value_key),
+            "points": points
+            or [{"x": str(i), "y": r.get(value_key) or 0} for i, r in enumerate(rows)],
+        }
+    return {"columns": [{"key": k, "label": k} for k in keys], "rows": rows}

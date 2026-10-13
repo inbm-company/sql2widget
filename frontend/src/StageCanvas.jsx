@@ -4,7 +4,8 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { api } from "./api";
 import { setStore, storeKeys, useSWR, useStore } from "./store";
-import WidgetRenderer from "./widgets/WidgetRenderer.jsx";
+import QueryWidget from "./widgets/QueryWidget.jsx";
+import { widgetDefinition } from "./widgets/widgetData.js";
 
 function debounce(fn, ms) {
   let t;
@@ -128,14 +129,14 @@ export default function StageCanvas({ projectId, readOnly = false, variant = "de
       }
       setStore(storeKeys.ui, (u) => ({ ...u, saveStatus: "saving" }));
       try {
-        const dropProps = { ...(payload.props || {}) };
-        if (payload.sql) dropProps.__sql = payload.sql;
+        const definition = widgetDefinition(payload);
         const created = await api.addStageWidget(projectId, {
           source_widget_id: payload.widget_id,
           source_artifact_id: payload.artifact_id,
           component: payload.component,
           title: payload.title || "",
-          props: dropProps,
+          props: definition.props,
+          query_ref: definition.query_ref,
           layout: {
             i: `tmp_${Date.now()}`,
             x: layoutItem?.x ?? 0,
@@ -234,7 +235,7 @@ export default function StageCanvas({ projectId, readOnly = false, variant = "de
                   <span className="widget-title">{w.title || w.component}</span>
                 </div>
               )}
-              <WidgetRenderer component={w.component} props={w.props} />
+              <QueryWidget widget={w} projectId={projectId} />
             </div>
           ))}
         </GridLayout>
@@ -249,8 +250,7 @@ export async function addWidgetToStage(projectId, widgetPayload, mutateStage) {
     (max, w) => Math.max(max, (w.layout?.y || 0) + (w.layout?.h || 4)),
     0
   );
-  const props = { ...(widgetPayload.props || {}) };
-  if (widgetPayload.sql) props.__sql = widgetPayload.sql;
+  const definition = widgetDefinition(widgetPayload);
   const composite = ["BarTable", "PieTable", "KpiSparkline"].includes(
     widgetPayload.component
   );
@@ -259,7 +259,8 @@ export async function addWidgetToStage(projectId, widgetPayload, mutateStage) {
     source_artifact_id: widgetPayload.artifact_id,
     component: widgetPayload.component,
     title: widgetPayload.title || "",
-    props,
+    props: definition.props,
+    query_ref: definition.query_ref,
     layout: {
       i: `tmp_${Date.now()}`,
       x: 0,

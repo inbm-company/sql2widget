@@ -82,10 +82,12 @@ def test_sql_artifact_and_stage_json_roundtrip(monkeypatch, component, rows, exp
     sql = "SELECT * FROM allowed_table"
     _, artifact = agent_service._materialize_plan({"widgets": [{"component": component, "sql": sql,
         "props": {"xLabel": "기준", "yLabel": "수치", "cells": [{"fake": True}]}}]},
-        db_url="test-only", allowed_tables={"allowed_table"}, message="조회")
+        db_url="test-only", allowed_tables={"allowed_table"}, message="조회", connection_id="sales")
     widget = sanitize_artifact(artifact)["widgets"][0]
     assert widget["component"] == component and widget["sql"] == sql
-    assert widget["props"] == {"xLabel": "기준", "yLabel": "수치", **expected}
+    assert widget["props"] == {"xLabel": "기준", "yLabel": "수치"}
+    assert widget["query_ref"] == {"connection_id": "sales", "sql": sql}
+    assert "fake" not in json.dumps(widget)
     assert calls == [{"allowed_tables": {"allowed_table"}}]
 
     class Cursor:
@@ -106,5 +108,7 @@ def test_sql_artifact_and_stage_json_roundtrip(monkeypatch, component, rows, exp
     payload = {**widget, "layout": {"i": "test", "x": 0, "y": 0, "w": 4, "h": 4}}
     added = stages.add_widget("test-stage", payload)
     assert added["component"] == component and added["props"] == widget["props"]
+    assert added["query_ref"] == widget["query_ref"]
     replaced = stages.replace_stage_widgets("test-stage", [{**payload, "id": added["id"]}])
     assert replaced[0]["props"] == added["props"]
+    assert replaced[0]["query_ref"] == widget["query_ref"]

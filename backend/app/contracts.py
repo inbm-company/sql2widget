@@ -76,18 +76,25 @@ class LayoutItem(BaseModel):
     h: int = 4
 
 
+class WidgetQueryRef(BaseModel):
+    connection_id: str | None = None
+    sql: str = Field(min_length=1, max_length=20000)
+
+
 class StageWidgetIn(BaseModel):
     source_widget_id: str | None = None
     source_artifact_id: str | None = None
     component: str
     title: str = ""
     props: dict[str, Any] = Field(default_factory=dict)
+    query_ref: WidgetQueryRef | None = None
     layout: LayoutItem
 
 
 class StageWidgetPatch(BaseModel):
     title: str | None = None
     props: dict[str, Any] | None = None
+    query_ref: WidgetQueryRef | None = None
     layout: LayoutItem | None = None
 
 

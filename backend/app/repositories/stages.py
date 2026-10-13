@@ -4,6 +4,7 @@ from typing import Any
 
 from app.config import ALLOWED_COMPONENTS
 from app.db import fetch_all, fetch_one, get_conn
+from app.widget_queries import stored_widget_props, widget_definition
 
 
 def _id(prefix: str) -> str:
@@ -14,7 +15,7 @@ def _widget_row_to_dict(row: dict) -> dict:
     props = row["props"]
     if isinstance(props, str):
         props = json.loads(props)
-    return {
+    return widget_definition({
         "id": row["id"],
         "source_widget_id": row["source_widget_id"],
         "source_artifact_id": row["source_artifact_id"],
@@ -28,7 +29,7 @@ def _widget_row_to_dict(row: dict) -> dict:
             "w": row["layout_w"],
             "h": row["layout_h"],
         },
-    }
+    })
 
 
 def get_or_create_stage(project_id: str, tenant_id: str, user_id: str) -> dict | None:
@@ -105,7 +106,7 @@ def replace_stage_widgets(stage_id: str, widgets: list[dict[str, Any]]) -> list[
                         w.get("source_artifact_id"),
                         component,
                         w.get("title") or "",
-                        json.dumps(w.get("props") or {}, default=str),
+                        json.dumps(stored_widget_props(w), default=str),
                         layout_i,
                         layout["x"],
                         layout["y"],
@@ -144,7 +145,7 @@ def add_widget(stage_id: str, payload: dict[str, Any]) -> dict:
                     payload.get("source_artifact_id"),
                     component,
                     payload.get("title") or "",
-                    json.dumps(payload.get("props") or {}, default=str),
+                    json.dumps(stored_widget_props(payload), default=str),
                     layout_i,
                     layout.get("x", 0),
                     layout.get("y", 0),
@@ -166,9 +167,12 @@ def patch_widget(stage_id: str, widget_id: str, patch: dict[str, Any]) -> dict |
         return None
 
     title = patch["title"] if patch.get("title") is not None else existing["title"]
-    props = patch["props"] if patch.get("props") is not None else existing["props"]
-    if isinstance(props, str):
-        props = json.loads(props)
+    definition = _widget_row_to_dict(existing)
+    if patch.get("props") is not None:
+        definition["props"] = patch["props"]
+    if patch.get("query_ref") is not None:
+        definition["query_ref"] = patch["query_ref"]
+    props = stored_widget_props(definition)
     layout = patch.get("layout")
     if layout:
         lx, ly, lw, lh, li = (

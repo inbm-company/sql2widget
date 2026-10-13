@@ -1014,6 +1014,43 @@ button {
   height: 180px;
 }
 
+.query-widget {
+  display: flex;
+  flex-direction: column;
+  height: 180px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.query-widget > .widget-body {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.widget-data-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding: 0 8px;
+}
+
+.widget-data-status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  overflow: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stage-widget > .query-widget {
+  flex: 1;
+  height: auto;
+}
+
 .widget-empty {
   display: flex;
   align-items: center;

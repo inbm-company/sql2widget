@@ -162,6 +162,7 @@ export const api = {
       }),
     }),
   getStage: (projectId) => request(`/api/projects/${projectId}/stage`),
+  getWidgetData: (url) => request(url, { cache: "no-store", timeoutMs: 30000 }),
   putStage: (projectId, widgets) =>
     request(`/api/projects/${projectId}/stage`, {
       method: "PUT",

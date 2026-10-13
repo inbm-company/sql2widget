@@ -22,6 +22,17 @@ globalThis.fetch = async (url, options) => {
 };
 beforeEach(() => { saved.clear(); requests.length = 0; });
 
+test("widget data fetches send authentication only and bypass HTTP caches", async () => {
+  saved.set("sql2widget_access", "test-access");
+  setAiSettings({ provider: "openai", apiKey: "llm-test", jevApiKey: "routing-test" });
+  await api.getWidgetData("/api/projects/p/stage/widgets/w/data");
+  assert.equal(requests[0].headers.Authorization, "Bearer test-access");
+  assert.equal(requests[0].headers["X-LLM-API-Key"], undefined);
+  assert.equal(requests[0].headers["X-Jev-API-Key"], undefined);
+  assert.equal(requests[0].cache, "no-store");
+  assert.equal(requests[0].body, undefined);
+});
+
 test("chat alone sends the shared Jev key after switching model providers", async () => {
   setAiSettings({ provider: "gemini", apiKey: "gemini-test", jevApiKey: "routing-test" });
   setAiSettings({ provider: "openai", apiKey: "openai-test" });

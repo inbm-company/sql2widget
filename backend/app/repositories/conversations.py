@@ -3,6 +3,7 @@ import secrets
 from typing import Any
 
 from app.db import execute, fetch_all, fetch_one, get_conn
+from app.widget_queries import widget_definition
 
 
 def _id(prefix: str) -> str:
@@ -94,7 +95,36 @@ def get_conversation(conversation_id: str, tenant_id: str, user_id: str) -> dict
             m["artifact"] = json.loads(m["artifact"])
         if isinstance(m.get("meta"), str):
             m["meta"] = json.loads(m["meta"])
+        if m.get("artifact"):
+            m["artifact"] = {**m["artifact"], "widgets": [
+                widget_definition(widget, (m.get("meta") or {}).get("connection_id"))
+                for widget in m["artifact"].get("widgets") or []
+            ]}
     return {**conv, "messages": messages}
+
+
+def find_source_widget(project_id, artifact_id, widget_id, tenant_id, user_id):
+    """Recover a legacy Stage widget's DB from its owned source message."""
+    if not artifact_id or not widget_id:
+        return None
+    message = fetch_one(
+        """SELECT m.artifact, m.meta FROM messages m
+        JOIN conversations c ON c.id = m.conversation_id
+        WHERE c.project_id = %s AND c.tenant_id = %s AND c.user_id = %s
+          AND m.role = 'assistant' AND m.artifact->>'artifact_id' = %s""",
+        (project_id, tenant_id, user_id, artifact_id),
+    )
+    if not message:
+        return None
+    artifact, meta = message["artifact"], message.get("meta") or {}
+    if isinstance(artifact, str):
+        artifact = json.loads(artifact)
+    if isinstance(meta, str):
+        meta = json.loads(meta)
+    for widget in artifact.get("widgets") or []:
+        if widget.get("widget_id") == widget_id:
+            return widget_definition(widget, meta.get("connection_id"))
+    return None
 
 
 def add_message(

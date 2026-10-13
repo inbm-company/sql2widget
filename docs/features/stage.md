@@ -3,9 +3,9 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Stage 배치 |
-| 기준일 | 2026-10-02 (구현 기준) |
+| 기준일 | 2026-10-13 (위젯별 조회 포함) |
 | 관련 문서 | [widgets-artifact.md](widgets-artifact.md)(위젯 카탈로그), [viewer.md](viewer.md)(읽기 전용 표시) |
-| 관련 코드 | `backend/app/repositories/stages.py`, `backend/app/main.py`(`/api/projects/{id}/stage*`), `frontend/src/StageCanvas.jsx`, `frontend/src/ProjectGraph.jsx` |
+| 관련 코드 | `backend/app/repositories/stages.py`, `backend/app/main.py`(`/api/projects/{id}/stage*`), `frontend/src/StageCanvas.jsx`, `frontend/src/widgets/QueryWidget.jsx`, `backend/app/widget_queries.py` |
 
 Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다([AGENTS.md](../../AGENTS.md) 제품 규칙 2).
 
@@ -21,7 +21,7 @@ Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위
 공통 처리:
 
 - `component`가 화이트리스트 밖이면 **400**으로 거부(채팅 쪽 `DataTable` 폴백과는 다르다 — § [widgets-artifact.md](widgets-artifact.md)).
-- 위젯에 SQL이 있었으면 `props.__sql`에 실어 함께 저장(나중에 Stage에서도 SQL 보기가 가능하도록).
+- 조회 결과를 복사하지 않고 `query_ref: {connection_id, sql}`와 표시 설정만 저장한다. 원본 DB ID를 함께 보관해 현재 선택한 DB나 원본 대화 삭제에 영향을 받지 않는다. SQL은 실제로 생성된 조회문만 보관한다.
 - 합성 위젯(`BarTable`, `PieTable`, `KpiSparkline`)은 기본 크기 `w:6 h:7`, 그 외는 `w:4 h:4`(버튼 경로 기준. 드래그 경로는 그리드가 준 드롭 크기를 그대로 쓰고 기본값은 `w:4 h:4`).
 - `source_widget_id` / `source_artifact_id`로 어떤 채팅 응답에서 왔는지 추적.
 
@@ -32,9 +32,9 @@ Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위
 - 레이아웃 엔진은 `react-grid-layout`(12열, `rowHeight: 36`, `margin: [12,12]`, `compactType: "vertical"`).
 - 이동·리사이즈(`onLayoutChange`)는 **500ms 디바운스** 후 변경된 위젯들만 `PATCH .../stage/widgets/{id}`로 저장(`persistLayout`). 저장 중에는 로컬 상태(`localWidgets`)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 `error`로 표시한다.
 - 전체 교체: `PUT .../stage` `{ widgets: [...] }` (현재 UI는 이 경로를 안 쓰고 있으나 API는 열려 있음).
-- 단건 수정: `PATCH` — `title`/`props`/`layout` 중 보낸 필드만 갱신.
+- 단건 수정: `PATCH` — `title`/`props`/`query_ref`/`layout` 중 보낸 필드만 갱신. 레이아웃 수정은 조회 정의를 유지하며 데이터 결과는 저장하지 않는다.
 - 삭제: `DELETE .../stage/widgets/{id}`.
-- 새로고침해도 SWR 캐시(`storeKeys.stage(projectId)`)를 통해 서버 상태로 복원.
+- 새로고침 시 서버에서 위젯 정의·레이아웃을 복원하고, 각 위젯의 데이터 API를 호출해 현재 데이터를 표시한다. 위젯별 새로고침 버튼도 같은 API를 호출한다. 주기적 폴링은 없다.
 - 빈 Stage 안내: 편집 가능 역할 "대화의 결과 위젯을 여기로 드래그하세요", viewer "배치된 위젯이 없습니다."
 - 저장 상태 표시줄(`대기` / `저장 중…` / `저장됨` / `저장 실패`)은 전역 슬롯 `storeKeys.ui`(`useStore`)에 있다. 편집 불가 역할(`readOnly`)에는 표시하지 않는다.
 - 위젯 크기는 `minW:2, minH:2`로 제한.
@@ -61,7 +61,8 @@ stage_widgets(
 
 - `stages.project_id`가 유니크 — 프로젝트당 1행이라는 규칙이 DB 레벨에서도 강제된다.
 - `stage_widgets`는 `layout_y ASC, layout_x ASC` 순으로 조회된다.
-- `props`는 `jsonb`로 저장되며 화이트리스트 검증은 저장소 함수(`add_widget`/`replace_stage_widgets`)에서 `ALLOWED_COMPONENTS`로 수행.
+- 기존 DB 스키마를 유지한다. `props` jsonb에는 표시 설정과 내부 `__query_ref` 메타데이터만 저장하고 API 응답은 이를 최상위 `query_ref`로 분리한다. 조회 결과 배열·KPI 값은 저장하지 않는다. 화이트리스트 검증은 저장소 함수(`add_widget`/`replace_stage_widgets`)에서 `ALLOWED_COMPONENTS`로 수행.
+- 기존 SQL 위젯은 읽을 때 데이터 필드를 제외하고 소유한 원본 대화에서 DB ID를 복원한다. SQL 또는 DB 정보가 없으면 조회 API가 409를 반환하며 질문 재실행을 안내한다. 기존 DB를 일괄 수정하거나 삭제하지 않는다.
 
 ---
 
@@ -70,6 +71,7 @@ stage_widgets(
 | Method | Path | 권한 |
 |--------|------|------|
 | GET/PUT | `/api/projects/{id}/stage` | 본인(프로젝트 소유자) |
+| GET | `/api/projects/{id}/stage/widgets/{widget_id}/data` | 본인 + 현재 DB 테이블 권한 |
 | POST | `/api/projects/{id}/stage/widgets` | 본인 |
 | PATCH/DELETE | `/api/projects/{id}/stage/widgets/{widget_id}` | 본인 |
 

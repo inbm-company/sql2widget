@@ -14,7 +14,8 @@ from app.intent_router import RouteError, choices_for, decide_route
 from app.llm import effective_provider, json_with_llm, plan_with_llm
 from app.prompts import GENERAL_CHAT_HINT, SCHEMA_QA_HINT
 from app.query import QueryError, execute_readonly
-from app.widget_props import ANALYTICAL_COMPONENTS, analytical_rows_to_props
+from app.widget_props import rows_to_props
+from app.widget_queries import SQL_COMPONENTS, display_props
 from app.repositories import connections as conn_repo
 
 
@@ -39,130 +40,6 @@ def _wid() -> str:
 
 def _aid() -> str:
     return f"art_{secrets.token_hex(6)}"
-
-
-def rows_to_props(component: str, rows: list[dict[str, Any]], title: str) -> dict[str, Any]:
-    if component in ANALYTICAL_COMPONENTS:
-        return analytical_rows_to_props(component, rows)
-    if not rows:
-        if component == "KpiStat":
-            return {"label": title, "value": 0}
-        if component == "DataTable":
-            return {"columns": [{"key": "info", "label": "Info"}], "rows": [{"info": "결과 없음"}]}
-        if component == "BarChart":
-            return {"categories": [], "series": [{"name": "value", "data": []}]}
-        if component == "LineChart":
-            return {"series": [{"name": title, "points": []}]}
-        if component == "RankList":
-            return {"items": []}
-        if component == "PieChart":
-            return {"slices": []}
-        return {}
-
-    keys = list(rows[0].keys())
-    if component == "KpiStat":
-        value_key = "value" if "value" in keys else keys[-1]
-        return {"label": title, "value": rows[0][value_key], "unit": rows[0].get("unit")}
-    if component == "DataTable":
-        return {
-            "columns": [{"key": k, "label": k} for k in keys],
-            "rows": [{k: r.get(k) for k in keys} for r in rows],
-        }
-    if component == "RankList":
-        label_key = "hostname" if "hostname" in keys else keys[0]
-        value_key = "attack_count" if "attack_count" in keys else keys[-1]
-        meta_key = "top_method" if "top_method" in keys else None
-        items = []
-        for i, r in enumerate(rows, start=1):
-            items.append(
-                {
-                    "rank": i,
-                    "label": str(r.get(label_key)),
-                    "value": r.get(value_key),
-                    "meta": str(r.get(meta_key)) if meta_key else None,
-                }
-            )
-        return {"items": items}
-    if component == "BarChart":
-        cat_key = "hostname" if "hostname" in keys else keys[0]
-        val_key = "attack_count" if "attack_count" in keys else keys[-1]
-        return {
-            "categories": [str(r.get(cat_key)) for r in rows],
-            "series": [{"name": val_key, "data": [r.get(val_key) or 0 for r in rows]}],
-        }
-    if component == "LineChart":
-        x_key = "x" if "x" in keys else keys[0]
-        y_key = "y" if "y" in keys else keys[-1]
-        return {
-            "series": [
-                {
-                    "name": title,
-                    "points": [{"x": str(r.get(x_key)), "y": r.get(y_key)} for r in rows],
-                }
-            ]
-        }
-    if component == "PieChart":
-        label_key = keys[0]
-        value_key = keys[-1]
-        return {
-            "slices": [
-                {"label": str(r.get(label_key)), "value": r.get(value_key) or 0} for r in rows
-            ]
-        }
-    if component == "PieTable":
-        label_key = "label" if "label" in keys else keys[0]
-        value_key = "value" if "value" in keys else keys[-1]
-        slices = [
-            {"label": str(r.get(label_key)), "value": r.get(value_key) or 0} for r in rows
-        ]
-        return {
-            "slices": slices,
-            "columns": [
-                {"key": "label", "label": label_key},
-                {"key": "value", "label": value_key},
-            ],
-            "rows": slices,
-        }
-    if component == "BarTable":
-        cat_key = "hostname" if "hostname" in keys else ("label" if "label" in keys else keys[0])
-        val_key = "attack_count" if "attack_count" in keys else ("value" if "value" in keys else keys[-1])
-        meta_key = "top_method" if "top_method" in keys else None
-        categories = [str(r.get(cat_key)) for r in rows]
-        data = [r.get(val_key) or 0 for r in rows]
-        table_rows = [
-            {
-                "label": str(r.get(cat_key)),
-                "value": r.get(val_key),
-                **({"meta": r.get(meta_key)} if meta_key else {}),
-            }
-            for r in rows
-        ]
-        cols = [
-            {"key": "label", "label": cat_key},
-            {"key": "value", "label": val_key},
-        ]
-        if meta_key:
-            cols.append({"key": "meta", "label": meta_key})
-        return {
-            "label": title,
-            "value": sum(data) if data else 0,
-            "categories": categories,
-            "series": [{"name": val_key, "data": data}],
-            "columns": cols,
-            "rows": table_rows,
-        }
-    if component == "KpiSparkline":
-        value_key = "value" if "value" in keys else keys[-1]
-        points = []
-        if "x" in keys and "y" in keys:
-            points = [{"x": str(r.get("x")), "y": r.get("y")} for r in rows]
-        return {
-            "label": title,
-            "value": rows[0].get(value_key),
-            "points": points
-            or [{"x": str(i), "y": r.get(value_key) or 0} for i, r in enumerate(rows)],
-        }
-    return {"columns": [{"key": k, "label": k} for k in keys], "rows": rows}
 
 
 def _resolve_db_url(
@@ -218,11 +95,11 @@ def _materialize_plan(
     db_url: str,
     allowed_tables: set[str] | None,
     message: str,
+    connection_id: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     summary = plan.get("summary") or "결과를 준비했습니다."
     widgets_in = plan.get("widgets") or []
     widgets: list[dict[str, Any]] = []
-    sql_error: str | None = None
 
     for w in widgets_in:
         component = w.get("component")
@@ -231,23 +108,21 @@ def _materialize_plan(
         title = w.get("title") or component
         sql = (w.get("sql") or "").strip()
         props = w.get("props") or {}
+        if component in SQL_COMPONENTS and not sql:
+            raise QueryError("Data widgets require a read-only SQL query")
         if sql:
-            try:
-                rows = execute_readonly(
-                    db_url, sql, allowed_tables=allowed_tables
-                )
-                labels = {key: props[key] for key in ("xLabel", "yLabel")
-                          if component in ANALYTICAL_COMPONENTS and isinstance(props.get(key), str)}
-                props = {**labels, **rows_to_props(component, rows, title)}
-            except (QueryError, Exception) as exc:  # noqa: BLE001
-                sql_error = str(exc)
-                raise
+            # Validate execution and the result contract for the existing repair
+            # path, then discard rows. Renderers fetch their own current data.
+            rows = execute_readonly(db_url, sql, allowed_tables=allowed_tables)
+            rows_to_props(component, rows, title)
+            props = display_props(component, props)
         widgets.append(
             {
                 "widget_id": w.get("widget_id") or _wid(),
                 "component": component,
                 "title": title,
                 "sql": sql or None,
+                **({"query_ref": {"connection_id": connection_id, "sql": sql}} if sql else {}),
                 "props": props,
             }
         )
@@ -454,7 +329,7 @@ def run_agent(
 
     try:
         summary, artifact = _materialize_plan(
-            plan, db_url=db_url, allowed_tables=allowed, message=message
+            plan, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn
         )
         meta["provider"] = llm_result.get("provider")
         meta["model"] = llm_result.get("model")
@@ -483,7 +358,7 @@ def run_agent(
             ) from first_exc
         try:
             summary, artifact = _materialize_plan(
-                plan2, db_url=db_url, allowed_tables=allowed, message=message
+                plan2, db_url=db_url, allowed_tables=allowed, message=message, connection_id=used_conn
             )
             meta["provider"] = repair.get("provider")
             meta["model"] = repair.get("model")

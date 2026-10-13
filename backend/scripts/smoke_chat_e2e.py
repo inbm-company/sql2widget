@@ -110,6 +110,7 @@ def main() -> int:
                 "component": w0["component"],
                 "title": w0.get("title") or "",
                 "props": w0.get("props") or {},
+                "query_ref": w0.get("query_ref"),
                 "layout": {"i": "tmp_smoke", "x": 0, "y": 0, "w": 4, "h": 4},
             },
         )

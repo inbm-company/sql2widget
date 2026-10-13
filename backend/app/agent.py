@@ -6,6 +6,7 @@ import secrets
 from typing import Any
 
 from app.config import ALLOWED_COMPONENTS
+from app.widget_queries import widget_definition
 
 
 def _wid(prefix: str = "wgt") -> str:
@@ -30,5 +31,5 @@ def sanitize_artifact(artifact: dict[str, Any]) -> dict[str, Any]:
                         "rows": [{"info": "Unsupported component fell back to table"}],
                     },
                 }
-        widgets.append({**w, "component": component, "widget_id": w.get("widget_id") or _wid()})
+        widgets.append(widget_definition({**w, "component": component, "widget_id": w.get("widget_id") or _wid()}))
     return {**artifact, "artifact_id": artifact.get("artifact_id") or _aid(), "widgets": widgets}
