@@ -161,7 +161,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand"><span class="name">sql2widget</span><span class="sub">프로젝트 문서</span></div>
       <div class="search-box"><input type="text" id="tocSearch" placeholder="문서 검색…" /></div>
-      <nav class="toc" id="toc"><div class="group-label">시작하기</div><a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a><a href="../README.md">실행 안내 ↗</a><a href="01-folder-structure.md">폴더 구조 ↗</a><div class="group-label">기능</div><a href="#auth" data-id="auth">기능: 로그인/세션</a><a href="#projects-conversations" data-id="projects-conversations">기능: 프로젝트 · 대화</a><a href="#chat" data-id="chat">기능: DB 채팅</a><a href="#widgets-artifact" data-id="widgets-artifact">기능: Artifact / 위젯 카탈로그</a><a href="#stage" data-id="stage">기능: Stage (핀보드)</a><a href="#viewer" data-id="viewer">기능: Viewer 화면</a><a href="#admin" data-id="admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a><a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a><a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a><div class="group-label">운영</div><a href="#progress" data-id="progress">진행 상황</a><a href="kanban.html">칸반 보드 ↗</a></nav>
+      <nav class="toc" id="toc"><div class="group-label">시작하기</div><a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a><a href="../README.md">실행 안내 ↗</a><a href="01-folder-structure.md">폴더 구조 ↗</a><div class="group-label">기능</div><a href="#auth" data-id="auth">기능: 로그인/세션</a><a href="#projects-conversations" data-id="projects-conversations">기능: 프로젝트 · 대화</a><a href="#chat" data-id="chat">기능: DB 채팅</a><a href="#widgets-artifact" data-id="widgets-artifact">기능: Artifact / 위젯 카탈로그</a><a href="#stage" data-id="stage">기능: Stage (핀보드)</a><a href="#viewer" data-id="viewer">기능: Viewer 화면</a><a href="#admin" data-id="admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a><a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a><a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a><div class="group-label">운영</div><a href="#deployment" data-id="deployment">운영 HTML 문서 공개</a><a href="#progress" data-id="progress">진행 상황</a><a href="kanban.html">칸반 보드 ↗</a></nav>
     </aside>
 
     <main id="main"><section id="overview"><h1>agent4any / sql2widget — 에이전트용 프로젝트 문서</h1>
@@ -215,12 +215,12 @@
 </tr>
 <tr>
 <td>채팅(에이전트)</td>
-<td>자연어 질문 → 실 LLM(OpenAI-compatible/Gemini)이 SELECT 계획을 세워 실행 → 위젯 Artifact 반환. AI 키가 없거나 호출이 실패하면 추측하지 않고 에러를 그대로 반환</td>
+<td>요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내</td>
 <td><a href="features/chat.md">chat.md</a></td>
 </tr>
 <tr>
 <td>채팅 의도 라우팅</td>
-<td>질문을 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 확신이 낮으면 위젯 대신 선택지 버튼을 반환</td>
+<td>질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 테이블 구조·인사·잡담·일반 개념은 전체 본문 답변(구조 설명은 테이블별 표 지원), 설명용 MarkdownBlock을 생성하지 않음. 확신이 낮으면 세 경로 선택지 버튼을 반환</td>
 <td><a href="features/chat.md">chat.md</a></td>
 </tr>
 <tr>
@@ -230,12 +230,12 @@
 </tr>
 <tr>
 <td>Artifact/위젯 표시</td>
-<td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td>
+<td>채팅 응답의 위젯을 제목 포함 320px 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td>
 <td><a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
 </tr>
 <tr>
 <td>Stage 배치</td>
-<td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, <code>react-grid-layout</code>으로 이동·리사이즈, 자동 저장·새로고침 후 복원</td>
+<td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, <code>react-grid-layout</code>으로 이동·리사이즈, 조회 정의·배치 자동 저장·새로고침 후 현재 데이터 조회</td>
 <td><a href="features/stage.md">stage.md</a></td>
 </tr>
 <tr>
@@ -245,7 +245,7 @@
 </tr>
 <tr>
 <td>관리자 — DB 연결/권한/AI 설정</td>
-<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정</td>
+<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지</td>
 <td><a href="features/admin.md">admin.md</a></td>
 </tr>
 </tbody>
@@ -841,478 +841,256 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 </tbody>
 </table></section>
 <section id="chat"><h1>기능: DB 채팅</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능: DB 채팅</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-02 (분리 후 구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>문서명</td><td>기능: DB 채팅</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시·대기 질문 중복 표시 수정)</td></tr>
+<tr><td>관련 문서</td><td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td></tr>
+</tbody></table>
 <h2>DB 선택과 질문</h2>
-<p><code>POST /api/chat</code> 입력은 <code>conversation_id</code>, <code>message</code>, 선택적 <code>connection_id</code>, <code>route</code>다. route는 <code>data_query</code> / <code>schema_qa</code>만 허용한다. 프로젝트와 대화는 로그인한 본인의 리소스만 접근한다.</p>
+<p><code>POST /api/chat</code> 입력은 <code>conversation_id</code>, <code>message</code>, 선택적 <code>connection_id</code>, <code>route</code>다. route는 <code>data_query</code> / <code>schema_qa</code> / <code>general_chat</code>을 허용한다. 프로젝트와 대화는 로그인한 본인의 리소스만 접근한다.</p>
 <ul>
-<li><code>data_query</code>: 허용 테이블의 실제 스키마와 예상 질문의 SQL·위젯 계획을 실 LLM에 전달하고 읽기 전용 SQL을 실행해 위젯을 생성한다.</li>
-<li><code>schema_qa</code>: 현재 연결한 DB의 허용 테이블·컬럼·키 구조를 답한다.</li>
-<li>의도가 불분명하면 위 두 경로의 선택지를 반환한다. TypeSafe Jev 실패 시 채팅 LLM이 판단하며, LLM도 실패하면 HTTP 502다.</li>
-<li>문서 질문·그래프 구성 경로와 문서 그래프 참조는 없다. <code>schema_linking.py</code>는 큰 DB에서 유사 질문이 사용한 테이블만 전달하고, 매칭이 없으면 전체 허용 스키마를 전달한다.</li>
-<li>SQL/계획 실행 실패 시 전체 스키마로 한 번 수정 요청한다. 그래도 실패하면 오류를 표시한다.</li>
+<li><code>data_query</code>: 허용 스키마와 유사 예상 질문을 참고해 필요한 SQL 데이터셋을 생성·실행한다. 실행된 결과의 컬럼·타입·행 수를 받은 뒤 여러 위젯과 컬럼 연결을 선택하고 위젯을 각각 생성한다. 데이터 없는 위젯 정의를 반환하며 실제 표시 데이터는 각 위젯이 별도 조회 API에서 가져온다.</li>
+<li><code>schema_qa</code>: 현재 연결한 DB의 허용 테이블·컬럼·키 구조를 전체 메시지 본문으로 답한다. 테이블별 설명과 필요한 컬럼 표를 본문에 표시하며 SQL·예상 질문 검색·<code>MarkdownBlock</code> 위젯을 생성하지 않는다. 응답 Artifact는 <code>{type: &quot;answer&quot;, widgets: []}</code>다.</li>
+<li><code>general_chat</code>: 인사·잡담·일반 지식·개념 설명을 최근 대화 문맥과 함께 처리한다. SQL 자체의 일반 개념 설명도 이 경로다. 실 LLM의 전체 답변을 메시지 본문에 직접 표시하며 SQL·예상 질문 검색·위젯은 생성하지 않는다. 고객 DB의 스키마 조회는 분류 이후 DB 경로에서만 실행하므로 일반 대화는 고객 DB 접속을 요구하지 않는다. 처리 내역에는 “일반 대화 (DB 조회 아님)”으로 표시한다.</li>
+<li>의도가 불분명하면 위 세 경로의 선택지를 반환한다. TypeSafe Jev 실패 시 채팅 LLM이 판단하며, LLM도 실패하면 HTTP 502다.</li>
+<li>문서 질문·그래프 구성 경로와 문서 그래프 참조는 없다. <code>schema_linking.py</code>는 큰 DB에서 유사 질문과 이전 대화 SQL이 사용한 허용 테이블을 전달하고, 매칭이 없으면 전체 허용 스키마를 전달한다.</li>
+<li>SQL 생성·실행·위젯 형식 실패를 다음 작업 판단에 전달한다. 실패한 SQL 수정은 전체 허용 스키마를 사용하며, 호환되지 않는 위젯은 실행 결과에 맞게 다시 선택한다. 완료되지 않으면 앞서 생성한 위젯을 보존하고 미완료 사유와 경로 선택지를 안내한다.</li>
+</ul>
+<h2>설명 답변 표시</h2>
+<ul>
+<li>설명은 채팅 본문에 직접 표시한다. 제목·목록·강조·인라인 코드·코드 블록·간단한 Markdown 표를 지원하며 HTML은 실행하지 않고 텍스트로 표시한다. 본문 표는 데이터 조회 위젯이 아니므로 Stage 추가 버튼이 없다.</li>
+<li>과거 채팅의 <code>MarkdownBlock</code>도 본문으로 표시한다. 함께 저장된 데이터 위젯과 경로 선택지는 유지하고, 표시할 위젯이 없는 답변에는 Widget/JSON 영역을 숨긴다. 기존 메시지·Stage 데이터를 일괄 변경하지 않으며 이미 Stage에 저장된 <code>MarkdownBlock</code>은 기존 렌더러로 표시한다.</li>
+<li>SOC 데모의 출처 기반 해결 방안도 위젯 대신 본문에 붙인다. 실제 조회 위젯과 <code>SourceList</code>는 유지하며 근거가 없으면 해결 방안을 지어내지 않는다.</li>
+<li>이번 변경은 테스트·검증용 빌드·브라우저 검증을 아직 실행하지 않았다. 사용자 승인 후 필요한 범위만 검증한다.</li>
+</ul>
+<h2>계획·실행·평가 루프</h2>
+<ul>
+<li><code>agent_plan.py</code>가 원래 요청 전체와 최근 대화를 받아 목표·단계(예상 경로·질의·기대 결과)를 만든다. 계획당 최대 20단계이며 여러 질문은 별도 단계로 처리한다. 단일 단계는 사용자 원문을 유지한다. 사용자가 경로를 직접 선택하면 계획 호출 없이 해당 경로의 1단계 계획을 쓴다.</li>
+<li><code>agent_service.py</code>는 계획 → 단계별 의도 분류 → 실행 → 원래 목표 평가 → 부족한 작업 재계획을 수행한다. 데이터 단계 안에서는 <code>data_agent.py</code>가 실제 도구 호출마다 결과 상태를 갱신하고 모델이 다음 호출을 결정한다. 계획·분류·평가는 같은 <code>ROUTE_CRITERIA</code>를 사용한다. Jev/LLM은 예상 경로를 그대로 강제하지 않고 현재 하위 질문을 다시 판단하며 원래 요청은 문맥 해석에 사용한다.</li>
+<li>같은 요청 안에서 완료한 단계의 본문·위젯 정의도 다음 단계의 대화 문맥으로 전달한다. DB 하위 질문의 임베딩은 그 하위 질문으로 생성하며 원래 질문과 동일할 때만 기존 벡터를 재사용한다.</li>
+<li>마지막 단계까지 실행한 뒤 단일 단계도 원래 사용자 요청 전체·목표·실제/예상 경로·기대 결과·전체 답변·위젯 정의·검증된 SQL의 컬럼/행 수로 평가한다. 실제 결과 행은 모델에 보내거나 저장하지 않는다. 유효한 조회의 0행 결과도 완료될 수 있으며 원시 데이터가 없다는 이유만으로 추가 작업을 만들지 않는다. 모델이 목표 충족을 확인해야 완료한다.</li>
+<li>부족한 구체적 작업이 있으면 최대 5회 재계획한다. 사용자가 직접 고른 경로에서는 그 경로 안에서만 재계획하며 다른 경로가 필요하면 미완료와 선택지를 반환한다. 같은 (예상 경로, 질의) 반복, 180초 시간 예산, 요청 전체의 데이터 도구 호출 100회 상한, 경로 확인 필요 시 중단한다. 단계 수도 100개로 제한한다. LLM 호출 타임아웃은 남은 예산과 60초 중 작은 값이며 Jev/DB/임베딩의 자체 제한 시간은 별도다.</li>
+<li>여러 단계의 본문·위젯 정의를 합쳐 반환하며 Stage에는 자동 배치하지 않는다. 데이터 도구 실패는 루프에서 수정할 수 있으며 계속할 작업이 없거나 반복·한도·목표 미충족이면 부분 결과와 “요청을 완료하지 못했습니다”, 사유·세 경로 선택지를 반환한다. 최초 계획·분류·일반/구조 답변의 모델 실패는 HTTP 502다.</li>
+<li>처리 내역에는 계획·경로 단계·실제 도구 호출 순서·평가·재계획·종료 사유를 저장한다. SQL 데이터셋 수, 생성 위젯 수, 데이터 도구 호출 수, 다음 작업 판단 호출 수를 구분한다. 공개 실행 기록의 조회 ID·컬럼 이름·행 수는 저장하되 임시 결과 프로필의 SQL 전체·타입·실제 행과 원시 오류는 표시용 meta에 복사하지 않는다. 진행 스트리밍은 없고 최종 응답만 반환한다. 프런트 채팅 대기 한도는 360초다.</li>
+</ul>
+<h2>위젯 선택과 SQL 생성 분리</h2>
+<ul>
+<li><code>data_plan.generate_sql</code>: 조회 목적에 맞는 독립 데이터셋 <code>queries[{title,purpose,sql}]</code>을 생성한다. 위젯 종류·개수·인덱스를 입력 계약으로 요구하지 않으며 여러 집계가 필요하면 복수 SQL을 반환한다. 서버가 <code>query_id</code>를 부여한다. 조회는 데이터 단계당 최대 20개다.</li>
+<li><code>execute_sql</code>: 지정한 조회 ID의 SELECT를 실행하고 결과 컬럼·PostgreSQL 타입·행 수·행 제한을 상태에 기록한다. 0행도 컬럼 메타데이터를 유지한다. 같은 실행 결과는 요청 메모리에서 재사용하며 각 위젯 생성 때문에 SQL을 다시 실행하지 않는다.</li>
+<li><code>data_plan.select_widgets</code>: 실행 완료한 조회 ID만 받는다. 실제 컬럼·타입과 요청 목적에 맞는 위젯을 여러 개 선택하고 <code>column_map</code>으로 위젯 역할을 연결한다. 예: <code>{&quot;label&quot;:&quot;country&quot;,&quot;value&quot;:&quot;product_revenue&quot;}</code>. 같은 SQL로 DataTable과 BarChart를 함께 만들 수 있다. 요청이 단일 위젯을 명시하면 이를 존중한다.</li>
+<li><code>widget_bindings.py</code>가 필수 역할·허용 역할·실제 컬럼 존재를 검증한다. 수치 역할은 수치 컬럼만 허용하며 단일 레코드 위젯은 복수 행을 임의 축약하지 않는다. DataTable·FilterBar·DetailCard는 원래 컬럼을 보존하고 빈 연결을 사용한다. 기존 연결 정보 없는 SQL 위젯의 별칭 동작은 유지한다.</li>
+<li><code>create_widget</code>: 선택한 <code>widget_id</code> 하나를 생성하고 상태를 갱신한다. 위젯마다 별도로 호출하며 데이터 단계당 최대 20개다. 결과 상태에서 추가 조회·수정·위젯 재선택·추가 생성이 필요하면 다음 호출을 결정한다.</li>
+<li><code>finish</code>는 조회·표현 목적이 충족되었을 때 선택한다. 서버도 생성 결과 존재, 모든 SQL 실행 완료, 모든 선택 위젯 생성 완료, 각 데이터셋의 위젯 존재를 확인한다. 미실행/미생성 상태로 조기 종료할 수 없다. 다음 작업이 없으면 <code>incomplete</code>로 종료한다. 실제 호출 수와 재계획 횟수는 서로 다르며 데이터 조회 경로가 하나여도 여러 호출을 수행한다.</li>
+<li>SQL 수정은 데이터 단계당 최대 5회이며 수정한 데이터셋에 연결된 선택·생성 결과를 무효화하고 재실행 후 다시 선택한다. 같은 상태에서 동일 호출이 3번 반복되거나 조기 완료 판단이 2번 반복되면 진행 불가로 중단한다. 기존 예상 질문 카탈로그의 SQL·위젯 계획은 참고 자료로 유지한다.</li>
+<li>계획·다음 작업 판단·SQL 생성·위젯 선택·목표 평가가 별도 모델 호출이므로 호출 수·응답 시간이 늘어난다. 이번 변경의 테스트·검증용 빌드·브라우저 검증은 실행하지 않았으며 사용자 승인 후 필요한 범위만 수행한다.</li>
 </ul>
 <h2>SQL과 위젯</h2>
 <p>고객 DB는 SELECT/WITH 기반 읽기 전용 조회만 허용한다. 역할별 테이블 접근 권한과 서버 위젯 화이트리스트를 검증한다. 지원 위젯은 <a href="features/widgets-artifact.md">widgets-artifact.md</a>를 본다.</p>
 <p>기존 SOC 데모의 고정 <code>DocumentProvider</code> 출처 보조 기능은 유지한다. 사용자 업로드 문서나 doc2graph의 그래프를 읽는 기능은 아니다.</p>
-<h2>저장과 AI 설정</h2>
-<p>대화 메시지·Artifact·표시용 처리 내역은 서비스 DB에 저장한다. 처리 내역에는 경로·모델·SQL 테이블 선택·유사 질문·복구 결과를 표시한다. API 키·원시 오류·참조 SQL 계획은 표시용 meta에 저장하지 않는다.</p>
-<p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
-<p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p></section>
-<section id="widgets-artifact"><h1>기능: Artifact / 위젯 카탈로그</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-09-21 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>rows_to_props</code>), <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2>용어</h2>
-<table>
-<thead>
-<tr>
-<th>용어</th>
-<th>의미</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Artifact</td>
-<td>채팅 한 번의 답변에 묶인 위젯 집합. <code>artifact_id</code>, <code>type</code>(<code>widget</code>/<code>dashboard</code>/<code>report</code>), <code>widgets[]</code></td>
-</tr>
-<tr>
-<td>Widget</td>
-<td>허용 컴포넌트 하나. <code>widget_id</code>, <code>component</code>, <code>title</code>, <code>props</code>, 선택적 <code>sql</code></td>
-</tr>
-<tr>
-<td>Furniture</td>
-<td>에이전트가 내는 닫힌 카탈로그 JSON을 부르는 제품 용어. 모르는 키/타입은 버려진다</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2>F-09 Artifact 표시</h2>
+<h2>대화 문맥과 후속 질문</h2>
 <ul>
-<li>어시스턴트 메시지에 Artifact가 있으면(<code>artifact.widgets.length</code> 또는 <code>artifact_id</code> 존재) <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다(<code>AssistantAnswer</code>).</li>
-<li>Widget 뷰: 위젯마다 <code>ArtifactPreviewCard</code> — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.</li>
-<li>JSON 뷰: Artifact 전체를 pretty-print.</li>
-<li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
-<li>실제 SQL 문자열은 <code>resolveWidgetSql()</code>이 반환한다: 위젯에 백엔드가 직접 붙인 <code>sql</code>/<code>query_ref.sql</code>/<code>props.__sql</code>만 보여준다 — 없으면 빈 문자열이고 SQL 토글이 숨는다. 추측한 SQL을 대신 보여주지 않는다(2026-09-22, 옛 <code>FALLBACK_BY_TITLE</code>/<code>FALLBACK_BY_COMPONENT</code> 하드코딩 테이블 삭제).</li>
-<li>미리보기 카드는 <code>draggable</code>(SQL 보기 중이거나 viewer면 제외). viewer는 드래그 핸들도, "Add to stage" 버튼도 없다.</li>
+<li>서버는 소유자 확인을 마친 현재 대화에서 최근 20개 메시지 범위의 응답 완료 이력을 구성한다(<code>backend/app/chat_flow.py</code>). 사용자의 현재 메시지는 이력에 중복해서 넣지 않는다.</li>
+<li>같은 연결 DB의 질문·답변 본문과 위젯 종류·제목·SQL·컬럼 연결·Markdown 본문을 Jev/LLM 라우터, 데이터 작업 판단·SQL 생성/수정·위젯 선택, 테이블 구조 답변·일반 대화에 전달한다. 직전 응답 경로도 라우터에 전달하되 현재 요청의 경로를 강제하지 않는다. “그중 상위 5개만”, “지난달과 비교해줘”, “그 컬럼은?” 같은 후속 질문을 이 문맥으로 해석한다.</li>
+<li>과거 메시지는 지시어 해석용 참고이며 현재 사실·스키마·권한의 근거가 아니다. 고객 DB 조회는 현재 허용 스키마와 읽기 전용 검증을 따르고 매번 현재 데이터를 조회한다. 의미를 확인할 수 없는 지시어는 추측하지 않고 추가 설명을 요청한다. 원시 진단 meta와 위젯 결과 행은 모델 이력에 복사하지 않는다.</li>
+<li>새 어시스턴트 메시지의 meta에 실제 <code>connection_id</code>를 저장해 새로고침 후에도 같은 DB의 문맥을 이어간다. 다른 DB의 응답이나 연결 DB를 확인할 수 없는 과거 메시지를 만나면 거기서 이력을 끊는다. 기존 DB 정보 없는 메시지는 화면에는 남지만 모델 문맥에서 제외한다. 응답 없이 실패한 질문도 문맥에서 제외한다. DB 이력을 소급 변환하지 않는다.</li>
+<li>이력 구성 자체는 추가 모델 호출 없이 수행한다. 계획·목표 평가·자동 재계획의 호출과 중단 조건은 위 루프 명세를 따른다. 응답은 최종 결과만 반환하며 스트리밍은 없다.</li>
+<li>입력창은 Enter 전송·Shift+Enter 줄바꿈을 유지하고, 한글 등 IME 조합 중 Enter는 전송하지 않는다.</li>
 </ul>
-<hr />
+<h2>저장과 AI 설정</h2>
+<p>질문을 전송하면 서버 저장 전에는 임시 말풍선을 표시한다. 서버는 응답 생성 전에 질문을 저장하므로 SWR의 포커스 복귀·재연결 조회에서 질문이 먼저 나타날 수 있다. 전송 전 메시지 ID 목록에 없던 동일 내용의 사용자 메시지가 조회되면 임시 말풍선만 숨기고 응답 대기 표시는 유지한다. 과거의 같은 질문은 그대로 표시하며 임시 질문·대기 표시는 전송한 대화에서만 표시한다. 중복 표시 회귀 테스트는 작성했고 사용자 승인 전에는 실행하지 않았다.</p>
+<p>대화 메시지·Artifact의 위젯 정의·표시용 처리 내역은 서비스 DB에 저장한다. SQL 위젯의 조회 결과 데이터는 저장하지 않고 <code>query_ref</code>에 원본 DB ID와 SQL을 보관한다. 채팅 미리보기는 위젯별 데이터 API로 현재 데이터를 조회한다(<a href="features/widgets-artifact.md">widgets-artifact.md</a>). 처리 내역에는 경로·모델·SQL 테이블 선택·유사 질문·복구 결과를 표시하며 meta의 <code>connection_id</code>는 문맥의 DB 범위를 확인하는 데 사용한다. API 키·원시 오류·참조 SQL 계획은 표시용 meta에 저장하지 않는다.</p>
+<p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
+<p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p>
+<p>같은 설정의 Provider 공통 <code>jevApiKey</code>는 AI 설정 패널의 <code>Jev API key</code> 입력란에서 저장하고 채팅의 <code>X-Jev-API-Key</code> 헤더로만 전달한다. 요청 키를 우선 사용하며 빈 값·헤더 생략 시 서버 <code>TYPESAFE_API_KEY</code>를 사용한다. Jev 키는 모델 프롬프트나 대화 기록에 저장하지 않는다. 길이·줄바꿈 형식 오류는 메시지를 저장하기 전에 HTTP 400으로 거부한다. 자세한 동작은 <a href="features/admin.md#jev-의도-분류-연결">Jev 의도 분류 연결</a>을 따른다.</p></section>
+<section id="widgets-artifact"><h1>기능: Artifact / 위젯 카탈로그</h1>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>문서명</td><td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시·채팅 프리뷰 320px)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>_materialize_plan</code>), <code>backend/app/widget_queries.py</code>, <code>backend/app/catalog_props.py</code>, <code>backend/app/widget_props.py</code>(<code>rows_to_props</code>), <code>frontend/src/widgets/QueryWidget.jsx</code>, <code>frontend/src/widgets/widgetData.js</code>, <code>frontend/src/widgets/catalogSettings.js</code>, <code>frontend/src/widgets/DataTable.jsx</code>, <code>frontend/src/widgets/tableData.js</code>, <code>frontend/src/widgets/CatalogCards.jsx</code>, <code>frontend/src/widgets/tanstackCatalogCharts.js</code>, <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/widgets/tanstackBarChart.js</code>, <code>frontend/src/widgets/tanstackAnalyticalCharts.js</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td></tr>
+</tbody></table>
+<hr>
+<h2>용어</h2>
+<table><thead><tr><th>용어</th><th>의미</th></tr></thead><tbody>
+<tr><td>Artifact</td><td>채팅 한 번의 답변에 묶인 위젯 집합. <code>artifact_id</code>, <code>type</code>(<code>widget</code>/<code>dashboard</code>/<code>report</code>), <code>widgets[]</code></td></tr>
+<tr><td>Widget</td><td>허용 컴포넌트 하나. <code>widget_id</code>, <code>component</code>, <code>title</code>, 표시 설정 <code>props</code>, SQL 위젯의 <code>sql</code>·<code>query_ref</code></td></tr>
+<tr><td>Furniture</td><td>에이전트가 내는 닫힌 카탈로그 JSON을 부르는 제품 용어. 모르는 키/타입은 버려진다</td></tr>
+</tbody></table>
+<hr>
+<h2>F-09 Artifact 표시</h2>
+<p>채팅은 필요한 SQL 데이터셋을 먼저 생성·실행하고 실제 컬럼·타입·행 수를 받은 뒤 여러 위젯을 선택한다. 같은 결과를 여러 위젯이 공유할 수 있으며 위젯마다 <code>column_map</code>으로 역할을 연결한다. 예를 들어 국가·제품·매출 조회 하나로 원본 DataTable과 국가별 매출 BarChart를 만들 수 있다. 실제 도구 호출마다 결과를 받아 다음 작업을 결정하고 각 위젯을 별도로 생성한다. 여러 단계 결과는 하나의 Artifact로 모으며 아래 데이터 없는 정의·위젯별 현재 조회 방식은 유지한다. 자세한 흐름은 <a href="features/chat.md#위젯-선택과-sql-생성-분리">채팅 명세</a>를 따른다.</p>
+<ul>
+<li><code>MarkdownBlock</code> 설명을 본문으로 옮긴 뒤 표시할 위젯이 남아 있을 때만 <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다(<code>AssistantAnswer</code>). <code>artifact_id</code>만 있는 빈 Artifact에는 표시하지 않는다. JSON 복사는 화면에 남은 위젯 정의를 대상으로 한다.</li>
+<li>테이블 구조 설명은 전체 채팅 본문으로 반환하며 테이블별 설명·컬럼 표를 본문에서 읽는다. 새 설명 답변과 SOC 출처 기반 해결 방안은 <code>MarkdownBlock</code>을 생성하지 않는다. 과거 채팅의 <code>MarkdownBlock</code>은 본문에 표시하고, 이미 Stage에 저장된 항목은 호환성을 위해 기존 렌더러로 표시한다. 기존 저장 데이터는 수정하지 않는다.</li>
+<li>Widget 뷰: 위젯마다 <code>ArtifactPreviewCard</code> — 제목, 렌더러, (가능하면) SQL 보기 토글, &quot;Add to stage&quot; 버튼.</li>
+<li>채팅 미리보기 카드는 테두리·제목을 포함해 높이 320px로 고정한다. 제목 아래 남은 공간을 조회 영역·정적 위젯·SQL 패널이 채우며 새로고침 버튼은 조회 영역 안에 포함된다. Stage·Viewer 위젯은 기존 배치 높이를 따른다.</li>
+<li>JSON 뷰: Artifact의 위젯 정의를 pretty-print. 조회 결과 행·차트 데이터·KPI 값은 포함하지 않는다.</li>
+<li>JSON 뷰의 &quot;JSON 복사&quot; 버튼은 화면에 표시한 Artifact JSON 전체를 들여쓰기와 함께 클립보드에 복사한다. 복사 중에는 중복 클릭을 막고 성공·실패 안내를 복사 버튼 바로 왼쪽에 10px 글자로 표시한다. 클립보드 접근이 불가능하면 JSON을 선택해 직접 복사하도록 안내한다. 읽기 전용 사용자도 복사할 수 있다.</li>
+<li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram, CompareCard, PivotTable, StatusSummary, EventTimeline, KpiGroup, DetailCard, HorizontalBarChart, ComboChart, BoxPlot, Treemap)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
+<li>실제 SQL 문자열은 <code>resolveWidgetSql()</code>이 반환한다: 위젯에 백엔드가 직접 붙인 <code>sql</code>/<code>query_ref.sql</code>/<code>props.__query_ref.sql</code>/<code>props.__sql</code>만 보여준다 — 없으면 빈 문자열이고 SQL 토글이 숨는다. 추측한 SQL을 대신 보여주지 않는다(2026-09-22, 옛 <code>FALLBACK_BY_TITLE</code>/<code>FALLBACK_BY_COMPONENT</code> 하드코딩 테이블 삭제).</li>
+<li>미리보기 카드는 <code>draggable</code>(SQL 보기 중이거나 viewer면 제외). viewer는 드래그 핸들도, &quot;Add to stage&quot; 버튼도 없다.</li>
+</ul>
+<hr>
+<h2>위젯별 데이터 조회 (2026-10-13)</h2>
+<ul>
+<li>SQL 위젯 정의는 <code>component</code>, <code>title</code>, <code>sql</code>, <code>query_ref: {connection_id, sql}</code>, 표시 설정 <code>props</code>와 ID만 저장한다. <code>rows</code>, <code>categories</code>, <code>series</code>, <code>points</code>, <code>cells</code>, <code>bins</code>, KPI <code>value</code> 등 조회 결과는 Artifact·Stage에 새로 저장하지 않는다. <code>MarkdownBlock</code>·<code>SourceList</code>의 본문/출처와 SQL 없는 과거 <code>FilterBar</code>의 칩은 유지한다. 새 <code>FilterBar</code>는 SQL 조회 위젯이다.</li>
+<li>생성 루프는 실행한 SQL 결과를 요청 메모리에서 공유한다. <code>_materialize_plan</code>은 이 결과에 컬럼 연결을 적용해 각 위젯의 데이터 형식을 확인하며 같은 SQL을 위젯마다 다시 실행하지 않는다. 실제 행은 저장하지 않는다. 실제 표시 데이터는 각 <code>QueryWidget</code>이 SWR로 별도 조회한다. 화면을 열거나 새로고침 버튼을 누르면 현재 데이터를 가져오며, 주기적인 폴링은 없다.</li>
+<li><code>props.column_map</code>은 데이터 값이 아닌 컬럼 연결 설정이다. 예: <code>{&quot;label&quot;:&quot;country&quot;,&quot;value&quot;:&quot;product_revenue&quot;}</code>. Artifact·Stage·Viewer·JSON 복사에서 이를 보존하고 조회 API가 현재 SQL 결과에 적용한다. 같은 SQL을 참조하는 여러 위젯도 서로 다른 연결을 사용할 수 있다. 기존 연결 정보 없는 위젯은 원래 별칭 변환을 유지한다.</li>
+<li>채팅 미리보기는 <code>GET /api/conversations/{conversation_id}/widgets/{widget_id}/data</code>, Stage·Viewer는 <code>GET /api/projects/{project_id}/stage/widgets/{widget_id}/data</code>를 호출한다. 응답은 <code>{props, count}</code>이며 브라우저 메모리 캐시에만 보관하고 HTTP 캐시는 <code>no-store</code>다.</li>
+<li>서버가 저장된 위젯의 SQL·원본 DB로 조회한다. 브라우저가 SQL·DB를 요청 인자로 보내지 않으며 현재 DB 선택창 변경도 기존 위젯의 조회 DB를 바꾸지 않는다. 소유자·tenant·현재 역할의 테이블 권한을 매 요청 검사하고 기존 SELECT 검증·1000행 제한·10초 SQL 제한을 적용한다. 테이블 권한이 없으면 403이고 데모 권한으로 대체하지 않는다.</li>
+<li>위젯마다 로딩·빈 결과·조회 오류·다시 조회를 표시한다. DB 연결 오류의 원문/접속 자격증명은 응답하지 않는다. 데이터 새로고침은 LLM을 호출하지 않는다.</li>
+<li>기존 저장 결과는 DB 일괄 마이그레이션 없이 읽을 때 데이터 필드를 제외한다. 채팅은 메시지 meta의 DB ID, Stage는 소유한 원본 Artifact·위젯의 같은 SQL에서 DB ID를 복원한다. SQL이나 원본 DB를 확인할 수 없으면 409로 질문 재실행을 안내하며 다른 DB로 추측 조회하지 않는다. Stage를 새로 저장하거나 수정하면 데이터 없는 정의로 저장한다.</li>
+</ul>
 <h2>허용 위젯 카탈로그</h2>
-<p>서버 <code>ALLOWED_COMPONENTS</code>(<code>backend/app/config.py</code>)가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 <code>REGISTRY</code>도 정확히 이 12개와 1:1로 대응한다.</p>
-<table>
-<thead>
-<tr>
-<th>컴포넌트</th>
-<th>용도</th>
-<th>대표 props</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>KpiStat</code></td>
-<td>단일 수치</td>
-<td><code>label, value, unit?, delta?</code></td>
-</tr>
-<tr>
-<td><code>DataTable</code></td>
-<td>표</td>
-<td><code>columns[{key,label}], rows[]</code></td>
-</tr>
-<tr>
-<td><code>RankList</code></td>
-<td>순위 목록</td>
-<td><code>items[{rank,label,value,meta?}]</code></td>
-</tr>
-<tr>
-<td><code>BarChart</code></td>
-<td>막대</td>
-<td><code>categories[], series[0]{name,data[]}</code></td>
-</tr>
-<tr>
-<td><code>LineChart</code></td>
-<td>추이</td>
-<td><code>series[]{name,points[{x,y}]}</code></td>
-</tr>
-<tr>
-<td><code>PieChart</code></td>
-<td>비중</td>
-<td><code>slices[{label,value}]</code></td>
-</tr>
-<tr>
-<td><code>MarkdownBlock</code></td>
-<td>설명·보고서 텍스트</td>
-<td><code>markdown, citations[]</code></td>
-</tr>
-<tr>
-<td><code>SourceList</code></td>
-<td>문서 출처</td>
-<td><code>sources[{title,version?,section?}]</code></td>
-</tr>
-<tr>
-<td><code>FilterBar</code></td>
-<td>필터 칩 UI(카탈로그 예약)</td>
-<td><code>filters[{label,value}]</code></td>
-</tr>
-<tr>
-<td><code>KpiSparkline</code></td>
-<td>KPI + 미니 추이</td>
-<td><code>label,value,unit?,delta?,points[{x,y}]</code></td>
-</tr>
-<tr>
-<td><code>PieTable</code></td>
-<td>파이 + 표 (컨테이너 쿼리로 레이아웃 전환)</td>
-<td><code>slices[], columns?, rows?</code></td>
-</tr>
-<tr>
-<td><code>BarTable</code></td>
-<td>막대 + 표 (+선택 KPI 헤더)</td>
-<td><code>label?,value?,categories[],series[],columns?,rows?</code></td>
-</tr>
-</tbody>
-</table>
-<p>렌더링은 Recharts(<code>WidgetRenderer.jsx</code>). <code>PieTable</code>/<code>BarTable</code>/<code>KpiSparkline</code>은 자체 CSS(<code>cq-composite</code>)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.</p>
+<p>서버 <code>ALLOWED_COMPONENTS</code>(<code>backend/app/config.py</code>)가 유일한 진실. 프론트 <code>WidgetRenderer</code>의 <code>REGISTRY</code>도 정확히 이 26개와 1:1로 대응한다.</p>
+<p>아래 props는 조회 API가 반환하는 <strong>실행 시점의 데이터 형태</strong>다. SQL 위젯의 저장 JSON에는 이 데이터 대신 <code>query_ref</code>와 표시 설정만 들어간다.</p>
+<table><thead><tr><th>컴포넌트</th><th>용도</th><th>실행 시점 props</th></tr></thead><tbody>
+<tr><td><code>KpiStat</code></td><td>단일 수치</td><td><code>label, value, unit?, delta?</code></td></tr>
+<tr><td><code>DataTable</code></td><td>검색·정렬·페이지 이동이 있는 표</td><td><code>columns[{key,label}], rows[]</code></td></tr>
+<tr><td><code>RankList</code></td><td>순위 목록</td><td><code>items[{rank,label,value,meta?}]</code></td></tr>
+<tr><td><code>BarChart</code></td><td>막대</td><td><code>categories[], series[0]{name,data[]}</code></td></tr>
+<tr><td><code>LineChart</code></td><td>여러 시리즈 추이 비교</td><td><code>series[]{name,points[{x,y}]}</code></td></tr>
+<tr><td><code>PieChart</code></td><td>비중</td><td><code>slices[{label,value}]</code></td></tr>
+<tr><td><code>MarkdownBlock</code></td><td>기존 Stage 설명·보고서 호환용 (채팅은 본문 표시)</td><td><code>markdown, citations[]</code></td></tr>
+<tr><td><code>SourceList</code></td><td>문서 출처</td><td><code>sources[{title,version?,section?}]</code></td></tr>
+<tr><td><code>FilterBar</code></td><td>조회 결과의 컬럼별 값 필터·검색·정렬</td><td><code>columns[], rows[]</code> (과거 SQL 없는 위젯은 <code>filters[]</code>)</td></tr>
+<tr><td><code>KpiSparkline</code></td><td>KPI + 미니 추이</td><td><code>label,value,unit?,delta?,points[{x,y}]</code></td></tr>
+<tr><td><code>PieTable</code></td><td>파이 + 표 (컨테이너 쿼리로 레이아웃 전환)</td><td><code>slices[], columns?, rows?</code></td></tr>
+<tr><td><code>BarTable</code></td><td>막대 + 표 (+선택 KPI 헤더)</td><td><code>label?,value?,categories[],series[],columns?,rows?</code></td></tr>
+<tr><td><code>StackedBarChart</code></td><td>시리즈별 기여도를 누적한 막대</td><td><code>categories[], series[{name,data[]}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>Heatmap</code></td><td>두 범주 축의 수치 강도</td><td><code>cells[{x,y,value}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>ScatterChart</code></td><td>두 수치의 관계·이상치</td><td><code>points[{x,y,label?}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>Histogram</code></td><td>숫자 구간별 빈도</td><td><code>bins[{start,end,count}], xLabel?, yLabel?</code></td></tr>
+<tr><td><code>CompareCard</code></td><td>두 기간/기준의 값·증감 비교</td><td><code>label,current,previous,delta,changeRate,unit?</code></td></tr>
+<tr><td><code>PivotTable</code></td><td>행·열 교차 표와 합계</td><td><code>columns[],rows[],totals</code></td></tr>
+<tr><td><code>StatusSummary</code></td><td>상태별 건수·비율</td><td><code>total,items[{label,value,share}]</code></td></tr>
+<tr><td><code>EventTimeline</code></td><td>실제 사건을 최신순으로 표시</td><td><code>items[{occurredAt,title,description?}]</code></td></tr>
+<tr><td><code>KpiGroup</code></td><td>여러 지표를 한 카드에 표시</td><td><code>items[{label,value,unit?}]</code></td></tr>
+<tr><td><code>DetailCard</code></td><td>한 레코드의 주요 속성</td><td><code>fields[{label,value}]</code></td></tr>
+<tr><td><code>HorizontalBarChart</code></td><td>이름이 긴 항목의 순위/수치 비교</td><td><code>categories[],series[0].data[]</code></td></tr>
+<tr><td><code>ComboChart</code></td><td>별도 좌우 축의 막대·선</td><td><code>points[{x,bar,line}],xLabel?,yLabel?,secondaryYLabel?,barLabel?,lineLabel?</code></td></tr>
+<tr><td><code>BoxPlot</code></td><td>사분위·중앙값·수염·이상치</td><td><code>boxes[{label,minimum,q1,median,q3,maximum,outliers[]}]</code></td></tr>
+<tr><td><code>Treemap</code></td><td>그룹·항목별 비중</td><td><code>nodes[{id,parentId,label,group,value}]</code></td></tr>
+</tbody></table>
+<p><code>BarChart</code>·<code>StackedBarChart</code>·<code>Heatmap</code>·<code>ScatterChart</code>·<code>Histogram</code>·<code>HorizontalBarChart</code>·<code>ComboChart</code>·<code>BoxPlot</code>·<code>Treemap</code>은 TanStack Charts 1.1.0의 React/SVG 렌더러를 사용한다. 나머지 차트와 합성 위젯은 Recharts(<code>WidgetRenderer.jsx</code>)를 사용한다. <code>PieTable</code>/<code>BarTable</code>/<code>KpiSparkline</code>은 자체 CSS(<code>cq-composite</code>)로 두 서브뷰를 하나의 위젯 안에 쌓는 합성 컴포넌트다.</p>
+<h3>TanStack Charts 적용 범위 (2026-10-13)</h3>
+<ul>
+<li>기존 <code>BarChart</code>의 <code>categories[]</code>, <code>series[0].data[]</code> 실행 시점 props 계약을 유지하며 첫 번째 시리즈만 표시한다. 저장 JSON은 위젯별 조회 정의로 바뀌었다. 여러 시리즈의 기여도는 신규 <code>StackedBarChart</code>로 표시한다.</li>
+<li><code>tanstackBarChart.js</code>·<code>tanstackAnalyticalCharts.js</code>·<code>tanstackCatalogCharts.js</code>가 고정된 차트 정의를 만든다. LLM이 임의의 TanStack 정의·색상·차트 타입을 생성하는 경로는 없다.</li>
+<li>채팅 미리보기·Stage·Viewer가 같은 렌더러를 공유한다. 카드의 너비와 높이 변화는 라이브러리의 ResizeObserver가 처리하고, 툴팁은 포인터와 키보드로 확인할 수 있다.</li>
+<li>중복 항목명은 별도 막대로 유지한다. 0·음수·소수·숫자 문자열을 표시하고, 누락된 값은 기존처럼 0으로 처리한다. 숫자가 아닌 값은 막대에서 제외한다.</li>
+<li>프런트 테스트 14개, 신규 위젯 백엔드 테스트 26개, Vite 빌드와 브라우저 화면의 크기 변경·빈 결과·키보드 툴팁·StrictMode 재마운트를 확인했다. 로컬 Compose를 띄운 뒤 백엔드 전체 124개 테스트가 통과했다. 실제 Global Sales 데모 DB의 SELECT 결과로 신규 4종을 만들고 Stage 추가/재조회 API 및 Viewer 화면을 확인했다(6개월 누적 매출, 지역·제품 24셀, 판매량·매출 288관측, 매출 9구간). 이 실데이터 화면은 SQL 직접 검증 결과이며 AI가 생성한 응답이 아니다. 서버·현재 브라우저에 AI 키가 없어 실 LLM 호출은 아직 미검증이다.</li>
+<li>Recharts와 함께 사용하므로 빌드의 압축 JS는 최초 적용 전 218.59KB에서 4종 추가 후 264.54KB로 증가했다. 기존 BarChart 적용 대비 추가 증가는 약 4.2KB다.</li>
+</ul>
+<p>공식 자료: <a href="https://tanstack.com/charts/latest/docs/overview">개요</a>, <a href="https://tanstack.com/charts/latest/docs/framework/react/quick-start">React 빠른 시작</a>.</p>
+<h3>신규 분석 위젯의 SQL 계약</h3>
+<p>채팅 계획과 DB별 예상 질문 생성 모두 다음 별칭을 사용한다. 예상 질문의 SQL 위젯 목록은 24개이며 <code>MarkdownBlock</code>·<code>SourceList</code>를 제외한다.</p>
+<table><thead><tr><th>컴포넌트</th><th>SQL 결과 별칭</th><th>변환 규칙</th></tr></thead><tbody>
+<tr><td><code>StackedBarChart</code></td><td><code>category</code>, <code>series</code>, <code>value</code></td><td>같은 범주·시리즈를 합산하고 누락된 조합은 0으로 채운다. 음수는 0 아래에 별도 누적한다.</td></tr>
+<tr><td><code>Heatmap</code></td><td><code>x</code>, <code>y</code>, <code>value</code></td><td>같은 좌표를 합산한다. 수치의 최솟값~최댓값을 고정 파란색 강도와 범례로 표시하며, 누락된 좌표는 빈 공간으로 남긴다.</td></tr>
+<tr><td><code>ScatterChart</code></td><td>숫자 <code>x</code>, 숫자 <code>y</code>, 선택적 <code>label</code></td><td>같은 행의 좌표 쌍을 유지하고 중복 좌표도 보존한다.</td></tr>
+<tr><td><code>Histogram</code></td><td><code>bin_start</code>, <code>bin_end</code>, <code>count</code></td><td>DB가 계산한 <code>[start,end)</code> 구간을 시작값 순으로 표시한다. 동일 구간은 합산한다. 겹친 구간·폭 0 이하·음수 또는 소수 빈도는 오류다.</td></tr>
+</tbody></table>
+<ul>
+<li>필수 별칭이 없거나 유한한 숫자가 아닌 값이 있으면 오류를 반환해 기존 계획 복구 경로로 전달한다. NULL 관측은 제외하며 임의의 0으로 대체하지 않는다.</li>
+<li>표시 설정은 <code>catalog_props.DISPLAY_KEYS</code>의 허용 문자열만 유지한다(축 이름, 복합 차트의 지표/오른쪽 축 이름, 비교 카드의 현재/이전 이름). 데이터 props는 위젯 조회 API에서 SQL 결과로 새로 만든다.</li>
+<li>히스토그램은 PostgreSQL에서 구간별 집계를 수행한다. 상수 데이터에도 양의 구간 폭을 쓰며, 사용자가 요청하면 빈 구간을 0건으로 포함한다. 원시 관측을 프런트에서 임의로 구간화하지 않는다.</li>
+</ul>
+<h3>카드·목록·새 차트 10종 및 기존 위젯 보강 (2026-10-13)</h3>
+<p>신규 10종도 조회 정의만 저장하고 현재 데이터는 위젯별 GET으로 가져온다. 기본 Stage 추가 크기는 <code>w:6 h:7</code>이며 기존 저장 배치는 유지한다.</p>
+<table><thead><tr><th>컴포넌트</th><th>SQL 별칭</th><th>처리 규칙</th></tr></thead><tbody>
+<tr><td><code>CompareCard</code></td><td><code>current</code>, <code>previous</code>, 선택적 <code>label/unit</code></td><td>1행만 허용. 증감액과 증감률을 서버에서 계산하고 이전 값 0/NULL이면 증감률은 계산 불가로 표시한다. 음수 기준은 절댓값을 분모로 쓴다.</td></tr>
+<tr><td><code>PivotTable</code></td><td><code>row</code>, <code>column</code>, <code>value</code></td><td>같은 조합을 합산하고 빈 조합은 0. 행·열·전체 합계를 계산한다. 검색/페이지 이동 중에도 아래 전체 합계는 원래 조회 결과 기준이다.</td></tr>
+<tr><td><code>StatusSummary</code></td><td><code>status</code>, <code>count</code></td><td>음수가 아닌 정수 건수만 허용. 상태별 건수·전체 대비 비율 표시.</td></tr>
+<tr><td><code>EventTimeline</code></td><td><code>occurred_at</code>, <code>title</code>, 선택적 <code>description</code></td><td>실제 ISO 날짜/시간만 허용하고 최신순으로 정렬. 날짜만 있는 데이터에 시간을 만들어 붙이지 않는다.</td></tr>
+<tr><td><code>KpiGroup</code></td><td><code>label</code>, <code>value</code>, 선택적 <code>unit</code></td><td>지표별 1행. 독립 집계를 UNION ALL 등으로 묶는다. NULL은 알 수 없는 값으로 표시.</td></tr>
+<tr><td><code>DetailCard</code></td><td>의미 있는 임의 컬럼</td><td>0~1행만 허용. 2행 이상은 목록을 임의로 잘라 표시하지 않고 오류.</td></tr>
+<tr><td><code>HorizontalBarChart</code></td><td><code>label</code>, <code>value</code></td><td>SQL 정렬 순서를 유지하고 음수도 표시.</td></tr>
+<tr><td><code>ComboChart</code></td><td><code>x</code>, <code>bar_value</code>, <code>line_value</code></td><td>같은 x 기준의 두 지표. 막대는 왼쪽 축, 선은 독립적인 오른쪽 축.</td></tr>
+<tr><td><code>BoxPlot</code></td><td><code>label</code>, <code>minimum</code>, <code>q1</code>, <code>median</code>, <code>q3</code>, <code>maximum</code>, 선택적 <code>outliers</code> 배열</td><td>DB에서 전체 자료의 사분위와 Tukey 수염/이상치를 계산한다. 수염~사분위 순서와 이상치 범위를 검증. 제한된 원시 1000행으로 통계를 다시 계산하지 않는다.</td></tr>
+<tr><td><code>Treemap</code></td><td><code>group</code>, <code>label</code>, <code>value</code></td><td>음수 값 거부, 0은 면적 없음. 그룹/항목 합계를 서버의 고정 트리 ID로 구성해 표시.</td></tr>
+</tbody></table>
+<ul>
+<li><code>LineChart</code>는 모든 시리즈를 표시한다. SQL에 선택적 <code>series</code> 별칭을 추가하고 <code>x/y/series</code> 쌍은 유일해야 한다. 누락된 관측은 0이 아닌 끊긴 선으로 표시한다. 기존 단일 <code>x/y</code> 계약은 유지한다.</li>
+<li><code>DataTable</code>은 컬럼 제목 클릭으로 오름/내림 정렬, 전체 컬럼 검색, 10/25/50행 페이지 이동을 지원한다. 합성 위젯 내부의 표도 같은 기능을 사용한다.</li>
+<li>새 <code>FilterBar</code>는 SQL이 반환한 표의 컬럼과 값을 선택해 해당 위젯 내부 데이터를 필터링한다. 검색·정렬·페이지 이동과 같이 적용되며 기존 SQL 없는 필터 칩은 계속 표시한다.</li>
+<li>표/필터 동작은 서버가 조회한 최대 1000행의 브라우저 메모리 데이터에 적용된다. DB 전체 검색·서버 페이지 이동·다른 위젯에 적용하는 전역 필터는 아니다. 필터링은 SQL을 재작성하거나 LLM을 호출하지 않는다.</li>
+<li>신규 컴포넌트는 서버 허용 목록·위젯 선택 프롬프트·SQL 생성 프롬프트·예상 질문 프롬프트·SQL 보기·Stage 복사 경로에 모두 등록한다.</li>
+</ul>
 <h3>화이트리스트 위반 시 동작이 다르다</h3>
-<table>
-<thead>
-<tr>
-<th>경로</th>
-<th>목록 밖 컴포넌트 처리</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>채팅 Artifact (<code>sanitize_artifact</code>)</td>
-<td><code>DataTable</code>로 치환. 원래 <code>props</code>에 <code>columns</code>가 없으면 "Unsupported component fell back to table" 안내 행으로 대체</td>
-</tr>
-<tr>
-<td>Stage 저장 (<code>stages.add_widget</code> / <code>replace_stage_widgets</code>)</td>
-<td><code>ValueError</code> → API가 <strong>400</strong>으로 거부. 폴백 없음</td>
-</tr>
-</tbody>
-</table>
-<h3>빈 결과일 때 props (<code>rows_to_props</code>, 실 LLM 경로)</h3>
-<p>SQL 실행 결과가 0행이면 컴포넌트별로 빈 상태 props를 만든다: <code>KpiStat</code>은 <code>value: 0</code>, <code>DataTable</code>은 "결과 없음" 안내 행, <code>BarChart</code>/<code>LineChart</code>/<code>RankList</code>/<code>PieChart</code>는 빈 배열.</p>
-<hr />
+<table><thead><tr><th>경로</th><th>목록 밖 컴포넌트 처리</th></tr></thead><tbody>
+<tr><td>채팅 Artifact (<code>sanitize_artifact</code>)</td><td><code>DataTable</code>로 치환. SQL이 있으면 표 데이터로 조회하며 SQL이 없으면 조회 정보 누락 오류를 표시</td></tr>
+<tr><td>Stage 저장 (<code>stages.add_widget</code> / <code>replace_stage_widgets</code>)</td><td><code>ValueError</code> → API가 <strong>400</strong>으로 거부. 폴백 없음</td></tr>
+</tbody></table>
+<h3>빈 결과일 때 실행 시점 props (<code>rows_to_props</code>, 위젯 조회 API)</h3>
+<p>SQL 실행 결과가 0행이면 컴포넌트별로 빈 상태 props를 만든다: <code>KpiStat</code>은 <code>value: 0</code>, <code>DataTable</code>은 &quot;결과 없음&quot; 안내 행, <code>BarChart</code>/<code>LineChart</code>/<code>RankList</code>/<code>PieChart</code>는 빈 배열. 신규 분석 위젯은 각각 빈 <code>categories/series</code>, <code>cells</code>, <code>points</code>, <code>bins</code>를 만들고 &quot;결과 없음&quot;을 표시한다.</p>
+<hr>
 <h2>관련 자료</h2>
 <ul>
 <li>LLM이 Artifact JSON을 만드는 프롬프트 규격(<code>SCHEMA_HINT</code>)은 <a href="features/chat.md">chat.md</a>에서 다룬다.</li>
 <li>Stage에 위젯을 올리는 절차는 <a href="features/stage.md">stage.md</a> F-10을 본다.</li>
 </ul></section>
 <section id="stage"><h1>기능: Stage (핀보드)</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — Stage 배치</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-02 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/widgets-artifact.md">widgets-artifact.md</a>(위젯 카탈로그), <a href="features/viewer.md">viewer.md</a>(읽기 전용 표시)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>backend/app/repositories/stages.py</code>, <code>backend/app/main.py</code>(<code>/api/projects/{id}/stage*</code>), <code>frontend/src/StageCanvas.jsx</code>, <code>frontend/src/ProjectGraph.jsx</code></td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>문서명</td><td>기능 문서 — Stage 배치</td></tr><tr><td>기준일</td><td>2026-10-13 (위젯별 조회 포함)</td></tr><tr><td>관련 문서</td><td><a href="features/widgets-artifact.md">widgets-artifact.md</a>(위젯 카탈로그), <a href="features/viewer.md">viewer.md</a>(읽기 전용 표시)</td></tr><tr><td>관련 코드</td><td><code>backend/app/repositories/stages.py</code>, <code>backend/app/main.py</code>(<code>/api/projects/{id}/stage*</code>), <code>frontend/src/StageCanvas.jsx</code>, <code>frontend/src/widgets/QueryWidget.jsx</code>, <code>backend/app/widget_queries.py</code></td></tr></tbody></table>
 <p>Stage는 프로젝트당 정확히 1개인 핀보드다. 채팅에서 나온 위젯을 사용자가 직접 배치·저장한다 — 에이전트가 완성된 대시보드를 자동 생성하지 않는다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2).</p>
-<hr />
+<hr>
 <h2>F-10 Stage에 위젯 추가</h2>
 <p>두 가지 경로 모두 최종적으로 <code>POST /api/projects/{id}/stage/widgets</code>를 호출한다.</p>
-<ol>
-<li><strong>드래그</strong>: <code>ArtifactPreviewCard</code>가 <code>dataTransfer</code>에 MIME 타입 <code>application/x-agent4any-widget</code>로 위젯 JSON을 싣는다. <code>StageCanvas</code>의 그리드가 <code>onDrop</code>에서 이를 파싱해 드롭 좌표(<code>layoutItem.x/y</code>)에 추가한다.</li>
-<li><strong>버튼</strong>: 카드의 "Add to stage" 클릭 → <code>addWidgetToStage()</code> 헬퍼가 현재 Stage의 최대 <code>y</code>값 아래(<code>yMax</code>)에 이어 붙인다.</li>
-</ol>
+<ol><li><strong>드래그</strong>: <code>ArtifactPreviewCard</code>가 <code>dataTransfer</code>에 MIME 타입 <code>application/x-agent4any-widget</code>로 위젯 JSON을 싣는다. <code>StageCanvas</code>의 그리드가 <code>onDrop</code>에서 이를 파싱해 드롭 좌표(<code>layoutItem.x/y</code>)에 추가한다.</li><li><strong>버튼</strong>: 카드의 &quot;Add to stage&quot; 클릭 → <code>addWidgetToStage()</code> 헬퍼가 현재 Stage의 최대 <code>y</code>값 아래(<code>yMax</code>)에 이어 붙인다.</li></ol>
 <p>공통 처리:</p>
-<ul>
-<li><code>component</code>가 화이트리스트 밖이면 <strong>400</strong>으로 거부(채팅 쪽 <code>DataTable</code> 폴백과는 다르다 — § <a href="features/widgets-artifact.md">widgets-artifact.md</a>).</li>
-<li>위젯에 SQL이 있었으면 <code>props.__sql</code>에 실어 함께 저장(나중에 Stage에서도 SQL 보기가 가능하도록).</li>
-<li>합성 위젯(<code>BarTable</code>, <code>PieTable</code>, <code>KpiSparkline</code>)은 기본 크기 <code>w:6 h:7</code>, 그 외는 <code>w:4 h:4</code>(버튼 경로 기준. 드래그 경로는 그리드가 준 드롭 크기를 그대로 쓰고 기본값은 <code>w:4 h:4</code>).</li>
-<li><code>source_widget_id</code> / <code>source_artifact_id</code>로 어떤 채팅 응답에서 왔는지 추적.</li>
-</ul>
+<ul><li><code>component</code>가 화이트리스트 밖이면 <strong>400</strong>으로 거부(채팅 쪽 <code>DataTable</code> 폴백과는 다르다 — § <a href="features/widgets-artifact.md">widgets-artifact.md</a>).</li><li>조회 결과를 복사하지 않고 <code>query_ref: {connection_id, sql}</code>와 표시 설정만 저장한다. 원본 DB ID를 함께 보관해 현재 선택한 DB나 원본 대화 삭제에 영향을 받지 않는다. SQL은 실제로 생성된 조회문만 보관한다.</li><li>합성 위젯(<code>BarTable</code>, <code>PieTable</code>, <code>KpiSparkline</code>)은 기본 크기 <code>w:6 h:7</code>, 그 외는 <code>w:4 h:4</code>(버튼 경로 기준. 드래그 경로는 그리드가 준 드롭 크기를 그대로 쓰고 기본값은 <code>w:4 h:4</code>).</li><li><code>source_widget_id</code> / <code>source_artifact_id</code>로 어떤 채팅 응답에서 왔는지 추적.</li></ul>
 <h2>F-11 Stage 배치 / 저장</h2>
-<ul>
-<li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li>
-<li>프로젝트당 Stage 1행. <code>GET .../stage</code> 호출 시 없으면 생성(<code>get_or_create_stage</code>).</li>
-<li>레이아웃 엔진은 <code>react-grid-layout</code>(12열, <code>rowHeight: 36</code>, <code>margin: [12,12]</code>, <code>compactType: "vertical"</code>).</li>
-<li>이동·리사이즈(<code>onLayoutChange</code>)는 <strong>500ms 디바운스</strong> 후 변경된 위젯들만 <code>PATCH .../stage/widgets/{id}</code>로 저장(<code>persistLayout</code>). 저장 중에는 로컬 상태(<code>localWidgets</code>)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 <code>error</code>로 표시한다.</li>
-<li>전체 교체: <code>PUT .../stage</code> <code>{ widgets: [...] }</code> (현재 UI는 이 경로를 안 쓰고 있으나 API는 열려 있음).</li>
-<li>단건 수정: <code>PATCH</code> — <code>title</code>/<code>props</code>/<code>layout</code> 중 보낸 필드만 갱신.</li>
-<li>삭제: <code>DELETE .../stage/widgets/{id}</code>.</li>
-<li>새로고침해도 SWR 캐시(<code>storeKeys.stage(projectId)</code>)를 통해 서버 상태로 복원.</li>
-<li>빈 Stage 안내: 편집 가능 역할 "대화의 결과 위젯을 여기로 드래그하세요", viewer "배치된 위젯이 없습니다."</li>
-<li>저장 상태 표시줄(<code>대기</code> / <code>저장 중…</code> / <code>저장됨</code> / <code>저장 실패</code>)은 전역 슬롯 <code>storeKeys.ui</code>(<code>useStore</code>)에 있다. 편집 불가 역할(<code>readOnly</code>)에는 표시하지 않는다.</li>
-<li>위젯 크기는 <code>minW:2, minH:2</code>로 제한.</li>
-</ul>
-<hr />
+<ul><li>데스크톱에서는 채팅과 Stage 사이 경계선을 드래그하거나, 경계선에 포커스를 두고 좌우 방향키로 너비를 조절한다. 채팅 최소 320px, Stage 최소 340px이며 더블클릭으로 기본 비율을 복원한다. 비율은 현재 화면에서만 유지되고 새로고침 시 초기화된다. 960px 이하에서는 기존 세로 배치를 유지한다.</li><li>프로젝트당 Stage 1행. <code>GET .../stage</code> 호출 시 없으면 생성(<code>get_or_create_stage</code>).</li><li>레이아웃 엔진은 <code>react-grid-layout</code>(12열, <code>rowHeight: 36</code>, <code>margin: [12,12]</code>, <code>compactType: &quot;vertical&quot;</code>).</li><li>이동·리사이즈(<code>onLayoutChange</code>)는 <strong>500ms 디바운스</strong> 후 변경된 위젯들만 <code>PATCH .../stage/widgets/{id}</code>로 저장(<code>persistLayout</code>). 저장 중에는 로컬 상태(<code>localWidgets</code>)를 먼저 갱신해 즉시 반영하고, 실패하면 저장 상태를 <code>error</code>로 표시한다.</li><li>전체 교체: <code>PUT .../stage</code> <code>{ widgets: [...] }</code> (현재 UI는 이 경로를 안 쓰고 있으나 API는 열려 있음).</li><li>단건 수정: <code>PATCH</code> — <code>title</code>/<code>props</code>/<code>query_ref</code>/<code>layout</code> 중 보낸 필드만 갱신. 레이아웃 수정은 조회 정의를 유지하며 데이터 결과는 저장하지 않는다.</li><li>삭제: <code>DELETE .../stage/widgets/{id}</code>.</li><li>새로고침 시 서버에서 위젯 정의·레이아웃을 복원하고, 각 위젯의 데이터 API를 호출해 현재 데이터를 표시한다. 위젯별 새로고침 버튼도 같은 API를 호출한다. 주기적 폴링은 없다.</li><li>빈 Stage 안내: 편집 가능 역할 &quot;대화의 결과 위젯을 여기로 드래그하세요&quot;, viewer &quot;배치된 위젯이 없습니다.&quot;</li><li>저장 상태 표시줄(<code>대기</code> / <code>저장 중…</code> / <code>저장됨</code> / <code>저장 실패</code>)은 전역 슬롯 <code>storeKeys.ui</code>(<code>useStore</code>)에 있다. 편집 불가 역할(<code>readOnly</code>)에는 표시하지 않는다.</li><li>위젯 크기는 <code>minW:2, minH:2</code>로 제한.</li></ul>
+<hr>
 <h2>프로젝트 결과 영역</h2>
 <p>sql2widget 결과 영역에는 위젯 Stage만 표시한다. 문서/엔티티 그래프 탭은 doc2graph의 결과 영역으로 이동했다.</p>
-<hr />
+<hr>
 <h2>데이터 모델 (서비스 DB)</h2>
-<pre><code class="language-text">stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
+<pre><code>stages(id, project_id UNIQUE, tenant_id, user_id, updated_at)
 stage_widgets(
   id, stage_id, source_widget_id?, source_artifact_id?,
   component, title, props jsonb,
   layout_i, layout_x, layout_y, layout_w, layout_h,
   updated_at
-)
-</code></pre>
-<ul>
-<li><code>stages.project_id</code>가 유니크 — 프로젝트당 1행이라는 규칙이 DB 레벨에서도 강제된다.</li>
-<li><code>stage_widgets</code>는 <code>layout_y ASC, layout_x ASC</code> 순으로 조회된다.</li>
-<li><code>props</code>는 <code>jsonb</code>로 저장되며 화이트리스트 검증은 저장소 함수(<code>add_widget</code>/<code>replace_stage_widgets</code>)에서 <code>ALLOWED_COMPONENTS</code>로 수행.</li>
-</ul>
-<hr />
+)</code></pre>
+<ul><li><code>stages.project_id</code>가 유니크 — 프로젝트당 1행이라는 규칙이 DB 레벨에서도 강제된다.</li><li><code>stage_widgets</code>는 <code>layout_y ASC, layout_x ASC</code> 순으로 조회된다.</li><li>기존 DB 스키마를 유지한다. <code>props</code> jsonb에는 표시 설정과 내부 <code>__query_ref</code> 메타데이터만 저장하고 API 응답은 이를 최상위 <code>query_ref</code>로 분리한다. 조회 결과 배열·KPI 값은 저장하지 않는다. 화이트리스트 검증은 저장소 함수(<code>add_widget</code>/<code>replace_stage_widgets</code>)에서 <code>ALLOWED_COMPONENTS</code>로 수행.</li><li>기존 SQL 위젯은 읽을 때 데이터 필드를 제외하고 소유한 원본 대화에서 DB ID를 복원한다. SQL 또는 DB 정보가 없으면 조회 API가 409를 반환하며 질문 재실행을 안내한다. 기존 DB를 일괄 수정하거나 삭제하지 않는다.</li></ul>
+<hr>
 <h2>API</h2>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-<th>권한</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET/PUT</td>
-<td><code>/api/projects/{id}/stage</code></td>
-<td>본인(프로젝트 소유자)</td>
-</tr>
-<tr>
-<td>POST</td>
-<td><code>/api/projects/{id}/stage/widgets</code></td>
-<td>본인</td>
-</tr>
-<tr>
-<td>PATCH/DELETE</td>
-<td><code>/api/projects/{id}/stage/widgets/{widget_id}</code></td>
-<td>본인</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>Method</th><th>Path</th><th>권한</th></tr></thead><tbody><tr><td>GET/PUT</td><td><code>/api/projects/{id}/stage</code></td><td>본인(프로젝트 소유자)</td></tr><tr><td>GET</td><td><code>/api/projects/{id}/stage/widgets/{widget_id}/data</code></td><td>본인 + 현재 DB 테이블 권한</td></tr><tr><td>POST</td><td><code>/api/projects/{id}/stage/widgets</code></td><td>본인</td></tr><tr><td>PATCH/DELETE</td><td><code>/api/projects/{id}/stage/widgets/{widget_id}</code></td><td>본인</td></tr></tbody></table>
 <p>viewer도 GET은 호출되지만(읽기 전용 페이지가 Stage를 불러와야 하므로), 쓰기 경로는 프론트에서 버튼 자체를 렌더링하지 않아 도달하지 않는다. 서버 쪽에서 role로 쓰기를 막는 별도 검사는 없다 — <code>StageCanvas</code>의 <code>readOnly</code> prop이 유일한 방어선이라는 점에 주의(§ <a href="features/viewer.md">viewer.md</a>).</p></section>
 <section id="viewer"><h1>기능: Viewer 화면</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — Viewer 전용 화면</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-09-21 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/stage.md">stage.md</a>, <a href="features/auth.md">auth.md</a>(역할/권한)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>frontend/src/ViewerStagePage.jsx</code>, <code>frontend/src/StageCanvas.jsx</code>(<code>readOnly</code>/<code>variant</code> props), <code>frontend/src/main.jsx</code>(라우팅)</td>
-</tr>
-</tbody>
-</table>
-<hr />
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody><tr><td>문서명</td><td>기능 문서 — Viewer 전용 화면</td></tr><tr><td>기준일</td><td>2026-10-13 (위젯별 조회 포함)</td></tr><tr><td>관련 문서</td><td><a href="features/stage.md">stage.md</a>, <a href="features/auth.md">auth.md</a>(역할/권한)</td></tr><tr><td>관련 코드</td><td><code>frontend/src/ViewerStagePage.jsx</code>, <code>frontend/src/StageCanvas.jsx</code>(<code>readOnly</code>/<code>variant</code> props), <code>frontend/src/main.jsx</code>(라우팅)</td></tr></tbody></table>
+<hr>
 <h2>F-12 Viewer 화면</h2>
-<ul>
-<li>경로: <code>/p/{projectId}/view</code>. <code>viewer</code> 역할 전용 화면이 아니라 <strong>누구나</strong> 갈 수 있는 읽기 전용 뷰(§ <a href="features/auth.md">auth.md</a> 화면 권한 표 — admin도 "Open viewer" 링크로 들어간다).</li>
-<li><code>StageCanvas</code>를 <code>readOnly</code> + <code>variant="orion"</code>으로 감싸기만 하는 얇은 페이지(<code>ViewerStagePage.jsx</code>, 33줄).</li>
-<li>헤더: <code>← Editor</code>(워크스페이스로 복귀), 프로젝트 Stage 제목, 기간 표시용 pill("Period: Last 12 months" — 고정 텍스트, 실제 기간 필터는 아직 없음), 로그인 사용자 이메일, Sign out.</li>
-<li>본문은 Stage 그리드만 전체 화면으로 표시. 채팅 패널·사이드바 없음.</li>
-</ul>
+<ul><li>경로: <code>/p/{projectId}/view</code>. <code>viewer</code> 역할 전용 화면이 아니라 <strong>누구나</strong> 갈 수 있는 읽기 전용 뷰(§ <a href="features/auth.md">auth.md</a> 화면 권한 표 — admin도 &quot;Open viewer&quot; 링크로 들어간다).</li><li><code>StageCanvas</code>를 <code>readOnly</code> + <code>variant=&quot;orion&quot;</code>으로 감싸기만 하는 얇은 페이지(<code>ViewerStagePage.jsx</code>, 33줄).</li><li>헤더: <code>← Editor</code>(워크스페이스로 복귀), 프로젝트 Stage 제목, 기간 표시용 pill(&quot;Period: Last 12 months&quot; — 고정 텍스트, 실제 기간 필터는 아직 없음), 로그인 사용자 이메일, Sign out.</li><li>본문은 Stage 그리드만 전체 화면으로 표시. 채팅 패널·사이드바 없음. 각 위젯은 서버의 조회 API로 현재 데이터를 가져오며 로딩·조회 오류·데이터 새로고침 버튼을 표시한다. 이 새로고침은 읽기 전용 SELECT이며 레이아웃이나 위젯 정의를 수정하지 않는다.</li></ul>
 <h3><code>readOnly</code>가 실제로 끄는 것 (<code>StageCanvas.jsx</code>)</h3>
-<table>
-<thead>
-<tr>
-<th>기능</th>
-<th>readOnly=false(기본)</th>
-<th>readOnly=true(Viewer)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>위젯 드래그 이동</td>
-<td>가능</td>
-<td><code>isDraggable={false}</code></td>
-</tr>
-<tr>
-<td>위젯 리사이즈</td>
-<td>가능</td>
-<td><code>isResizable={false}</code></td>
-</tr>
-<tr>
-<td>새 위젯 드롭</td>
-<td>가능</td>
-<td><code>isDroppable={false}</code>, <code>onDrop</code> 미연결</td>
-</tr>
-<tr>
-<td>위젯 제거(×)</td>
-<td>가능</td>
-<td>제거 버튼 자체를 렌더링하지 않음</td>
-</tr>
-<tr>
-<td>저장 상태 표시줄</td>
-<td>표시</td>
-<td>표시 안 함</td>
-</tr>
-<tr>
-<td>빈 Stage 안내 문구</td>
-<td>"대화의 결과 위젯을 여기로 드래그하세요"</td>
-<td>"배치된 위젯이 없습니다."</td>
-</tr>
-</tbody>
-</table>
-<p><code>variant="orion"</code>은 시각적 스타일 클래스만 바꾼다(어두운 톤의 레거시 뷰어 자리표시 — <a href="../DESIGN.md">DESIGN.md</a>는 이를 "정식 토큰이 아닌 잔재"로 명시하고 있다. 정리 필요 항목은 <a href="progress.md">progress.md</a>에서 추적 예정).</p>
+<table><thead><tr><th>기능</th><th>readOnly=false(기본)</th><th>readOnly=true(Viewer)</th></tr></thead><tbody><tr><td>위젯 드래그 이동</td><td>가능</td><td><code>isDraggable={false}</code></td></tr><tr><td>위젯 리사이즈</td><td>가능</td><td><code>isResizable={false}</code></td></tr><tr><td>새 위젯 드롭</td><td>가능</td><td><code>isDroppable={false}</code>, <code>onDrop</code> 미연결</td></tr><tr><td>위젯 제거(×)</td><td>가능</td><td>제거 버튼 자체를 렌더링하지 않음</td></tr><tr><td>저장 상태 표시줄</td><td>표시</td><td>표시 안 함</td></tr><tr><td>빈 Stage 안내 문구</td><td>&quot;대화의 결과 위젯을 여기로 드래그하세요&quot;</td><td>&quot;배치된 위젯이 없습니다.&quot;</td></tr></tbody></table>
+<p><code>variant=&quot;orion&quot;</code>은 시각적 스타일 클래스만 바꾼다(어두운 톤의 레거시 뷰어 자리표시 — <a href="../DESIGN.md">DESIGN.md</a>는 이를 &quot;정식 토큰이 아닌 잔재&quot;로 명시하고 있다. 정리 필요 항목은 <a href="progress.md">progress.md</a>에서 추적 예정).</p>
 <h3>주의할 점</h3>
-<ul>
-<li><code>readOnly</code>는 <strong>프론트엔드 렌더링 제어일 뿐</strong>이다. 백엔드 Stage 쓰기 API는 role을 별도로 검사하지 않는다(§ <a href="features/stage.md">stage.md</a> API 절). 즉 이 화면의 "읽기 전용"은 UI 차원의 보장이며, 서버가 role 기반으로 쓰기를 거부하는 것이 아니라는 점을 문서화해둔다.</li>
-<li>채팅·프로젝트/대화 생성 기능은 이 라우트에 아예 없다 — 접근 자체가 안 된다(컴포넌트가 존재하지 않음).</li>
-</ul>
-<hr />
+<ul><li><code>readOnly</code>는 <strong>프론트엔드 렌더링 제어일 뿐</strong>이다. 백엔드 Stage 쓰기 API는 role을 별도로 검사하지 않는다(§ <a href="features/stage.md">stage.md</a> API 절). 즉 이 화면의 &quot;읽기 전용&quot;은 UI 차원의 보장이며, 서버가 role 기반으로 쓰기를 거부하는 것이 아니라는 점을 문서화해둔다.</li><li>채팅·프로젝트/대화 생성 기능은 이 라우트에 아예 없다 — 접근 자체가 안 된다(컴포넌트가 존재하지 않음).</li></ul>
+<hr>
 <h2>API</h2>
-<p>Viewer 화면이 쓰는 API는 Stage 조회 하나뿐이다.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Path</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GET</td>
-<td><code>/api/projects/{id}/stage</code></td>
-</tr>
-</tbody>
-</table></section>
+<p>Viewer 화면은 Stage 정의를 읽고 위젯별로 데이터를 조회한다. 현재 로그인 역할의 테이블 권한을 적용한다.</p>
+<table><thead><tr><th>Method</th><th>Path</th></tr></thead><tbody><tr><td>GET</td><td><code>/api/projects/{id}/stage</code></td></tr><tr><td>GET</td><td><code>/api/projects/{id}/stage/widgets/{widget_id}/data</code></td></tr></tbody></table></section>
 <section id="admin"><h1>기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>기능 문서 — 관리자 패널</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-02 (구현 기준)</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td>
-</tr>
-<tr>
-<td>관련 코드</td>
-<td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>문서명</td><td>기능 문서 — 관리자 패널</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (Gemini 3.8 기본 모델 포함)</td></tr>
+<tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td></tr>
+<tr><td>관련 코드</td><td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td></tr>
+</tbody></table>
 <p>액터: 대부분 <code>admin</code>만. 그 외 역할은 403(패널 자체가 사이드바에 노출되지 않음, § <a href="features/auth.md">auth.md</a>).</p>
-<p>사이드바 하단에는 기존 <code>Admin</code> 버튼과 별도로 <code>AI 설정</code>, <code>DB 관리</code> 버튼이 있다. <code>Admin</code>은 기존 전체 설정을 유지한다. <code>AI 설정</code> 패널은 Provider별 AI 연결 설정만, <code>DB 관리</code> 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
+<p>사이드바 하단에는 기존 <code>Admin</code> 버튼과 별도로 <code>AI 설정</code>, <code>DB 관리</code> 버튼이 있다. <code>Admin</code>은 기존 전체 설정을 유지한다. <code>AI 설정</code> 패널은 Provider별 AI 연결 설정과 Jev 공통 키 입력, <code>DB 관리</code> 패널은 연결 목록·테스트, 예상 질문 관리, 새 연결 등록, 테이블 권한을 표시한다. 세 패널은 같은 설정과 저장 동작을 공유하며 관리자에게만 노출된다.</p>
 <p>드로어는 닫기 버튼 또는 패널 바깥의 어두운 배경을 클릭하면 닫힌다. 패널 내부를 클릭하면 열린 상태를 유지한다.</p>
-<hr />
+<hr>
 <h2>F-13 DB 연결 관리</h2>
-<table>
-<thead>
-<tr>
-<th>API</th>
-<th>기능</th>
-<th>권한</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GET /api/database-connections</code></td>
-<td>테넌트 연결 목록(비밀번호 비노출)</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections</code></td>
-<td>연결 추가(host, port, database_name, username, password, sslmode)</td>
-<td>admin</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections/{id}/test</code></td>
-<td><code>SELECT 1</code>로 연결 테스트</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>GET /api/database-connections/{id}/tables</code></td>
-<td><code>information_schema.tables</code> 베이스 테이블 목록</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>POST /api/database-connections/{id}/preview-sql</code></td>
-<td>검증된 SELECT 실행(디버그용)</td>
-<td>admin</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead><tbody>
+<tr><td><code>GET /api/database-connections</code></td><td>테넌트 연결 목록(비밀번호 비노출)</td><td>로그인</td></tr>
+<tr><td><code>POST /api/database-connections</code></td><td>연결 추가(host, port, database_name, username, password, sslmode)</td><td>admin</td></tr>
+<tr><td><code>POST /api/database-connections/{id}/test</code></td><td><code>SELECT 1</code>로 연결 테스트</td><td>로그인</td></tr>
+<tr><td><code>GET /api/database-connections/{id}/tables</code></td><td><code>information_schema.tables</code> 베이스 테이블 목록</td><td>로그인</td></tr>
+<tr><td><code>POST /api/database-connections/{id}/preview-sql</code></td><td>검증된 SELECT 실행(디버그용)</td><td>admin</td></tr>
+</tbody></table>
 <ul>
 <li>비밀번호는 <code>APP_SECRET</code>에서 유도한 키로 Fernet 대칭암호화해 <code>password_encrypted</code>에 저장(<code>crypto.encrypt_secret</code>). 조회 응답에는 절대 포함하지 않는다.</li>
 <li><code>connection_url()</code>이 요청 시점에 복호화해 <code>postgresql://user:pass@host:port/db?sslmode=...</code> 형태로 조립.</li>
@@ -1321,27 +1099,10 @@ stage_widgets(
 <li>SKAX NMS는 로컬·운영에서 <code>SKAX NMS DB</code>(<code>dbconn_skax_nms</code>) 연결로 자동 등록한다. 운영은 별도 <code>db-skax-nms</code> 서비스와 영속 볼륨에 저장소 스냅샷을 최초 복원하고, admin/user/viewer의 <code>cinamon</code> 테이블·뷰 권한을 등록한다. 재배포는 기존 DB를 보존하며 연결·권한을 다시 등록한다. 배포 완료 전 읽기 전용 접속과 역할별 권한을 검사한다. <a href="../deployment/README.md#skax-nms-cinamon-운영-db">운영 절차</a>.</li>
 </ul>
 <h2>F-14 테이블 권한</h2>
-<table>
-<thead>
-<tr>
-<th>API</th>
-<th>기능</th>
-<th>권한</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GET /api/table-permissions?connection_id=</code></td>
-<td>연결별 역할-테이블 매핑 조회</td>
-<td>로그인</td>
-</tr>
-<tr>
-<td><code>PUT /api/table-permissions</code></td>
-<td><code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체 교체</td>
-<td>admin</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>API</th><th>기능</th><th>권한</th></tr></thead><tbody>
+<tr><td><code>GET /api/table-permissions?connection_id=</code></td><td>연결별 역할-테이블 매핑 조회</td><td>로그인</td></tr>
+<tr><td><code>PUT /api/table-permissions</code></td><td><code>{ connection_id, role, tables }</code>로 특정 역할의 허용 테이블 전체 교체</td><td>admin</td></tr>
+</tbody></table>
 <ul>
 <li>저장은 delete-then-insert: 해당 <code>(tenant_id, connection_id, role)</code> 행을 지우고 새로 넣는다(<code>replace_table_permissions</code>).</li>
 <li>현재 Admin UI는 <strong><code>user</code> 역할만</strong> 편집 가능(체크박스 목록). <code>admin</code>/<code>viewer</code>용 허용 테이블은 시드 스크립트(<code>backend/scripts/seed_dev.py</code> 등)가 넣어둔 값을 UI에서 바꿀 방법이 아직 없다 — API 자체는 임의 role을 받는다.</li>
@@ -1349,46 +1110,32 @@ stage_widgets(
 <li><code>schema_metadata()</code>가 이 허용 테이블만 골라 <code>information_schema</code>에서 컬럼·PK·FK를 읽어 실 LLM 프롬프트용 스키마 텍스트를 만든다 — 데이터 행은 절대 읽지 않는다.</li>
 </ul>
 <h2>AI 연결 설정 (브라우저 로컬)</h2>
-<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local } }</code> 형태로 저장한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
-<table>
-<thead>
-<tr>
-<th>필드</th>
-<th>동작</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Provider</td>
-<td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td>
-</tr>
-<tr>
-<td>Model</td>
-<td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td>
-</tr>
-<tr>
-<td>Base URL</td>
-<td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td>
-</tr>
-<tr>
-<td>API key</td>
-<td><code>type="password"</code>, 로컬에서는 선택 사항</td>
-</tr>
-<tr>
-<td>Embedding model</td>
-<td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td>
-</tr>
-</tbody>
-</table>
+<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local }, jevApiKey }</code> 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
+<table><thead><tr><th>필드</th><th>동작</th></tr></thead><tbody>
+<tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
+<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.8-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
+<tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
+<tr><td>API key</td><td><code>type=&quot;password&quot;</code>, 로컬에서는 선택 사항</td></tr>
+<tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
+<tr><td>Jev API key</td><td><code>type=&quot;password&quot;</code>, Provider 공통 의도 분류 키. 공백 제거 후 저장, 빈 값은 서버 설정 사용</td></tr>
+</tbody></table>
 <ul>
 <li>저장한 값은 채팅과 예상 질문 생성·검색 요청의 <code>X-LLM-Provider</code>, <code>X-LLM-API-Key</code>, <code>X-LLM-Model</code>, <code>X-LLM-Base-URL</code>, <code>X-LLM-Embedding-Model</code> 헤더로 전달된다. 요청 설정이 서버 환경변수보다 우선한다.</li>
 <li>URL은 브라우저가 아니라 <strong>백엔드에서 접근하는 주소</strong>다. Docker Desktop에서는 호스트 서버에 <code>host.docker.internal</code>로 연결한다. 직접 실행하는 백엔드는 <code>http://localhost:11434/v1</code> 등을 쓴다. 서버는 별도로 실행해야 한다.</li>
 <li>로컬 Provider는 패널을 열 때와 <strong>모델 목록 새로고침</strong> 클릭 시 <code>POST /api/ai/local-models</code>(관리자 전용, body <code>{base_url, api_key}</code>)를 호출한다. 백엔드가 <code>{base_url}/models</code>(OpenAI 호환, 타임아웃 5초)를 조회해 <code>{models: [id…]}</code>를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.</li>
 <li>로컬 임베딩 벡터의 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
 <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
-<li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
+<li>Gemini 기본값만 <code>gemini-3.8-flash</code>로 변경했다. 저장된 <code>gemini-3.6-flash</code>와 사용자 지정 다른 모델·API 키·임베딩 모델·Jev 키·다른 Provider 프로필은 유지한다. 기존 <code>gemini-2.5-flash</code>를 기본 모델로 전환하는 규칙은 유지한다(<code>aiSettings.js</code>). 백엔드 Gemini Provider도 모델 지정이 없으면 <code>gemini-3.8-flash</code>를 사용한다.</li>
 </ul>
-<hr />
+<h2>Jev 의도 분류 연결</h2>
+<p>관리자의 <strong>AI 설정 → Jev API key</strong>에 키를 입력하고 <strong>AI 설정 저장</strong>을 누르면 다음 채팅 요청부터 사용한다. 모든 Provider가 이 앱의 공통 Jev 키를 사용하므로 Provider 전환과 새로고침 후에도 유지된다. doc2graph의 키를 자동으로 가져오지 않는다.</p>
+<ul>
+<li>브라우저 키는 <code>POST /api/chat</code>의 <code>X-Jev-API-Key</code> 헤더로만 전달한다. 메시지 본문, 예상 질문 생성·검색, DB 연결 조회, 로컬 모델 목록 요청에는 넣지 않는다.</li>
+<li>요청 키를 우선 사용하며 비어 있거나 헤더가 없으면 서버 <code>TYPESAFE_API_KEY</code>를 사용한다. 서버 키도 없거나 Jev가 실패하면 기존처럼 채팅 LLM이 분류한다.</li>
+<li>브라우저와 서버는 8,192자 이하의 한 줄 문자열만 허용한다. 저장 오류는 설정 화면에 표시하고, 잘못된 헤더는 메시지를 저장하기 전에 HTTP 400으로 거부한다.</li>
+<li>키는 Jev 인증에만 사용한다. 분류 payload, SQL 계획·복구·답변·임베딩 모델 입력, 응답·대화·표시용 처리 내역에는 포함하지 않는다. Provider별 모델 API 키는 기존 방식으로 별도 사용한다.</li>
+</ul>
+<hr>
 <h2>데이터 모델 (서비스 DB)</h2>
 <pre><code class="language-text">database_connections(id, tenant_id, name, host, port, database_name,
                       username, password_encrypted, sslmode, created_by, created_at)
@@ -1521,31 +1268,14 @@ docker compose exec backend pytest -q
 </table>
 <p>문서 업로드·스키마 협의·엔티티 추출·문서 질의응답·그래프 화면은 독립 프로젝트 <code>doc2graph</code>로 이동했다. sql2widget에는 문서 그래프 API/테이블/화면이 없다.</p>
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
-<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="progress"><span class="badge done">완료 18</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>내용</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>문서명</td>
-<td>작업 진행 상황</td>
-</tr>
-<tr>
-<td>기준일</td>
-<td>2026-10-06</td>
-</tr>
-<tr>
-<td>관련 문서</td>
-<td><a href="../AGENTS.md">AGENTS.md</a>, <a href="features/README.md">docs/features/</a>, <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td>
-</tr>
-</tbody>
-</table>
+<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="deployment"><h1>운영 HTML 문서 공개</h1><p>칸반은 <a href="kanban.html">/docs/kanban.html</a>, 문서 대시보드는 <a href="dashboard.html">/docs/dashboard.html</a>에서 제공한다. Actions는 두 HTML만 서버 public-docs/에 업로드하고 프런트 Nginx에 읽기 전용으로 연결한다. 원본 Markdown·임시 기록·환경변수 파일은 공개하지 않는다. HTML 교체에 앱 이미지 빌드나 백엔드 재기동은 필요하지 않다.</p></section><section id="progress"><span class="badge done">완료 24</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
+<table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
+<tr><td>문서명</td><td>작업 진행 상황</td></tr>
+<tr><td>기준일</td><td>2026-10-14</td></tr>
+<tr><td>관련 문서</td><td><a href="../AGENTS.md">AGENTS.md</a>, <a href="features/README.md">docs/features/</a>, <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td></tr>
+</tbody></table>
 <p>상태 라벨은 4종 고정: <code>완료</code> / <code>진행중</code> / <code>예정</code> / <code>보류</code>. 이 문서는 <code>docs/현황.html</code>(2026-09-03 스냅샷)을 대체한다 — 이전 스냅샷 수치는 6절에 남겨둔다.</p>
-<hr />
+<hr>
 <h2>1. 요약</h2>
 <ul>
 <li>로컬 데모 골격(로그인 → 질문 → 위젯 → Stage 핀 → 새로고침 유지)은 <strong>완료</strong>.</li>
@@ -1553,174 +1283,59 @@ docker compose exec backend pytest -q
 <li>실 LLM 경로(OpenAI-compatible + Gemini, 스키마 컨텍스트, 1회 복구 재시도)도 스냅샷 이후 상당히 진전됐다.</li>
 <li>채팅 메시지 임베딩(pgvector 유사도 검색)은 이번 문서화 중 코드에서 새로 발견한 기능으로, 백엔드만 동작하고 프론트는 아직 안 붙었다.</li>
 </ul>
-<hr />
+<hr>
 <h2>2. 완료</h2>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>비고</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리</td>
-<td><a href="features/auth.md">auth.md</a>. 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인</td>
-</tr>
-<tr>
-<td>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</td>
-<td><a href="features/projects-conversations.md">projects-conversations.md</a></td>
-</tr>
-<tr>
-<td>Artifact 위젯 렌더 + SQL 미리보기</td>
-<td><a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
-</tr>
-<tr>
-<td>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</td>
-<td><a href="features/stage.md">stage.md</a></td>
-</tr>
-<tr>
-<td>Viewer 읽기 전용 화면(<code>/p/:id/view</code>)</td>
-<td><a href="features/viewer.md">viewer.md</a></td>
-</tr>
-<tr>
-<td>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기</td>
-<td><a href="features/admin.md">admin.md</a></td>
-</tr>
-<tr>
-<td>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</td>
-<td><code>docker-compose.yml</code></td>
-</tr>
-<tr>
-<td>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</td>
-<td><code>backend/scripts/seed_northwind_recent.py</code>, <code>seed_skax_nms.py</code></td>
-</tr>
-<tr>
-<td>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 실패 시 1회 복구 재시도, 그래도 안 되면 추측 없이 에러 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제)</td>
-<td><a href="features/chat.md">chat.md</a></td>
-</tr>
-<tr>
-<td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select)</td>
-<td><a href="features/admin.md">admin.md</a></td>
-</tr>
-<tr>
-<td><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</td>
-<td><a href="features/admin.md">admin.md</a> 데이터 모델</td>
-</tr>
-<tr>
-<td>문서 체계 정비 — <code>AGENTS.md</code>/<code>CLAUDE.md</code>, <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, 본 문서, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code></td>
-<td>이번 문서화 작업 1~5번 전체 완료</td>
-</tr>
-<tr>
-<td>DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성</td>
-<td><a href="features/similarity-search-design.md">similarity-search-design.md</a></td>
-</tr>
-<tr>
-<td>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지</td>
-<td>단위 테스트와 실제 Jev 호출(2026-10-01, <code>jev-1.13.0</code>)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. <code>ROUTE_MIN_CONFIDENCE</code> 0.5는 아직 검증 전 초기값. <a href="features/chat.md">chat.md</a></td>
-</tr>
-<tr>
-<td>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도</td>
-<td>단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. <a href="features/chat.md">chat.md</a></td>
-</tr>
-<tr>
-<td>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조</td>
-<td><code>messages.meta</code> 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. <a href="features/chat.md">chat.md</a></td>
-</tr>
-<tr>
-<td>운영 배포 파이프라인</td>
-<td>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a></td>
-</tr>
-<tr>
-<td>DB/문서 프로젝트 분리 및 독립 실행</td>
-<td>sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 2026-10-06 sql2widget 운영 전환 완료(6a88140): CI 테스트·이미지 게시·VPS 배포, HTTPS/API·기존 계정/프로젝트/대화 보존 확인. 실모델 유료 호출은 미실행</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>비고</th></tr></thead><tbody>
+<tr><td>응답 대기 중 사용자 질문 중복 표시 수정</td><td>2026-10-14 SWR 재조회에서 이번 질문이 확인되면 임시 말풍선만 숨김. 과거 동일 질문은 유지하고 임시 질문·대기 표시는 해당 대화로 제한. 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>설명 답변 본문 표시 — 테이블 구조·SOC 출처 설명의 MarkdownBlock 생성 제거</td><td>2026-10-14 전체 설명·테이블별 컬럼 표를 채팅 본문에 표시. 과거 채팅 설명 카드는 본문으로 표시하고 데이터 위젯·출처·기존 Stage 항목 유지. 관련 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a>, <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
+<tr><td>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리</td><td><a href="features/auth.md">auth.md</a>. 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인</td></tr>
+<tr><td>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</td><td><a href="features/projects-conversations.md">projects-conversations.md</a></td></tr>
+<tr><td>Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가</td><td>2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 버튼 왼쪽 10px 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a> 2026-10-14 채팅 프리뷰를 제목 포함 320px로 고정하고 내용·SQL 패널이 남은 공간을 채우도록 수정. 이번 높이 변경의 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행.</td></tr>
+<tr><td>위젯 자체 데이터 조회 — 결과 비저장·원본 DB/SQL 정의 저장</td><td>2026-10-13 채팅·Stage·Viewer의 위젯별 GET·새로고침·로딩/오류 구현. 현재 소유자·tenant·역할 테이블 권한 검사, 기존 위젯 DB 정보 복원. 실제 Global Sales DB 7종 SELECT·임시 Stage 결과 비저장 검증, 브라우저 대역의 조회/새로고침/오류 복구/Viewer 확인. 전체 백엔드 169개 통과·기존 일반 대화 기대값 불일치 2개 실패, 프런트 23개·빌드 통과. 실 LLM·운영 배포는 미실행. <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
+<tr><td>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</td><td><a href="features/stage.md">stage.md</a></td></tr>
+<tr><td>Viewer 읽기 전용 화면(<code>/p/:id/view</code>)</td><td><a href="features/viewer.md">viewer.md</a></td></tr>
+<tr><td>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기</td><td><a href="features/admin.md">admin.md</a></td></tr>
+<tr><td>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</td><td><code>docker-compose.yml</code></td></tr>
+<tr><td>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</td><td><code>backend/scripts/seed_northwind_recent.py</code>, <code>seed_skax_nms.py</code></td></tr>
+<tr><td>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 결과 기반 SQL 수정·위젯 재선택, 미완료 시 부분 결과·사유 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제)</td><td><a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장</td><td>2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. <a href="features/admin.md">admin.md</a> 2026-10-14 Gemini 기본값만 3.8 Flash로 변경. 저장된 3.6 모델·키·다른 Provider·사용자 지정 다른 모델은 유지하며 기존 2.5 모델 전환 규칙 보존. 이번 모델 변경의 테스트·실모델 호출·빌드·브라우저 검증은 승인 전 미실행.</td></tr>
+<tr><td><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</td><td><a href="features/admin.md">admin.md</a> 데이터 모델</td></tr>
+<tr><td>문서 체계 정비 — <code>AGENTS.md</code>/<code>CLAUDE.md</code>, <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, 본 문서, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code></td><td>이번 문서화 작업 1~5번 전체 완료</td></tr>
+<tr><td>DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성</td><td><a href="features/similarity-search-design.md">similarity-search-design.md</a></td></tr>
+<tr><td>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지</td><td>단위 테스트와 실제 Jev 호출(2026-10-01, <code>jev-1.13.0</code>)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. <code>ROUTE_MIN_CONFIDENCE</code> 0.5는 아직 검증 전 초기값. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도</td><td>단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조</td><td><code>messages.meta</code> 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>일반 대화 — 인사·잡담·일반 지식·개념 설명</td><td>2026-10-13 <code>general_chat</code> 경로·Jev/LLM 분류·세 경로 선택지·전체 본문 답변·처리 내역 표시 구현. 고객 DB 스키마 조회는 DB 경로에서만 수행. 사용자 요청에 따라 테스트·빌드·브라우저 검증 미실행. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>에이전트 루프 및 위젯 선택·SQL 생성 분리</td><td>2026-10-13 SQL 데이터셋 생성·실행 후 실제 컬럼·타입·행 수로 복수 위젯 선택·개별 생성. 각 실제 호출 결과에서 다음 작업 결정, 같은 SQL의 여러 위젯 컬럼 연결·Stage 보존. 도구 호출 순서·SQL 수·생성 위젯 수·판단 호출·재계획 구분, 부분 결과·한도·반복 중단 구현. 테스트·검증용 빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>대화 문맥·후속 질문 처리 및 IME 조합 중 전송 방지</td><td>최근 20개 메시지 범위의 같은 DB 응답 이력을 라우터·SQL 계획·복구·구조 답변에 전달. 다른 DB·DB 정보 없는 과거 이력은 제외. 2026-10-13 관련 백엔드 테스트 70개, 프런트 테스트 4개, Vite 빌드 통과. 테스트 대역으로 검증했고 실모델·브라우저 IME·실 DB 재조회 검증은 미실행. <a href="features/chat.md">chat.md</a></td></tr>
+<tr><td>운영 배포 파이프라인</td><td>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a> 2026-10-14 칸반·문서 대시보드 HTML을 운영 `/docs/kanban.html`·`/docs/dashboard.html`에 공개. 기존 앱 이미지로 프런트만 재생성했고 백엔드·DB·계정은 변경하지 않음. 공개 URL 응답·업로드 파일 일치 검사는 사용자 승인 전 미실행.</td></tr>
+<tr><td>DB/문서 프로젝트 분리 및 독립 실행</td><td>sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 2026-10-06 sql2widget 운영 전환 완료(6a88140): CI 테스트·이미지 게시·VPS 배포, HTTPS/API·기존 계정/프로젝트/대화 보존 확인. 실모델 유료 호출은 미실행</td></tr>
+</tbody></table>
 <h2>3. 진행중</h2>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>비고</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>채팅 메시지 임베딩·유사도 검색(pgvector, <code>chat_vector</code> DB)</td>
-<td>백엔드 저장·검색(<code>message_embeddings.py</code>)까지 완료, API가 <code>related_messages</code> 반환. <strong>프론트 미표시</strong> — <code>App.jsx</code>가 아직 렌더링 안 함</td>
-</tr>
-<tr>
-<td>실 LLM 경로 하드닝</td>
-<td>기본 동작은 되나 재시도는 1회 한정, 레이트리밋/서킷브레이커 없음. <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>비고</th></tr></thead><tbody>
+<tr><td>채팅 메시지 임베딩·유사도 검색(pgvector, <code>chat_vector</code> DB)</td><td>백엔드 저장·검색(<code>message_embeddings.py</code>)까지 완료, API가 <code>related_messages</code> 반환. <strong>프론트 미표시</strong> — <code>App.jsx</code>가 아직 렌더링 안 함</td></tr>
+<tr><td>실 LLM 경로 하드닝</td><td>데이터 호출 루프·단계당 SQL 수정 5회·시간/호출 제한은 구현, 실모델 검증과 레이트리밋/서킷브레이커는 미완료. <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></td></tr>
+</tbody></table>
 <h2>4. 예정</h2>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>우선순위</th>
-<th>비고</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증</td>
-<td>HIGH</td>
-<td><a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a>, 2026-09-03 스냅샷 #7과 동일 항목, 미착수</td>
-</tr>
-<tr>
-<td>Circle 게이지 조합 카탈로그 (ring × size × companion)</td>
-<td>MED</td>
-<td>스냅샷 #9와 동일, <code>ALLOWED_COMPONENTS</code>에 아직 없음</td>
-</tr>
-<tr>
-<td>Viewer에 남은 다크 Orion 자리표시(CSS <code>variant="orion"</code>) 정리</td>
-<td>LOW</td>
-<td><a href="../DESIGN.md">DESIGN.md</a>가 "정식 토큰 아님"으로 명시. <a href="features/viewer.md">viewer.md</a> 참고</td>
-</tr>
-<tr>
-<td>실 RAG(문서 검색) 고도화 — 현재 <code>DocumentProvider</code>는 Mock 고정 문서만</td>
-<td>LOW</td>
-<td>고정 SOC 데모 출처 보조 기능. 사용자 업로드 문서 그래프는 doc2graph 소유</td>
-</tr>
-<tr>
-<td>LLM 사용량(<code>llm_usage</code>) 조회 UI</td>
-<td>미지정</td>
-<td>기록만 되고 화면에서 보여주지 않음. <a href="features/admin.md">admin.md</a></td>
-</tr>
-<tr>
-<td>Stage 쓰기 API에 role 기반 서버측 검사 추가 여부</td>
-<td>미지정</td>
-<td>현재는 소유자 검사만 있고 <code>readOnly</code>는 프론트 전용. <a href="features/stage.md">stage.md</a> 주의 항목 — 취약점이 아니라 설계 확인 필요 항목으로 분류</td>
-</tr>
-</tbody>
-</table>
+<table><thead><tr><th>항목</th><th>우선순위</th><th>비고</th></tr></thead><tbody>
+<tr><td>질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증</td><td>HIGH</td><td><a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a>, 2026-09-03 스냅샷 #7과 동일 항목, 미착수</td></tr>
+<tr><td>Circle 게이지 조합 카탈로그 (ring × size × companion)</td><td>MED</td><td>스냅샷 #9와 동일, <code>ALLOWED_COMPONENTS</code>에 아직 없음</td></tr>
+<tr><td>Viewer에 남은 다크 Orion 자리표시(CSS <code>variant=&quot;orion&quot;</code>) 정리</td><td>LOW</td><td><a href="../DESIGN.md">DESIGN.md</a>가 &quot;정식 토큰 아님&quot;으로 명시. <a href="features/viewer.md">viewer.md</a> 참고</td></tr>
+<tr><td>실 RAG(문서 검색) 고도화 — 현재 <code>DocumentProvider</code>는 Mock 고정 문서만</td><td>LOW</td><td>고정 SOC 데모 출처 보조 기능. 사용자 업로드 문서 그래프는 doc2graph 소유</td></tr>
+<tr><td>LLM 사용량(<code>llm_usage</code>) 조회 UI</td><td>미지정</td><td>기록만 되고 화면에서 보여주지 않음. <a href="features/admin.md">admin.md</a></td></tr>
+<tr><td>Stage 쓰기 API에 role 기반 서버측 검사 추가 여부</td><td>미지정</td><td>현재는 소유자 검사만 있고 <code>readOnly</code>는 프론트 전용. <a href="features/stage.md">stage.md</a> 주의 항목 — 취약점이 아니라 설계 확인 필요 항목으로 분류</td></tr>
+</tbody></table>
 <h2>5. 보류 — 열려 있는 제품 결정</h2>
-<table>
-<thead>
-<tr>
-<th>항목</th>
-<th>비고</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>완성 Orion 대시보드 템플릿을 넣을지</td>
-<td>스냅샷 #8과 동일. <a href="../PRODUCT.md">PRODUCT.md</a> "Explicitly undecided"에 명시. <strong>현재 기본 규칙은 "핀보드만, 템플릿 없음"</strong>이며, 이 규칙을 바꾸려면 합의가 필요하다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2)</td>
-</tr>
-</tbody>
-</table>
-<hr />
+<table><thead><tr><th>항목</th><th>비고</th></tr></thead><tbody>
+<tr><td>완성 Orion 대시보드 템플릿을 넣을지</td><td>스냅샷 #8과 동일. <a href="../PRODUCT.md">PRODUCT.md</a> &quot;Explicitly undecided&quot;에 명시. <strong>현재 기본 규칙은 &quot;핀보드만, 템플릿 없음&quot;</strong>이며, 이 규칙을 바꾸려면 합의가 필요하다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2)</td></tr>
+</tbody></table>
+<hr>
 <h2>6. 히스토리 — 2026-09-03 스냅샷 (<code>docs/현황.html</code>, 대체됨)</h2>
-<p>당시 수치: 백로그 11건 중 완료 6 · 대기 5(55%). 완료 6건은 위 "2. 완료"에 모두 흡수됐다. 대기 5건(#7~#11)은 위 "4. 예정"과 "5. 보류"에 각각 대응한다 — 새로 생긴 항목(프로젝트 계층, 실 LLM 진전, 채팅 임베딩, 배포 파이프라인)은 스냅샷에는 없었다.</p>
+<p>당시 수치: 백로그 11건 중 완료 6 · 대기 5(55%). 완료 6건은 위 &quot;2. 완료&quot;에 모두 흡수됐다. 대기 5건(#7~#11)은 위 &quot;4. 예정&quot;과 &quot;5. 보류&quot;에 각각 대응한다 — 새로 생긴 항목(프로젝트 계층, 실 LLM 진전, 채팅 임베딩, 배포 파이프라인)은 스냅샷에는 없었다.</p>
 <p>인수 시나리오(S-01~S-05)는 여전히 유효하며 기능 문서의 대표 시나리오로 이어졌다: SOC 유형별 비중 → PieTable → Stage 드래그(<a href="features/chat.md">chat.md</a>, <a href="features/stage.md">stage.md</a>), Global 지역 매출 → BarTable, viewer 제약(<a href="features/viewer.md">viewer.md</a>), 틀린 비밀번호 거부, 쓰기 SQL 차단(<a href="features/chat.md">chat.md</a> SQL 규칙).</p>
-<hr />
+<hr>
 <h2>7. 관련 문서</h2>
-<p>→ <a href="dashboard.html">docs/dashboard.html</a>: 전체 문서를 GitBook 스타일로 묶어 보여주는 HTML 문서.
-→ <a href="kanban.html">docs/kanban.html</a>: <code>docs/features/*.md</code> + 본 문서를 시각화한 칸반형 정적 보드.</p></section></main>
+<p>→ <a href="dashboard.html">docs/dashboard.html</a>: 전체 문서를 GitBook 스타일로 묶어 보여주는 HTML 문서. → <a href="kanban.html">docs/kanban.html</a>: <code>docs/features/*.md</code> + 본 문서를 시각화한 칸반형 정적 보드.</p></section></main>
   </div>
 
 <footer class="doc-footer">

@@ -108,6 +108,8 @@ services:
     image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE}
     restart: unless-stopped
     ports: ["127.0.0.1:${APP_PORT:-3003}:80"]
+    volumes:
+      - ./public-docs:/usr/share/nginx/html/docs:ro
     depends_on:
       backend: {condition: service_healthy}
 volumes:

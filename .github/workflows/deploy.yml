@@ -107,7 +107,8 @@ jobs:
             "docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin"
       - name: Upload deployment configuration
         run: |
-          ssh -i "$HOME/.ssh/github_actions_vps" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$DEPLOY_PATH/scripts' '$DEPLOY_PATH/backend/sql/skax_nms'"
+          ssh -i "$HOME/.ssh/github_actions_vps" -p "$VPS_PORT" -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$DEPLOY_PATH/scripts' '$DEPLOY_PATH/backend/sql/skax_nms' '$DEPLOY_PATH/public-docs'"
+          scp -i "$HOME/.ssh/github_actions_vps" -P "$VPS_PORT" -o BatchMode=yes docs/kanban.html docs/dashboard.html "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/public-docs/"
           scp -i "$HOME/.ssh/github_actions_vps" -P "$VPS_PORT" -o BatchMode=yes compose.production.yml "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/"
           scp -i "$HOME/.ssh/github_actions_vps" -P "$VPS_PORT" -o BatchMode=yes scripts/deploy.sh "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/scripts/"
           scp -i "$HOME/.ssh/github_actions_vps" -P "$VPS_PORT" -o BatchMode=yes backend/sql/skax_nms/001_full_dump.sql.gz backend/sql/skax_nms/002_local_settings.sh "$VPS_USER@$VPS_HOST:$DEPLOY_PATH/backend/sql/skax_nms/"

@@ -47,3 +47,5 @@ npm run build
 실모델이 설정된 상태의 스모크는 `--expect-ai-error` 없이 수행한다. 이번 분리 검증의 모델 응답은 키 미설정 오류 경로 및 테스트 대역으로 확인했다. `smoke_stage.py`는 모델 응답을 필요로 하므로 키 미설정 상태에서 실패했다. 별도 API 검사로 실제 고객 DB SELECT·DML 거부와 Stage 추가/배치 수정/재조회/삭제를 확인했다.
 
 [분리 설계와 결정 기록](docs/project-separation-proposal.md) · [기능 명세](docs/features/README.md) · [운영 배포](deployment/README.md)
+
+운영 HTML 보기: [칸반](https://sql2widget.crudy.cloud/docs/kanban.html) · [문서 대시보드](https://sql2widget.crudy.cloud/docs/dashboard.html)
