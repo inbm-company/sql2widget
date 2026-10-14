@@ -25,6 +25,8 @@ DB 연결·테이블 권한·예상 질문·DB 조회/구조 질문·일반 대�
 
 AI 설정에서 Gemini/OpenAI 호환/로컬 모델을 지정하거나 `.env.local`의 LLM_PROVIDER/API_KEY/BASE_URL/MODEL을 설정한다. 로컬 서버는 OpenAI 호환 API를 별도로 제공해야 한다. 키가 없거나 호출이 실패하면 오류를 반환한다. 기존 메시지 임베딩과 예상 질문용 pgvector는 유지한다.
 
+Gemini 기본 모델은 `gemini-3.8-flash`다. 브라우저에 이미 저장된 `gemini-3.6-flash`와 사용자 지정 다른 모델·API 키·다른 Provider 설정은 유지한다. 기존 2.5 모델의 기본값 전환 규칙은 유지한다.
+
 SQL 테이블 선택은 유사 예상 질문을 사용하고 매칭이 없으면 전체 허용 스키마를 전달한다. 문서 그래프를 조회하지 않는다. 기존 SOC 고정 데모 출처 보조 기능은 유지한다.
 
 채팅은 요청을 계획·분류·실행한 뒤 원래 목표를 평가하고 부족한 작업을 최대 5회 재계획한다. 데이터 요청은 SQL을 먼저 생성·실행한 뒤 결과에 맞는 여러 위젯을 선택하고 각각 생성한다. 각 도구 호출 결과에서 다음 작업을 결정하며 같은 SQL을 여러 위젯이 컬럼 연결로 공유할 수 있다. 180초 예산·요청 전체 데이터 도구 호출 100회·반복에서 중단하면 부분 결과와 미완료 사유를 표시한다. 상세 조건은 [채팅 명세](docs/features/chat.md)를 따른다.
@@ -49,3 +51,5 @@ npm run build
 실모델이 설정된 상태의 스모크는 `--expect-ai-error` 없이 수행한다. 이번 분리 검증의 모델 응답은 키 미설정 오류 경로 및 테스트 대역으로 확인했다. `smoke_stage.py`는 모델 응답을 필요로 하므로 키 미설정 상태에서 실패했다. 별도 API 검사로 실제 고객 DB SELECT·DML 거부와 Stage 추가/배치 수정/재조회/삭제를 확인했다.
 
 [분리 설계와 결정 기록](docs/project-separation-proposal.md) · [기능 명세](docs/features/README.md) · [운영 배포](deployment/README.md)
+
+운영 HTML 보기: [칸반](https://sql2widget.crudy.cloud/docs/kanban.html) · [문서 대시보드](https://sql2widget.crudy.cloud/docs/dashboard.html)

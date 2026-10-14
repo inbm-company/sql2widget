@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 관리자 패널 |
-| 기준일 | 2026-10-13 (Jev 공통 키 입력·저장 포함) |
+| 기준일 | 2026-10-14 (Gemini 3.8 기본 모델 포함) |
 | 관련 문서 | [chat.md](chat.md)(연결·권한·AI 설정이 실제로 쓰이는 곳) |
 | 관련 코드 | `backend/app/repositories/connections.py`, `backend/app/crypto.py`, `backend/app/local_models.py`, `backend/app/main.py`(`/api/ai/local-models`, `/api/database-connections*`, `/api/table-permissions`), `frontend/src/AdminPanel.jsx`, `frontend/src/api.js`(`getAiSettings`/`setAiSettings`) |
 
@@ -51,7 +51,7 @@ Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델�
 | 필드 | 동작 |
 |------|------|
 | Provider | Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환) |
-| Model | Gemini 기본 `gemini-3.6-flash`, OpenAI 기본 `gpt-4o-mini`, 로컬은 서버의 `/models` 목록에서 선택(조회 실패 시 직접 입력) |
+| Model | Gemini 기본 `gemini-3.8-flash`, OpenAI 기본 `gpt-4o-mini`, 로컬은 서버의 `/models` 목록에서 선택(조회 실패 시 직접 입력) |
 | Base URL | OpenAI·로컬에서 입력 가능. 로컬 기본 `http://host.docker.internal:11434/v1`, Gemini는 Google 호환 URL 고정 |
 | API key | `type="password"`, 로컬에서는 선택 사항 |
 | Embedding model | 로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음 |
@@ -62,7 +62,7 @@ Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델�
 - 로컬 Provider는 패널을 열 때와 **모델 목록 새로고침** 클릭 시 `POST /api/ai/local-models`(관리자 전용, body `{base_url, api_key}`)를 호출한다. 백엔드가 `{base_url}/models`(OpenAI 호환, 타임아웃 5초)를 조회해 `{models: [id…]}`를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.
 - 로컬 임베딩 벡터의 길이는 `CHAT_EMBEDDING_DIM`(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.
 - 키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.
-- 이전 Gemini 모델 `gemini-2.5-flash`는 기존 동작대로 `gemini-3.6-flash`로 마이그레이션한다(`aiSettings.js`).
+- Gemini 기본값만 `gemini-3.8-flash`로 변경했다. 저장된 `gemini-3.6-flash`와 사용자 지정 다른 모델·API 키·임베딩 모델·Jev 키·다른 Provider 프로필은 유지한다. 기존 `gemini-2.5-flash`를 기본 모델로 전환하는 규칙은 유지한다(`aiSettings.js`). 백엔드 Gemini Provider도 모델 지정이 없으면 `gemini-3.8-flash`를 사용한다.
 
 ## Jev 의도 분류 연결
 

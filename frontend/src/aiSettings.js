@@ -1,7 +1,7 @@
 const SETTINGS_KEY = "sql2widget_ai_settings";
 
 const DEFAULTS = {
-  gemini: { model: "gemini-3.6-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", embeddingModel: "gemini-embedding-001" },
+  gemini: { model: "gemini-3.8-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", embeddingModel: "gemini-embedding-001" },
   openai: { model: "gpt-4o-mini", baseUrl: "https://api.openai.com/v1", embeddingModel: "text-embedding-3-small" },
   local: { model: "", baseUrl: "http://host.docker.internal:11434/v1", embeddingModel: "" },
 };

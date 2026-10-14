@@ -63,6 +63,7 @@ APP_PORT=3003
 로그인 후 Admin → AI 연결에 Gemini API 키를 입력합니다.
 현재 API 키는 해당 브라우저 localStorage에 저장됩니다. 채팅 요청에만 전달되고,
 제공자별 고정 API 주소로 호출합니다. 사용자는 Gemini 모델을 직접 지정할 수 있습니다.
+Gemini 기본 모델은 `gemini-3.8-flash`입니다. 이미 저장된 3.6 모델·사용자 지정 다른 모델·API 키는 유지합니다. 기존 2.5 모델의 기본값 전환 규칙은 유지합니다.
 
 외부 접근에는 DNS와 호스트 Nginx HTTPS reverse proxy가 추가로 필요합니다.
 Nginx는 해당 도메인을 `http://127.0.0.1:3003`으로 전달하고 응답 제한 시간을 180초로 둡니다.
@@ -84,3 +85,12 @@ DB 앱에서 문서 그래프 라우터·기능·마이그레이션을 제거했
 2026-10-06 `6a88140` 운영 배포가 [GitHub Actions #37421027481](https://github.com/inbm-company/sql2widget/actions/runs/37421027481)에서 성공했습니다. 프로젝트 분리 및 로컬/운영 아이디 분리가 적용됐으며 HTTPS 화면·API 200, 모든 컨테이너 healthy, 기존 계정·비밀번호·프로젝트·대화 보존을 확인했습니다. 배포 당시 서버 환경변수 비밀번호와 DB 해시의 기존 불일치는 변경하지 않았으며, 아래 후속 조치로 해결했습니다.
 
 같은 날 사용자 요청으로 기존 운영 관리자·Viewer 비밀번호를 서버 환경변수 값에 맞춰 DB에서 동기화했습니다. `.env` 값·로컬 계정·기존 프로젝트·대화는 유지했고 기존 갱신 토큰은 무효화했습니다. 공개 HTTPS 로그인·세션·프로젝트 조회 모두 200으로 확인했습니다. 이제 `/home/deploy/sql2widget/.env`의 ADMIN_PASSWORD·VIEWER_PASSWORD가 실제 운영 로그인 비밀번호와 일치합니다. 환경변수만 바꾸면 기존 DB 비밀번호가 자동 회전하는 구조는 아닙니다.
+
+## 칸반·HTML 문서 공개
+
+Actions는 `docs/kanban.html`과 `docs/dashboard.html`만 서버의 `public-docs/`에 업로드한다.
+프런트는 이 폴더를 `/usr/share/nginx/html/docs`에 읽기 전용으로 연결해
+`https://sql2widget.crudy.cloud/docs/kanban.html`과 `/docs/dashboard.html`에서 제공한다.
+원본 Markdown·임시 기록·환경변수 파일은 공개 폴더에 포함하지 않는다.
+HTML은 저장소의 최신 문서 보기를 사용하므로 원본 변경 시 기존 문서 동기화 규칙을 따른다.
+HTML만 갱신할 때는 서버의 `public-docs/` 파일을 교체하며 앱 이미지 빌드나 백엔드 재기동은 필요하지 않다.

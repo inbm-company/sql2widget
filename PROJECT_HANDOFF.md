@@ -8,6 +8,10 @@ DB SQL·예상 질문·위젯 Stage, 선택적 graph_backend. 자세한 범위�
 
 다음 유지보수에서는 반대쪽 기능을 다시 import하거나 브라우저 키/토큰 issuer/DB/볼륨을 공유하지 않는다. 최소 그래프는 기본 미사용이고 문서 그래프를 SQL 계획에 전달하지 않는다.
 
+2026-10-14 Gemini 기본값 변경: 백엔드 `providers/gemini.py`와 프런트 `aiSettings.js`의 기본 모델만 `gemini-3.8-flash`로 변경했다. 저장된 3.6 모델·사용자 지정 다른 모델·API 키·임베딩 모델·Jev 키·다른 Provider는 유지한다. 기존 2.5 모델의 기본값 전환 규칙은 유지했다. Google 공식 모델 문서에서 ID를 확인했으며 모델 호출·테스트·빌드·브라우저 검증·배포는 사용자 승인 전 미실행이다.
+
+2026-10-14 채팅 프리뷰 높이: `frontend/src/styles.css`의 `.artifact-preview`를 제목·테두리 포함 320px로 고정하고 제목 아래 조회 영역·정적 위젯·SQL 패널이 남은 공간을 채우게 했다. Stage·Viewer의 배치 높이는 유지한다. 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행이다.
+
 2026-10-14 대기 질문 중복 표시 수정: 서버가 질문을 먼저 저장한 뒤 응답을 생성하는 동안 SWR 재조회가 저장된 질문을 반환하면 `chatMessages.js`가 전송 전 ID 목록과 비교해 임시 말풍선만 숨긴다. 과거 동일 질문은 유지하고 임시 질문·대기 표시는 전송한 대화에만 표시한다. 관련 회귀 테스트를 작성했으며 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행이다.
 
 2026-10-14 설명 답변 본문 표시: `_answer_schema`는 전체 구조 설명을 메시지 본문과 `{type: "answer", widgets: []}`로 반환한다. SOC 출처 기반 설명과 계획의 `MarkdownBlock` 본문도 응답 텍스트로 합치며 조회 위젯·SourceList는 유지한다. `ChatText.jsx`/`chatText.js`가 제목·목록·코드·간단한 표를 본문에서 표시하고 과거 채팅의 MarkdownBlock을 본문으로 옮겨 표시한다. 표시할 위젯이 없으면 Widget/JSON 영역을 숨긴다. HTML은 실행하지 않는다. 기존 메시지·Stage를 마이그레이션하지 않고 Stage의 MarkdownBlock 렌더러·허용 목록은 호환성을 위해 유지한다. 관련 회귀 테스트를 작성했으며 테스트·검증용 빌드·브라우저 검증은 사용자 승인 전 미실행이다.
@@ -39,3 +43,5 @@ DB SQL·예상 질문·위젯 Stage, 선택적 graph_backend. 자세한 범위�
 2026-10-13 위젯 자체 조회: SQL 위젯 Artifact·Stage에 조회 결과 배열/KPI 값을 새로 저장하지 않고 `query_ref: {connection_id, sql}`·표시 설정만 저장한다. 기존 Stage jsonb의 `__query_ref`에 조회 정의를 보관하므로 스키마 마이그레이션은 없다. `QueryWidget.jsx`가 채팅 미리보기·Stage·Viewer에서 위젯별 데이터 GET API를 SWR로 호출하고 로딩·오류·새로고침을 표시한다. 현재 소유자·tenant·역할별 테이블 권한과 SELECT/1000행/10초 제한을 적용하며 LLM 호출이나 주기적 폴링은 없다. 생성 시 SQL·결과 형식을 검증한 뒤 결과를 버려 기존 1회 계획 복구는 유지한다. 기존 SQL 위젯은 읽을 때 데이터 필드를 제외하고 같은 SQL의 소유한 원본 메시지에서 DB ID를 복원한다. SQL/DB 정보 없는 기존 위젯은 409와 질문 재실행 안내를 표시하고 다른 DB를 추측하지 않는다. DB 일괄 변환·사용자 기록 삭제·커밋·푸시·운영 배포는 수행하지 않았다.
 
 검증: 실제 Global Sales 고객 DB SELECT 7종·임시 Stage 결과 비저장/API 조회, 브라우저 대역의 초기 조회·값 갱신·빈 결과·오류 복구·Viewer 편집 금지 확인. 전체 백엔드 169개 통과·기존 일반 대화 경로와 기대값이 다른 테스트 2개 실패(test_intent_router/test_separation), 프런트 23개·Vite 빌드 통과. 실 LLM 호출·운영 배포는 미실행.
+
+2026-10-14 칸반·문서 대시보드 HTML을 운영 `/docs/kanban.html`·`/docs/dashboard.html`에 공개. 기존 앱 이미지로 프런트만 재생성했고 백엔드·DB·계정은 변경하지 않음. 공개 URL 응답·업로드 파일 일치 검사는 사용자 승인 전 미실행. Actions와 운영 Compose에 HTML 업로드·읽기 전용 공개 폴더를 추가했다.

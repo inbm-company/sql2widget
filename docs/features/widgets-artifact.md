@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Artifact 표시 및 위젯 카탈로그 |
-| 기준일 | 2026-10-14 (설명 답변 본문 표시) |
+| 기준일 | 2026-10-14 (설명 답변 본문 표시·채팅 프리뷰 320px) |
 | 관련 문서 | [chat.md](chat.md)(Artifact 생성), [stage.md](stage.md)(Stage로 이동) |
 | 관련 코드 | `backend/app/config.py`(`ALLOWED_COMPONENTS`), `backend/app/agent.py`(`sanitize_artifact`), `backend/app/agent_service.py`(`_materialize_plan`), `backend/app/widget_queries.py`, `backend/app/catalog_props.py`, `backend/app/widget_props.py`(`rows_to_props`), `frontend/src/widgets/QueryWidget.jsx`, `frontend/src/widgets/widgetData.js`, `frontend/src/widgets/catalogSettings.js`, `frontend/src/widgets/DataTable.jsx`, `frontend/src/widgets/tableData.js`, `frontend/src/widgets/CatalogCards.jsx`, `frontend/src/widgets/tanstackCatalogCharts.js`, `frontend/src/widgets/WidgetRenderer.jsx`, `frontend/src/widgets/tanstackBarChart.js`, `frontend/src/widgets/tanstackAnalyticalCharts.js`, `frontend/src/sqlHelpers.js`, `frontend/src/App.jsx`(`AssistantAnswer`, `ArtifactPreviewCard`) |
 
@@ -26,6 +26,7 @@
 - `MarkdownBlock` 설명을 본문으로 옮긴 뒤 표시할 위젯이 남아 있을 때만 **Widget / JSON** 세그먼트 토글이 뜬다(`AssistantAnswer`). `artifact_id`만 있는 빈 Artifact에는 표시하지 않는다. JSON 복사는 화면에 남은 위젯 정의를 대상으로 한다.
 - 테이블 구조 설명은 전체 채팅 본문으로 반환하며 테이블별 설명·컬럼 표를 본문에서 읽는다. 새 설명 답변과 SOC 출처 기반 해결 방안은 `MarkdownBlock`을 생성하지 않는다. 과거 채팅의 `MarkdownBlock`은 본문에 표시하고, 이미 Stage에 저장된 항목은 호환성을 위해 기존 렌더러로 표시한다. 기존 저장 데이터는 수정하지 않는다.
 - Widget 뷰: 위젯마다 `ArtifactPreviewCard` — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.
+- 채팅 미리보기 카드는 테두리·제목을 포함해 높이 320px로 고정한다. 제목 아래 남은 공간을 조회 영역·정적 위젯·SQL 패널이 채우며 새로고침 버튼은 조회 영역 안에 포함된다. Stage·Viewer 위젯은 기존 배치 높이를 따른다.
 - JSON 뷰: Artifact의 위젯 정의를 pretty-print. 조회 결과 행·차트 데이터·KPI 값은 포함하지 않는다.
 - JSON 뷰의 "JSON 복사" 버튼은 화면에 표시한 Artifact JSON 전체를 들여쓰기와 함께 클립보드에 복사한다. 복사 중에는 중복 클릭을 막고 성공·실패 안내를 복사 버튼 바로 왼쪽에 10px 글자로 표시한다. 클립보드 접근이 불가능하면 JSON을 선택해 직접 복사하도록 안내한다. 읽기 전용 사용자도 복사할 수 있다.
 - SQL 보기 가능 여부(`canShowSql`)는 `widget.sql`/`widget.query_ref.sql`/`widget.props.__query_ref.sql`/`widget.props.__sql` 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram, CompareCard, PivotTable, StatusSummary, EventTimeline, KpiGroup, DetailCard, HorizontalBarChart, ComboChart, BoxPlot, Treemap)에 속할 때다. `MarkdownBlock`/`SourceList`는 SQL 없음.

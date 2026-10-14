@@ -161,7 +161,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand"><span class="name">sql2widget</span><span class="sub">프로젝트 문서</span></div>
       <div class="search-box"><input type="text" id="tocSearch" placeholder="문서 검색…" /></div>
-      <nav class="toc" id="toc"><div class="group-label">시작하기</div><a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a><a href="../README.md">실행 안내 ↗</a><a href="01-folder-structure.md">폴더 구조 ↗</a><div class="group-label">기능</div><a href="#auth" data-id="auth">기능: 로그인/세션</a><a href="#projects-conversations" data-id="projects-conversations">기능: 프로젝트 · 대화</a><a href="#chat" data-id="chat">기능: DB 채팅</a><a href="#widgets-artifact" data-id="widgets-artifact">기능: Artifact / 위젯 카탈로그</a><a href="#stage" data-id="stage">기능: Stage (핀보드)</a><a href="#viewer" data-id="viewer">기능: Viewer 화면</a><a href="#admin" data-id="admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a><a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a><a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a><div class="group-label">운영</div><a href="#progress" data-id="progress">진행 상황</a><a href="kanban.html">칸반 보드 ↗</a></nav>
+      <nav class="toc" id="toc"><div class="group-label">시작하기</div><a href="#overview" data-id="overview">개요 &amp; 공통 규칙</a><a href="../README.md">실행 안내 ↗</a><a href="01-folder-structure.md">폴더 구조 ↗</a><div class="group-label">기능</div><a href="#auth" data-id="auth">기능: 로그인/세션</a><a href="#projects-conversations" data-id="projects-conversations">기능: 프로젝트 · 대화</a><a href="#chat" data-id="chat">기능: DB 채팅</a><a href="#widgets-artifact" data-id="widgets-artifact">기능: Artifact / 위젯 카탈로그</a><a href="#stage" data-id="stage">기능: Stage (핀보드)</a><a href="#viewer" data-id="viewer">기능: Viewer 화면</a><a href="#admin" data-id="admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a><a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a><a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a><div class="group-label">운영</div><a href="#deployment" data-id="deployment">운영 HTML 문서 공개</a><a href="#progress" data-id="progress">진행 상황</a><a href="kanban.html">칸반 보드 ↗</a></nav>
     </aside>
 
     <main id="main"><section id="overview"><h1>agent4any / sql2widget — 에이전트용 프로젝트 문서</h1>
@@ -230,7 +230,7 @@
 </tr>
 <tr>
 <td>Artifact/위젯 표시</td>
-<td>채팅 응답의 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td>
+<td>채팅 응답의 위젯을 제목 포함 320px 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td>
 <td><a href="features/widgets-artifact.md">widgets-artifact.md</a></td>
 </tr>
 <tr>
@@ -245,7 +245,7 @@
 </tr>
 <tr>
 <td>관리자 — DB 연결/권한/AI 설정</td>
-<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장</td>
+<td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지</td>
 <td><a href="features/admin.md">admin.md</a></td>
 </tr>
 </tbody>
@@ -905,7 +905,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <section id="widgets-artifact"><h1>기능: Artifact / 위젯 카탈로그</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능 문서 — Artifact 표시 및 위젯 카탈로그</td></tr>
-<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시)</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시·채팅 프리뷰 320px)</td></tr>
 <tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(Artifact 생성), <a href="features/stage.md">stage.md</a>(Stage로 이동)</td></tr>
 <tr><td>관련 코드</td><td><code>backend/app/config.py</code>(<code>ALLOWED_COMPONENTS</code>), <code>backend/app/agent.py</code>(<code>sanitize_artifact</code>), <code>backend/app/agent_service.py</code>(<code>_materialize_plan</code>), <code>backend/app/widget_queries.py</code>, <code>backend/app/catalog_props.py</code>, <code>backend/app/widget_props.py</code>(<code>rows_to_props</code>), <code>frontend/src/widgets/QueryWidget.jsx</code>, <code>frontend/src/widgets/widgetData.js</code>, <code>frontend/src/widgets/catalogSettings.js</code>, <code>frontend/src/widgets/DataTable.jsx</code>, <code>frontend/src/widgets/tableData.js</code>, <code>frontend/src/widgets/CatalogCards.jsx</code>, <code>frontend/src/widgets/tanstackCatalogCharts.js</code>, <code>frontend/src/widgets/WidgetRenderer.jsx</code>, <code>frontend/src/widgets/tanstackBarChart.js</code>, <code>frontend/src/widgets/tanstackAnalyticalCharts.js</code>, <code>frontend/src/sqlHelpers.js</code>, <code>frontend/src/App.jsx</code>(<code>AssistantAnswer</code>, <code>ArtifactPreviewCard</code>)</td></tr>
 </tbody></table>
@@ -923,6 +923,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <li><code>MarkdownBlock</code> 설명을 본문으로 옮긴 뒤 표시할 위젯이 남아 있을 때만 <strong>Widget / JSON</strong> 세그먼트 토글이 뜬다(<code>AssistantAnswer</code>). <code>artifact_id</code>만 있는 빈 Artifact에는 표시하지 않는다. JSON 복사는 화면에 남은 위젯 정의를 대상으로 한다.</li>
 <li>테이블 구조 설명은 전체 채팅 본문으로 반환하며 테이블별 설명·컬럼 표를 본문에서 읽는다. 새 설명 답변과 SOC 출처 기반 해결 방안은 <code>MarkdownBlock</code>을 생성하지 않는다. 과거 채팅의 <code>MarkdownBlock</code>은 본문에 표시하고, 이미 Stage에 저장된 항목은 호환성을 위해 기존 렌더러로 표시한다. 기존 저장 데이터는 수정하지 않는다.</li>
 <li>Widget 뷰: 위젯마다 <code>ArtifactPreviewCard</code> — 제목, 렌더러, (가능하면) SQL 보기 토글, &quot;Add to stage&quot; 버튼.</li>
+<li>채팅 미리보기 카드는 테두리·제목을 포함해 높이 320px로 고정한다. 제목 아래 남은 공간을 조회 영역·정적 위젯·SQL 패널이 채우며 새로고침 버튼은 조회 영역 안에 포함된다. Stage·Viewer 위젯은 기존 배치 높이를 따른다.</li>
 <li>JSON 뷰: Artifact의 위젯 정의를 pretty-print. 조회 결과 행·차트 데이터·KPI 값은 포함하지 않는다.</li>
 <li>JSON 뷰의 &quot;JSON 복사&quot; 버튼은 화면에 표시한 Artifact JSON 전체를 들여쓰기와 함께 클립보드에 복사한다. 복사 중에는 중복 클릭을 막고 성공·실패 안내를 복사 버튼 바로 왼쪽에 10px 글자로 표시한다. 클립보드 접근이 불가능하면 JSON을 선택해 직접 복사하도록 안내한다. 읽기 전용 사용자도 복사할 수 있다.</li>
 <li>SQL 보기 가능 여부(<code>canShowSql</code>)는 <code>widget.sql</code>/<code>widget.query_ref.sql</code>/<code>widget.props.__query_ref.sql</code>/<code>widget.props.__sql</code> 중 하나가 있거나, 컴포넌트가 SQL 지원 목록(KpiStat, DataTable, RankList, BarChart, LineChart, PieChart, FilterBar, KpiSparkline, PieTable, BarTable, StackedBarChart, Heatmap, ScatterChart, Histogram, CompareCard, PivotTable, StatusSummary, EventTimeline, KpiGroup, DetailCard, HorizontalBarChart, ComboChart, BoxPlot, Treemap)에 속할 때다. <code>MarkdownBlock</code>/<code>SourceList</code>는 SQL 없음.</li>
@@ -1074,7 +1075,7 @@ stage_widgets(
 <section id="admin"><h1>기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능 문서 — 관리자 패널</td></tr>
-<tr><td>기준일</td><td>2026-10-13 (Jev 공통 키 입력·저장 포함)</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (Gemini 3.8 기본 모델 포함)</td></tr>
 <tr><td>관련 문서</td><td><a href="features/chat.md">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td></tr>
 <tr><td>관련 코드</td><td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td></tr>
 </tbody></table>
@@ -1112,7 +1113,7 @@ stage_widgets(
 <p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local }, jevApiKey }</code> 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
 <table><thead><tr><th>필드</th><th>동작</th></tr></thead><tbody>
 <tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
-<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.6-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
+<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.8-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
 <tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
 <tr><td>API key</td><td><code>type=&quot;password&quot;</code>, 로컬에서는 선택 사항</td></tr>
 <tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
@@ -1124,7 +1125,7 @@ stage_widgets(
 <li>로컬 Provider는 패널을 열 때와 <strong>모델 목록 새로고침</strong> 클릭 시 <code>POST /api/ai/local-models</code>(관리자 전용, body <code>{base_url, api_key}</code>)를 호출한다. 백엔드가 <code>{base_url}/models</code>(OpenAI 호환, 타임아웃 5초)를 조회해 <code>{models: [id…]}</code>를 반환하고, 실패하면 400과 원인 메시지를 돌려주며 UI는 직접 입력으로 되돌아간다. 저장된 모델이 목록에 없어도 선택지에 유지된다.</li>
 <li>로컬 임베딩 벡터의 길이는 <code>CHAT_EMBEDDING_DIM</code>(기본 1536)과 정확히 일치해야 한다. 임의로 잘라 저장하지 않는다. 불일치하면 유사도 검색은 생략되고 예상 질문 저장은 실패한다.</li>
 <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
-<li>이전 Gemini 모델 <code>gemini-2.5-flash</code>는 기존 동작대로 <code>gemini-3.6-flash</code>로 마이그레이션한다(<code>aiSettings.js</code>).</li>
+<li>Gemini 기본값만 <code>gemini-3.8-flash</code>로 변경했다. 저장된 <code>gemini-3.6-flash</code>와 사용자 지정 다른 모델·API 키·임베딩 모델·Jev 키·다른 Provider 프로필은 유지한다. 기존 <code>gemini-2.5-flash</code>를 기본 모델로 전환하는 규칙은 유지한다(<code>aiSettings.js</code>). 백엔드 Gemini Provider도 모델 지정이 없으면 <code>gemini-3.8-flash</code>를 사용한다.</li>
 </ul>
 <h2>Jev 의도 분류 연결</h2>
 <p>관리자의 <strong>AI 설정 → Jev API key</strong>에 키를 입력하고 <strong>AI 설정 저장</strong>을 누르면 다음 채팅 요청부터 사용한다. 모든 Provider가 이 앱의 공통 Jev 키를 사용하므로 Provider 전환과 새로고침 후에도 유지된다. doc2graph의 키를 자동으로 가져오지 않는다.</p>
@@ -1267,7 +1268,7 @@ docker compose exec backend pytest -q
 </table>
 <p>문서 업로드·스키마 협의·엔티티 추출·문서 질의응답·그래프 화면은 독립 프로젝트 <code>doc2graph</code>로 이동했다. sql2widget에는 문서 그래프 API/테이블/화면이 없다.</p>
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
-<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="progress"><span class="badge done">완료 24</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
+<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="deployment"><h1>운영 HTML 문서 공개</h1><p>칸반은 <a href="kanban.html">/docs/kanban.html</a>, 문서 대시보드는 <a href="dashboard.html">/docs/dashboard.html</a>에서 제공한다. Actions는 두 HTML만 서버 public-docs/에 업로드하고 프런트 Nginx에 읽기 전용으로 연결한다. 원본 Markdown·임시 기록·환경변수 파일은 공개하지 않는다. HTML 교체에 앱 이미지 빌드나 백엔드 재기동은 필요하지 않다.</p></section><section id="progress"><span class="badge done">완료 24</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>작업 진행 상황</td></tr>
 <tr><td>기준일</td><td>2026-10-14</td></tr>
@@ -1289,7 +1290,7 @@ docker compose exec backend pytest -q
 <tr><td>설명 답변 본문 표시 — 테이블 구조·SOC 출처 설명의 MarkdownBlock 생성 제거</td><td>2026-10-14 전체 설명·테이블별 컬럼 표를 채팅 본문에 표시. 과거 채팅 설명 카드는 본문으로 표시하고 데이터 위젯·출처·기존 Stage 항목 유지. 관련 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a>, <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
 <tr><td>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리</td><td><a href="features/auth.md">auth.md</a>. 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인</td></tr>
 <tr><td>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</td><td><a href="features/projects-conversations.md">projects-conversations.md</a></td></tr>
-<tr><td>Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가</td><td>2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 버튼 왼쪽 10px 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
+<tr><td>Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가</td><td>2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 버튼 왼쪽 10px 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a> 2026-10-14 채팅 프리뷰를 제목 포함 320px로 고정하고 내용·SQL 패널이 남은 공간을 채우도록 수정. 이번 높이 변경의 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행.</td></tr>
 <tr><td>위젯 자체 데이터 조회 — 결과 비저장·원본 DB/SQL 정의 저장</td><td>2026-10-13 채팅·Stage·Viewer의 위젯별 GET·새로고침·로딩/오류 구현. 현재 소유자·tenant·역할 테이블 권한 검사, 기존 위젯 DB 정보 복원. 실제 Global Sales DB 7종 SELECT·임시 Stage 결과 비저장 검증, 브라우저 대역의 조회/새로고침/오류 복구/Viewer 확인. 전체 백엔드 169개 통과·기존 일반 대화 기대값 불일치 2개 실패, 프런트 23개·빌드 통과. 실 LLM·운영 배포는 미실행. <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
 <tr><td>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</td><td><a href="features/stage.md">stage.md</a></td></tr>
 <tr><td>Viewer 읽기 전용 화면(<code>/p/:id/view</code>)</td><td><a href="features/viewer.md">viewer.md</a></td></tr>
@@ -1297,7 +1298,7 @@ docker compose exec backend pytest -q
 <tr><td>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</td><td><code>docker-compose.yml</code></td></tr>
 <tr><td>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</td><td><code>backend/scripts/seed_northwind_recent.py</code>, <code>seed_skax_nms.py</code></td></tr>
 <tr><td>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 결과 기반 SQL 수정·위젯 재선택, 미완료 시 부분 결과·사유 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제)</td><td><a href="features/chat.md">chat.md</a></td></tr>
-<tr><td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장</td><td>2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. <a href="features/admin.md">admin.md</a></td></tr>
+<tr><td>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장</td><td>2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. <a href="features/admin.md">admin.md</a> 2026-10-14 Gemini 기본값만 3.8 Flash로 변경. 저장된 3.6 모델·키·다른 Provider·사용자 지정 다른 모델은 유지하며 기존 2.5 모델 전환 규칙 보존. 이번 모델 변경의 테스트·실모델 호출·빌드·브라우저 검증은 승인 전 미실행.</td></tr>
 <tr><td><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</td><td><a href="features/admin.md">admin.md</a> 데이터 모델</td></tr>
 <tr><td>문서 체계 정비 — <code>AGENTS.md</code>/<code>CLAUDE.md</code>, <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, 본 문서, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code></td><td>이번 문서화 작업 1~5번 전체 완료</td></tr>
 <tr><td>DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성</td><td><a href="features/similarity-search-design.md">similarity-search-design.md</a></td></tr>
@@ -1307,7 +1308,7 @@ docker compose exec backend pytest -q
 <tr><td>일반 대화 — 인사·잡담·일반 지식·개념 설명</td><td>2026-10-13 <code>general_chat</code> 경로·Jev/LLM 분류·세 경로 선택지·전체 본문 답변·처리 내역 표시 구현. 고객 DB 스키마 조회는 DB 경로에서만 수행. 사용자 요청에 따라 테스트·빌드·브라우저 검증 미실행. <a href="features/chat.md">chat.md</a></td></tr>
 <tr><td>에이전트 루프 및 위젯 선택·SQL 생성 분리</td><td>2026-10-13 SQL 데이터셋 생성·실행 후 실제 컬럼·타입·행 수로 복수 위젯 선택·개별 생성. 각 실제 호출 결과에서 다음 작업 결정, 같은 SQL의 여러 위젯 컬럼 연결·Stage 보존. 도구 호출 순서·SQL 수·생성 위젯 수·판단 호출·재계획 구분, 부분 결과·한도·반복 중단 구현. 테스트·검증용 빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></td></tr>
 <tr><td>대화 문맥·후속 질문 처리 및 IME 조합 중 전송 방지</td><td>최근 20개 메시지 범위의 같은 DB 응답 이력을 라우터·SQL 계획·복구·구조 답변에 전달. 다른 DB·DB 정보 없는 과거 이력은 제외. 2026-10-13 관련 백엔드 테스트 70개, 프런트 테스트 4개, Vite 빌드 통과. 테스트 대역으로 검증했고 실모델·브라우저 IME·실 DB 재조회 검증은 미실행. <a href="features/chat.md">chat.md</a></td></tr>
-<tr><td>운영 배포 파이프라인</td><td>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a></td></tr>
+<tr><td>운영 배포 파이프라인</td><td>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a> 2026-10-14 칸반·문서 대시보드 HTML을 운영 `/docs/kanban.html`·`/docs/dashboard.html`에 공개. 기존 앱 이미지로 프런트만 재생성했고 백엔드·DB·계정은 변경하지 않음. 공개 URL 응답·업로드 파일 일치 검사는 사용자 승인 전 미실행.</td></tr>
 <tr><td>DB/문서 프로젝트 분리 및 독립 실행</td><td>sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 2026-10-06 sql2widget 운영 전환 완료(6a88140): CI 테스트·이미지 게시·VPS 배포, HTTPS/API·기존 계정/프로젝트/대화 보존 확인. 실모델 유료 호출은 미실행</td></tr>
 </tbody></table>
 <h2>3. 진행중</h2>

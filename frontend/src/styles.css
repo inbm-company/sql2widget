@@ -1012,16 +1012,20 @@ button {
 
 /* Artifact preview cards */
 .artifact-preview {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  max-height: 240px;
+  height: 320px;
   overflow: hidden;
   cursor: grab;
 }
 
 .artifact-preview-head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   padding: 5px 8px;
@@ -1104,6 +1108,15 @@ button {
   flex: 1;
   height: auto;
   min-height: 0;
+}
+
+.artifact-preview > .query-widget,
+.artifact-preview > .widget-body,
+.artifact-preview > .sql-panel {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .widget-data-actions {
