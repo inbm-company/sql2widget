@@ -23,6 +23,7 @@
 
 | 항목 | 비고 |
 |------|------|
+| 응답 대기 중 사용자 질문 중복 표시 수정 | 2026-10-14 SWR 재조회에서 이번 질문이 확인되면 임시 말풍선만 숨김. 과거 동일 질문은 유지하고 임시 질문·대기 표시는 해당 대화로 제한. 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. [chat.md](features/chat.md) |
 | 설명 답변 본문 표시 — 테이블 구조·SOC 출처 설명의 MarkdownBlock 생성 제거 | 2026-10-14 전체 설명·테이블별 컬럼 표를 채팅 본문에 표시. 과거 채팅 설명 카드는 본문으로 표시하고 데이터 위젯·출처·기존 Stage 항목 유지. 관련 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. [chat.md](features/chat.md), [widgets-artifact.md](features/widgets-artifact.md) |
 | 로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리 | [auth.md](features/auth.md). 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인 |
 | 프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정 | [projects-conversations.md](features/projects-conversations.md) |

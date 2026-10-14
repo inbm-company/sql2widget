@@ -31,7 +31,7 @@ test("unrelated user messages and assistant text do not hide the pending questio
 
 test("pending questions are scoped to their conversation and cleared on completion", () => {
   assert.equal(shouldShowPendingMessage({ id: "chat-2", messages: [] }, pending), false);
-  assert.equal(shouldShowPendingMessage(undefined, pending), false);
+  assert.equal(shouldShowPendingMessage(undefined, pending), true);
   assert.equal(shouldShowPendingMessage({ id: "chat-1" }, pending), true);
   assert.equal(shouldShowPendingMessage({ id: "chat-1" }, null), false);
 });

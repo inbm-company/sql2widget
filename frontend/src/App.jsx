@@ -816,9 +816,9 @@ function Workspace({ user, onLogout }) {
               {sending && pendingMessage?.conversationId === activeId ? (
                 <>
                   {shouldShowPendingMessage(conversation, pendingMessage) ? (
-                  <div className="msg user pending-user">
-                    <div className="msg-content user-bubble">{pendingMessage.content}</div>
-                  </div>
+                    <div className="msg user pending-user">
+                      <div className="msg-content user-bubble">{pendingMessage.content}</div>
+                    </div>
                   ) : null}
                   <div className="msg assistant assistant-pending" role="status" aria-live="polite">
                     <span className="loading-dots" aria-hidden="true">•••</span>

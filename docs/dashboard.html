@@ -843,7 +843,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <section id="chat"><h1>기능: DB 채팅</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능: DB 채팅</td></tr>
-<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시)</td></tr>
+<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시·대기 질문 중복 표시 수정)</td></tr>
 <tr><td>관련 문서</td><td><a href="../README.md">README</a>, <a href="features/README.md">기능 색인</a></td></tr>
 </tbody></table>
 <h2>DB 선택과 질문</h2>
@@ -897,6 +897,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <li>입력창은 Enter 전송·Shift+Enter 줄바꿈을 유지하고, 한글 등 IME 조합 중 Enter는 전송하지 않는다.</li>
 </ul>
 <h2>저장과 AI 설정</h2>
+<p>질문을 전송하면 서버 저장 전에는 임시 말풍선을 표시한다. 서버는 응답 생성 전에 질문을 저장하므로 SWR의 포커스 복귀·재연결 조회에서 질문이 먼저 나타날 수 있다. 전송 전 메시지 ID 목록에 없던 동일 내용의 사용자 메시지가 조회되면 임시 말풍선만 숨기고 응답 대기 표시는 유지한다. 과거의 같은 질문은 그대로 표시하며 임시 질문·대기 표시는 전송한 대화에서만 표시한다. 중복 표시 회귀 테스트는 작성했고 사용자 승인 전에는 실행하지 않았다.</p>
 <p>대화 메시지·Artifact의 위젯 정의·표시용 처리 내역은 서비스 DB에 저장한다. SQL 위젯의 조회 결과 데이터는 저장하지 않고 <code>query_ref</code>에 원본 DB ID와 SQL을 보관한다. 채팅 미리보기는 위젯별 데이터 API로 현재 데이터를 조회한다(<a href="features/widgets-artifact.md">widgets-artifact.md</a>). 처리 내역에는 경로·모델·SQL 테이블 선택·유사 질문·복구 결과를 표시하며 meta의 <code>connection_id</code>는 문맥의 DB 범위를 확인하는 데 사용한다. API 키·원시 오류·참조 SQL 계획은 표시용 meta에 저장하지 않는다.</p>
 <p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
 <p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p>
@@ -1266,7 +1267,7 @@ docker compose exec backend pytest -q
 </table>
 <p>문서 업로드·스키마 협의·엔티티 추출·문서 질의응답·그래프 화면은 독립 프로젝트 <code>doc2graph</code>로 이동했다. sql2widget에는 문서 그래프 API/테이블/화면이 없다.</p>
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
-<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="progress"><span class="badge done">완료 23</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
+<p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p></section><section id="progress"><span class="badge done">완료 24</span> <span class="badge wip">진행중 2</span> <span class="badge plan">예정 6</span> <span class="badge hold">보류 1</span><h1>작업 진행 상황</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>작업 진행 상황</td></tr>
 <tr><td>기준일</td><td>2026-10-14</td></tr>
@@ -1284,6 +1285,7 @@ docker compose exec backend pytest -q
 <hr>
 <h2>2. 완료</h2>
 <table><thead><tr><th>항목</th><th>비고</th></tr></thead><tbody>
+<tr><td>응답 대기 중 사용자 질문 중복 표시 수정</td><td>2026-10-14 SWR 재조회에서 이번 질문이 확인되면 임시 말풍선만 숨김. 과거 동일 질문은 유지하고 임시 질문·대기 표시는 해당 대화로 제한. 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></td></tr>
 <tr><td>설명 답변 본문 표시 — 테이블 구조·SOC 출처 설명의 MarkdownBlock 생성 제거</td><td>2026-10-14 전체 설명·테이블별 컬럼 표를 채팅 본문에 표시. 과거 채팅 설명 카드는 본문으로 표시하고 데이터 위젯·출처·기존 Stage 항목 유지. 관련 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a>, <a href="features/widgets-artifact.md">widgets-artifact.md</a></td></tr>
 <tr><td>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리</td><td><a href="features/auth.md">auth.md</a>. 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인</td></tr>
 <tr><td>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</td><td><a href="features/projects-conversations.md">projects-conversations.md</a></td></tr>

@@ -28,6 +28,7 @@
 | `backend/tests/test_widget_props.py` | 신규 분석 위젯의 SQL 변환·빈 결과·잘못된 구간·Artifact/Stage JSON 경로 검증 |
 | `backend/tests/` | 앱별 기능·권한·독립성·토큰 격리 검증 |
 | `frontend/src/App.jsx` | 같은 기본 로그인·사이드바·채팅·설정·분할 패널 UI |
+| `frontend/src/chatMessages.js`, `frontend/tests/chatMessages.test.js` | 서버 조회와 임시 질문의 중복 표시 방지, 과거 동일 질문·대화 범위 회귀 테스트 |
 | `frontend/src/ChatText.jsx`, `chatText.js` | 설명 본문의 제목·목록·코드·표 표시, 과거 MarkdownBlock 채팅 카드를 본문으로 표시 |
 | `backend/tests/test_chat_text.py`, `frontend/tests/chatText.test.js` | 구조 답변 본문·오류·조회 위젯/출처 보존, 과거 설명 카드·본문 표/코드 호환 검증 |
 | `frontend/src/StageCanvas.jsx` | 위젯 핀보드, 그래프 탭 없음 |
