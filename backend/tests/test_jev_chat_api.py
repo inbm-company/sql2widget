@@ -5,8 +5,9 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app import agent_service, config, intent_router, main
+from app import agent_plan, agent_service, config, intent_router, main
 from app.auth import get_current_user
+from app.prompts import EVALUATE_HINT, PLAN_HINT
 
 
 @pytest.fixture
@@ -31,9 +32,15 @@ def chat_api(monkeypatch):
         assert "jev_api_key" not in settings and "runtime_jev_api_key" not in settings
         assert "routing-test" not in json.dumps(content)
         assert "routing-test" not in json.dumps(settings)
+        if hint == PLAN_HINT:
+            return {"result": {"goal": "테이블 구조 설명", "steps": [
+                {"route": "schema_qa", "query": content["question"], "expect": "테이블 설명"}]}}
+        if hint == EVALUATE_HINT:
+            return {"result": {"met": True, "reason": "테이블 구조 설명 완료"}}
         return {"result": {"markdown": "orders 테이블입니다."}, "provider": "openai", "model": "test-model"}
 
     monkeypatch.setattr(agent_service, "json_with_llm", answer)
+    monkeypatch.setattr(agent_plan, "json_with_llm", answer)
 
     def route(*a, api_key, payload, **k):
         calls.append(api_key)

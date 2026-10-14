@@ -1,6 +1,6 @@
 import json
 
-from app import agent_service, llm
+from app import agent_plan, agent_service, llm
 
 
 
@@ -14,9 +14,9 @@ def test_live_model_error_is_not_hidden_by_mock(monkeypatch):
     monkeypatch.setattr(agent_service, "decide_route",
         lambda *args, **kwargs: {"route": "data_query", "source": "similarity", "clarify": False})
     monkeypatch.setattr(
-        agent_service,
-        "plan_with_llm",
-        lambda *args, **kwargs: {"provider": "gemini", "plan": None, "error": "HTTP 404: model unavailable"},
+        agent_plan,
+        "json_with_llm",
+        lambda *args, **kwargs: {"provider": "gemini", "result": None, "error": "HTTP 404: model unavailable"},
     )
 
     import pytest
@@ -48,7 +48,6 @@ def test_missing_cloud_key_is_failure_without_cross_provider_fallback(monkeypatc
     assert result["provider"] == "openai"
     assert "API key" in result["error"]
     assert usage[0]["success"] is False
-
 
 
 

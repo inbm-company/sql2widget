@@ -1,6 +1,7 @@
 import pytest
 
-from app import agent_service, config, schema_linking as linking
+from app import agent_service, config, data_agent, schema_linking as linking
+from app.query import QueryError
 
 ALLOWED = {f"table_{i}" for i in range(30)} | {"orders", "customers"}
 
@@ -34,10 +35,12 @@ def run_with(monkeypatch, matches, allowed=ALLOWED):
                         lambda *a, **k: {"route": "data_query", "source": "similarity", "clarify": False})
 
     def plan(*args, **kwargs):
-        plan_schemas.append(kwargs["schema_text"])
-        return {"plan": {"widgets": []}, "provider": "gemini"}
+        plan_schemas.append(kwargs["schema"])
+        column = "missing" if len(plan_schemas) == 1 else "id"
+        return {"summary": "주문 조회", "queries": [
+            {"sql": f"SELECT {column} FROM orders", "title": "주문", "purpose": "주문 조회"}]}, {"provider": "gemini"}
 
-    monkeypatch.setattr(agent_service, "plan_with_llm", plan)
+    monkeypatch.setattr(data_agent, "generate_sql", plan)
     return plan_schemas
 
 
@@ -45,17 +48,34 @@ def run_with(monkeypatch, matches, allowed=ALLOWED):
 
 def test_failure_retries_with_full_schema(monkeypatch):
     schemas = run_with(monkeypatch, [match("SELECT * FROM orders")])
-    outcomes = iter([ValueError("no such column"), ("ok", {"widgets": []})])
+    outcomes = iter([QueryError("no such column"), [{"id": 1}]])
 
-    def materialize(*args, **kwargs):
+    def execute(*args, **kwargs):
         outcome = next(outcomes)
         if isinstance(outcome, Exception):
             raise outcome
+        kwargs["result_metadata"].update(columns=[{"name": "id", "type": "numeric"}], row_count=1)
         return outcome
 
-    monkeypatch.setattr(agent_service, "_materialize_plan", materialize)
-    _, _, meta = agent_service.run_agent("q", tenant_id="t", user_id="u")
+    actions = iter([
+        {"action": "generate_sql"},
+        {"action": "execute_sql", "query_id": "query_1"},
+        {"action": "generate_sql", "query_id": "query_1"},
+        {"action": "execute_sql", "query_id": "query_1"},
+        {"action": "select_widgets", "query_id": "query_1"},
+        {"action": "create_widget", "widget_id": "widget_1"},
+        {"action": "finish"},
+    ])
+    monkeypatch.setattr(data_agent, "choose_data_action",
+                        lambda *a, **k: {"request": "q", "reason": "", **next(actions)})
+    monkeypatch.setattr(data_agent, "execute_readonly", execute)
+    monkeypatch.setattr(data_agent, "select_widgets", lambda *a, **k: ([
+        {"component": "DataTable", "title": "주문", "props": {"column_map": {}}}], {"provider": "gemini"}))
+    monkeypatch.setattr(agent_service, "evaluate", lambda *a, **k: {"verdict": "done", "reason": "조회 완료"})
+    _, artifact, meta = agent_service.run_agent("q", tenant_id="t", user_id="u", forced_route="data_query")
     assert schemas == ["LINKED:['orders']", "FULL"]
     assert meta["schema_link"]["escalated_to_full"] is True and meta["retried"]
-
+    assert artifact["widgets"][0]["sql"] == "SELECT id FROM orders"
+    assert meta["sql_generation"]["repairs"] == 1
+    assert meta["loop_stop"] == "done"
 
