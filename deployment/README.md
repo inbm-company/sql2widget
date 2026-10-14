@@ -90,7 +90,12 @@ DB 앱에서 문서 그래프 라우터·기능·마이그레이션을 제거했
 
 Actions는 `docs/kanban.html`과 `docs/dashboard.html`만 서버의 `public-docs/`에 업로드한다.
 프런트는 이 폴더를 `/usr/share/nginx/html/docs`에 읽기 전용으로 연결해
-`https://sql2widget.crudy.cloud/docs/kanban.html`과 `/docs/dashboard.html`에서 제공한다.
+`https://sql2widget.crudy.cloud/kanban`과 `https://sql2widget.crudy.cloud/docs`에서 제공한다.
+`frontend/deployment/nginx.conf`가 두 주소에 HTML 파일을 직접 제공하며, 기존
+`/docs/kanban.html`·`/docs/dashboard.html` 주소는 각각 `/kanban`·`/docs`로 301 연결한다.
+`/kanban/`·`/docs/`도 끝 슬래시 없는 주소로 연결한다.
+HTML은 짧은 운영 주소에서만 `/docs/`를 상대 링크 기준으로 설정해 문서 간 이동을 유지한다.
+로컬 HTML 파일 보기와 원본 파일명은 유지한다.
 원본 Markdown·임시 기록·환경변수 파일은 공개 폴더에 포함하지 않는다.
 HTML은 저장소의 최신 문서 보기를 사용하므로 원본 변경 시 기존 문서 동기화 규칙을 따른다.
 HTML만 갱신할 때는 서버의 `public-docs/` 파일을 교체하며 앱 이미지 빌드나 백엔드 재기동은 필요하지 않다.

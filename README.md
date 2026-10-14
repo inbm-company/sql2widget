@@ -52,4 +52,4 @@ npm run build
 
 [분리 설계와 결정 기록](docs/project-separation-proposal.md) · [기능 명세](docs/features/README.md) · [운영 배포](deployment/README.md)
 
-운영 HTML 보기: [칸반](https://sql2widget.crudy.cloud/docs/kanban.html) · [문서 대시보드](https://sql2widget.crudy.cloud/docs/dashboard.html)
+운영 HTML 보기: [칸반](https://sql2widget.crudy.cloud/kanban) · [문서 대시보드](https://sql2widget.crudy.cloud/docs)

@@ -45,3 +45,5 @@ DB SQL·예상 질문·위젯 Stage, 선택적 graph_backend. 자세한 범위�
 검증: 실제 Global Sales 고객 DB SELECT 7종·임시 Stage 결과 비저장/API 조회, 브라우저 대역의 초기 조회·값 갱신·빈 결과·오류 복구·Viewer 편집 금지 확인. 전체 백엔드 169개 통과·기존 일반 대화 경로와 기대값이 다른 테스트 2개 실패(test_intent_router/test_separation), 프런트 23개·Vite 빌드 통과. 실 LLM 호출·운영 배포는 미실행.
 
 2026-10-14 칸반·문서 대시보드 HTML을 운영 `/docs/kanban.html`·`/docs/dashboard.html`에 공개. 기존 앱 이미지로 프런트만 재생성했고 백엔드·DB·계정은 변경하지 않음. 공개 URL 응답·업로드 파일 일치 검사는 사용자 승인 전 미실행. Actions와 운영 Compose에 HTML 업로드·읽기 전용 공개 폴더를 추가했다.
+
+2026-10-14 사용자 승인으로 운영 칸반 주소를 `/kanban`, 문서 대시보드 주소를 `/docs`로 변경. 기존 `/docs/kanban.html`·`/docs/dashboard.html` 및 끝 슬래시 주소는 새 주소로 301 연결. 푸시 후 별도 테스트·빌드·브라우저·접속 검증은 사용자 요청으로 실행하지 않는다. 운영 Nginx 설정은 프런트 이미지에 포함되므로 변경은 자동 배포 시 반영된다.
