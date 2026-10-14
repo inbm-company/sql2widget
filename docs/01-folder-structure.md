@@ -43,6 +43,7 @@
 | `frontend/src/styles.css`, `DESIGN.md` | 동일 기본 디자인에서 시작한 앱 스타일 |
 | `frontend/tests/` | AI 설정·TanStack 차트의 데이터/구간/크기/라벨 이스케이프·카탈로그 일치 테스트 |
 | `docker-compose.yml` | 새 독립 로컬 볼륨·포트, Neo4j 미필수 |
+| `frontend/vite.config.js` | 로컬 Vite의 /kanban·/docs HTML 제공, 이전 주소 301 연결과 API 프록시 |
 | `frontend/deployment/nginx.conf` | 운영 `/kanban`·`/docs` HTML 제공, 이전 주소 301 연결과 API 프록시 |
 | `compose.production.yml` | 칸반·대시보드 공개용 `public-docs/` 읽기 전용 마운트. 독립 운영 구성. 2026-10-06 sql2widget VPS 배포 확인 |
 | `.github/workflows/` | 기존 SQL 테스트·이미지·배포 파이프라인의 기능 경계 갱신 |

@@ -53,3 +53,11 @@ npm run build
 [분리 설계와 결정 기록](docs/project-separation-proposal.md) · [기능 명세](docs/features/README.md) · [운영 배포](deployment/README.md)
 
 운영 HTML 보기: [칸반](https://sql2widget.crudy.cloud/kanban) · [문서 대시보드](https://sql2widget.crudy.cloud/docs)
+
+로컬 HTML 보기: [칸반](http://localhost:5175/kanban) · [문서 대시보드](http://localhost:5175/docs)
+
+로컬 Vite는 `docs/kanban.html`·`docs/dashboard.html`을 `/kanban`·`/docs`로 제공한다.
+이전 HTML 주소와 끝 슬래시 주소는 새 주소로 301 연결한다. Docker Compose는 `docs/`를
+`/docs`에 읽기 전용으로 마운트하며, 직접 `frontend`에서 `npm run dev`를 실행할 때도 지원한다.
+HTML 변경은 다음 요청에 반영되고 문서 내용은 기존 동기화 규칙으로 갱신한다.
+마운트가 없는 기존 프런트 컨테이너는 `docker compose --env-file .env.local up -d --no-deps --no-build frontend`로 재생성한다.
