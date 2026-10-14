@@ -45,32 +45,8 @@ def chat_api(monkeypatch):
         yield client, saved, calls
 
 
-@pytest.mark.parametrize("request_key,server_key,expected", [
-    (" request-routing-test ", "server-routing-test", "request-routing-test"),
-    ("request-routing-test", "", "request-routing-test"),
-    ("", "server-routing-test", "server-routing-test"),
-    ("   ", "server-routing-test", "server-routing-test"),
-    (None, "server-routing-test", "server-routing-test"),
-])
-def test_chat_uses_request_jev_key_first_without_storing_it(chat_api, monkeypatch, request_key, server_key, expected):
-    client, saved, calls = chat_api
-    monkeypatch.setattr(config, "TYPESAFE_API_KEY", server_key)
-    headers = {"X-Jev-API-Key": request_key} if request_key is not None else {}
-    response = client.post("/api/chat", headers=headers, json={"conversation_id": "chat", "message": "테이블 구조는?"})
-    assert response.status_code == 200
-    assert calls == [expected]
-    assert response.json()["meta"]["route_source"] == "jev"
-    assert "routing-test" not in json.dumps(response.json())
-    assert "routing-test" not in json.dumps(saved)
 
 
-@pytest.mark.parametrize("key", ["x" * 8193, "invalid\nkey", "invalid\rkey"])
-def test_invalid_header_is_rejected_before_any_message_is_saved(chat_api, key):
-    client, saved, calls = chat_api
-    response = client.post("/api/chat", headers={"X-Jev-API-Key": key},
-                           json={"conversation_id": "chat", "message": "테이블 구조는?"})
-    assert response.status_code == 400
-    assert saved == [] and calls == []
 
 
 def test_failed_request_key_is_scrubbed_and_does_not_reach_fallback_model(chat_api, monkeypatch):

@@ -110,6 +110,7 @@ def _materialize_plan(
     summary = plan.get("summary") or "결과를 준비했습니다."
     widgets_in = plan.get("widgets") or []
     widgets: list[dict[str, Any]] = []
+    explanations = []
 
     for w in widgets_in:
         component = w.get("component")
@@ -118,6 +119,11 @@ def _materialize_plan(
         title = w.get("title") or component
         sql = (w.get("sql") or "").strip()
         props = w.get("props") or {}
+        if component == "MarkdownBlock":
+            markdown = props.get("markdown")
+            if isinstance(markdown, str) and markdown.strip():
+                explanations.append(markdown)
+            continue
         if component in SQL_COMPONENTS and not sql:
             raise QueryError("Data widgets require a read-only SQL query")
         if sql:
@@ -156,14 +162,7 @@ def _materialize_plan(
         "공격" in (w.get("title") or "") for w in widgets
     )):
         solution = build_solution_from_sources(sources)
-        widgets.append(
-            {
-                "widget_id": _wid(),
-                "component": "MarkdownBlock",
-                "title": "해결 방안",
-                "props": solution,
-            }
-        )
+        explanations.append(solution["markdown"])
         if sources:
             widgets.append(
                 {
@@ -183,6 +182,9 @@ def _materialize_plan(
                 }
             )
 
+    summary = "\n\n".join([summary, *explanations])
+    if not widgets:
+        return summary, {"type": "answer", "widgets": []}
     artifact = sanitize_artifact(
         {
             "artifact_id": _aid(),
@@ -210,23 +212,16 @@ def _answer_schema(
     result = json_with_llm(
         SCHEMA_QA_HINT, {"question": message, "schema": schema_text, "history": history or []}, **llm_context,
     )
-    answer = result.get("result") or {}
-    if not answer.get("markdown"):
+    answer = result.get("result")
+    content = answer.get("markdown") if isinstance(answer, dict) else None
+    if not isinstance(content, str) or not content.strip():
         raise AgentRunError(
             f"{result.get('provider') or 'LLM'} request failed: "
             f"{result.get('error') or 'schema answer was empty'}"
         )
     meta["provider"] = result.get("provider")
     meta["model"] = result.get("model")
-    artifact = sanitize_artifact({
-        "artifact_id": _aid(),
-        "type": "report",
-        "widgets": [{
-            "widget_id": _wid(), "component": "MarkdownBlock",
-            "title": "테이블 구조", "props": {"markdown": answer["markdown"]},
-        }],
-    })
-    return answer.get("summary") or "테이블 구조를 설명했습니다.", artifact, meta
+    return content.strip(), {"type": "answer", "widgets": []}, meta
 
 
 def _answer_general(

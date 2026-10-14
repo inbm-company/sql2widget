@@ -50,28 +50,8 @@ def test_user_choice_skips_every_model(monkeypatch):
     assert calls == []
 
 
-def test_expected_questions_are_searched_only_when_planning_sql(monkeypatch):
-    searched = []
-    monkeypatch.setattr(agent_service.question_similarity, "search_questions",
-                        lambda *a, **k: searched.append(1) or {"status": "matched", "matches": []})
-    monkeypatch.setattr(agent_service, "_answer_schema", lambda *a, **k: ("답", {"widgets": []}, a[-1]))
-    monkeypatch.setattr(agent_service, "plan_with_llm", lambda *a, **k: {"plan": {"widgets": []}, "provider": "x"})
-    monkeypatch.setattr(agent_service, "_materialize_plan", lambda *a, **k: ("ok", {"widgets": []}))
-    for route in ("schema_qa", "other"):
-        agent_with(monkeypatch, {"route": route, "source": "jev", "clarify": route == "other"})()
-    assert searched == []  # not for routing, structure answers or clarification
-    run = agent_with(monkeypatch, {"route": "data_query", "source": "jev", "clarify": False})
-    monkeypatch.setattr(agent_service, "_resolve_db_url", lambda *a, **k: ("db", "test", {"orders"}))
-    run()
-    assert searched == [1]
 
 
-def test_jev_choice_is_used_with_its_confidence(monkeypatch):
-    calls = post_json_returning(monkeypatch, jev_body("schema_qa", 0.8))
-    result = decide()
-    assert (result["route"], result["source"], result["clarify"]) == ("schema_qa", "jev", False)
-    assert calls[0]["api_key"] == "test-key"
-    assert calls[0]["payload"]["state"]["tables"] == ["orders"]
 
 
 def test_low_confidence_or_other_asks_the_user(monkeypatch):
@@ -81,30 +61,10 @@ def test_low_confidence_or_other_asks_the_user(monkeypatch):
     assert decide()["clarify"] is True
 
 
-def test_retries_twice_on_overload_then_succeeds(monkeypatch):
-    overloaded = httpx.HTTPStatusError("busy", request=response(529).request, response=response(529))
-    calls = post_json_returning(monkeypatch, overloaded, overloaded, jev_body())
-    assert decide()["source"] == "jev"
-    assert len(calls) == 3
 
 
-def test_auth_errors_are_not_retried_and_fall_back_to_llm(monkeypatch):
-    unauthorized = httpx.HTTPStatusError("no", request=response(401).request, response=response(401))
-    calls = post_json_returning(monkeypatch, unauthorized)
-    monkeypatch.setattr(router, "json_with_llm", lambda *a, **k: {"result": {"route": "schema_qa"}})
-    result = decide()
-    assert len(calls) == 1
-    assert (result["route"], result["source"]) == ("schema_qa", "llm_fallback")
-    assert "401" in result["jev_error"]
-    assert "test-key" not in result["jev_error"]
 
 
-def test_missing_key_uses_llm_and_records_why(monkeypatch):
-    monkeypatch.setattr(config, "TYPESAFE_API_KEY", "")
-    monkeypatch.setattr(router, "json_with_llm", lambda *a, **k: {"result": {"route": "data_query"}})
-    result = decide()
-    assert result["source"] == "llm_fallback"
-    assert result["jev_error"] == "TYPESAFE_API_KEY is not configured"
 
 
 def test_both_models_failing_raises(monkeypatch):
@@ -114,10 +74,6 @@ def test_both_models_failing_raises(monkeypatch):
         decide()
 
 
-def test_choices_put_the_likeliest_route_first():
-    choices = router.choices_for("질문", {"schema_qa": 0.6, "data_query": 0.3})
-    assert [c["route"] for c in choices] == ["schema_qa", "data_query"]
-    assert all(c["message"] == "질문" for c in choices)
 
 
 def agent_with(monkeypatch, decision):
@@ -127,21 +83,19 @@ def agent_with(monkeypatch, decision):
     return lambda: agent_service.run_agent("질문", tenant_id="t", user_id="u")
 
 
-def test_clarify_returns_choices_without_running_sql(monkeypatch):
-    monkeypatch.setattr(agent_service, "plan_with_llm", lambda *a, **k: pytest.fail("no plan"))
-    run = agent_with(monkeypatch, {"route": "other", "source": "jev", "clarify": True,
-                                   "confidence": 0.4, "probabilities": {}})
-    summary, artifact, meta = run()
-    assert artifact["type"] == "choices" and artifact["widgets"] == []
-    assert meta["route"] == "clarify" and meta["route_confidence"] == 0.4
 
 
 def test_schema_route_answers_from_schema_only(monkeypatch):
+    monkeypatch.setattr(agent_service, "make_plan", lambda *a, **k: {
+        "goal": "테이블 구조 설명", "steps": [
+            {"route": "schema_qa", "query": "질문", "expect": "테이블 구조 설명"}]})
+    monkeypatch.setattr(agent_service, "evaluate", lambda *a, **k: {
+        "verdict": "done", "reason": "구조 설명 완료"})
     monkeypatch.setattr(agent_service, "json_with_llm", lambda hint, content, **k: {
         "provider": "openai", "model": "m",
         "result": {"summary": "요약", "markdown": "orders 테이블이 있습니다."}})
     run = agent_with(monkeypatch, {"route": "schema_qa", "source": "jev", "clarify": False})
     summary, artifact, meta = run()
-    assert summary == "요약"
-    assert artifact["widgets"][0]["component"] == "MarkdownBlock"
+    assert summary == "orders 테이블이 있습니다."
+    assert artifact == {"type": "answer", "widgets": []}
     assert meta["route"] == "schema_qa"

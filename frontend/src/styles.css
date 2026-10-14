@@ -723,6 +723,68 @@ button {
   color: var(--ink);
 }
 
+.chat-text {
+  white-space: normal;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chat-text p,
+.chat-text h3,
+.chat-text ul,
+.chat-text ol,
+.chat-text pre,
+.chat-text-table {
+  margin: 0 0 10px;
+}
+
+.chat-text > :last-child {
+  margin-bottom: 0;
+}
+
+.chat-text p,
+.chat-text li {
+  white-space: pre-wrap;
+}
+
+.chat-text h3 {
+  font-size: 14px;
+  color: var(--ink-bright);
+}
+
+.chat-text ul,
+.chat-text ol {
+  padding-left: 20px;
+}
+
+.chat-text code {
+  font-size: 12px;
+}
+
+.chat-text pre,
+.chat-text-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.chat-text pre {
+  white-space: pre;
+}
+
+.chat-text-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.chat-text-table th,
+.chat-text-table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  min-width: 80px;
+}
+
 .assistant-pending {
   display: flex;
   align-items: center;

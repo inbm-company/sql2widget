@@ -25,7 +25,7 @@
 | 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`viewer` 역할 구분, 로컬/운영 로그인 아이디 분리 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
 | 채팅(에이전트) | 요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내 | [chat.md](docs/features/chat.md) |
-| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 인사·잡담·일반 개념은 전체 본문 답변, 확신이 낮으면 세 경로 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
+| 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 테이블 구조·인사·잡담·일반 개념은 전체 본문 답변(구조 설명은 테이블별 표 지원), 설명용 MarkdownBlock을 생성하지 않음. 확신이 낮으면 세 경로 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
 | 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
 | Artifact/위젯 표시 | 16개 허용 위젯을 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 조회 정의·배치 자동 저장·새로고침 후 현재 데이터 조회 | [stage.md](docs/features/stage.md) |

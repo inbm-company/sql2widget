@@ -117,7 +117,7 @@ def get_document_provider() -> DocumentProvider:
 
 
 def build_solution_from_sources(sources: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Return MarkdownBlock props only when sources exist — never invent."""
+    """Build chat-body guidance from sources; never invent unsupported guidance."""
     if not sources:
         return {
             "markdown": "근거 문서를 찾지 못해 해결 방안을 제시하지 않았습니다.",

@@ -20,6 +20,9 @@ import { storeKeys, useSWR } from "./store";
 import QueryWidget from "./widgets/QueryWidget.jsx";
 import { widgetDefinition } from "./widgets/widgetData.js";
 import ChatTrace from "./ChatTrace.jsx";
+import ChatText from "./ChatText.jsx";
+import { assistantPresentation } from "./chatText.js";
+import { shouldShowPendingMessage } from "./chatMessages.js";
 
 function LoginForm({ onSuccess }) {
   // 개발 서버(vite dev)에서만 데모 계정을 미리 채운다. 운영 빌드에서는 빈 값이며 문자열도 번들에서 제거된다.
@@ -171,8 +174,10 @@ function ArtifactPreviewCard({ widget, artifact, projectId, conversationId, onAd
 function AssistantAnswer({ content, artifact, meta, projectId, conversationId, onAdded, onChoose, readOnly = false }) {
   const [view, setView] = useState("widget");
   const [copyStatus, setCopyStatus] = useState("idle");
-  const hasArtifact = Boolean(artifact?.widgets?.length || artifact?.artifact_id);
-  const jsonText = view === "json" ? JSON.stringify(artifact, null, 2) : "";
+  const presentation = assistantPresentation(content, artifact);
+  const displayArtifact = presentation.artifact;
+  const hasArtifact = Boolean(displayArtifact?.widgets?.length);
+  const jsonText = view === "json" ? JSON.stringify(displayArtifact, null, 2) : "";
 
   async function copyJson() {
     setCopyStatus("copying");
@@ -186,7 +191,7 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
 
   return (
     <div className="assistant-block">
-      {content ? <div className="msg-content">{content}</div> : null}
+      {presentation.content ? <ChatText content={presentation.content} /> : null}
       <ChatTrace meta={meta} />
 
 
@@ -244,11 +249,11 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
             <pre className="artifact-json">{jsonText}</pre>
           ) : (
             <div className="artifact-widgets">
-              {(artifact.widgets || []).map((w) => (
+              {(displayArtifact.widgets || []).map((w) => (
                 <ArtifactPreviewCard
                   key={w.widget_id}
                   widget={w}
-                  artifact={artifact}
+                  artifact={displayArtifact}
                   projectId={projectId}
                   conversationId={conversationId}
                   onAdded={onAdded}
@@ -510,7 +515,7 @@ function Workspace({ user, onLogout }) {
   const [activeId, setActiveId] = useState(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [pendingMessage, setPendingMessage] = useState("");
+  const [pendingMessage, setPendingMessage] = useState(null);
   const [chatError, setChatError] = useState("");
   const [newChatError, setNewChatError] = useState("");
   const [adminOpen, setAdminOpen] = useState(false);
@@ -587,7 +592,11 @@ function Workspace({ user, onLogout }) {
     const message = text.trim();
     if (!message || !activeId || sending) return;
     setSending(true);
-    setPendingMessage(message);
+    setPendingMessage({
+      conversationId: activeId,
+      content: message,
+      existingMessageIds: (conversation?.messages || []).map((m) => m.id),
+    });
     setChatError("");
     if (text === input) setInput("");
     try {
@@ -600,7 +609,7 @@ function Workspace({ user, onLogout }) {
       if (text === input || !input) setInput(message);
     } finally {
       setSending(false);
-      setPendingMessage("");
+      setPendingMessage(null);
     }
   }
 
@@ -804,11 +813,13 @@ function Workspace({ user, onLogout }) {
                   )}
                 </div>
               ))}
-              {sending ? (
+              {sending && pendingMessage?.conversationId === activeId ? (
                 <>
+                  {shouldShowPendingMessage(conversation, pendingMessage) ? (
                   <div className="msg user pending-user">
-                    <div className="msg-content user-bubble">{pendingMessage}</div>
+                    <div className="msg-content user-bubble">{pendingMessage.content}</div>
                   </div>
+                  ) : null}
                   <div className="msg assistant assistant-pending" role="status" aria-live="polite">
                     <span className="loading-dots" aria-hidden="true">•••</span>
                     답변 생성 중…

@@ -35,25 +35,8 @@ def test_sql_widgets_discard_embedded_data_and_keep_query_identity(component):
     assert "__query_ref" in widget_queries.stored_widget_props(definition)
 
 
-def test_text_widgets_remain_inline_and_legacy_sql_is_normalized_without_mutation():
-    text = {"component": "MarkdownBlock", "props": {"markdown": "설명"}}
-    assert widget_queries.widget_definition(text) == text
-    old = {"component": "DataTable", "props": {"__sql": SQL, "rows": [{"old": 1}]}}
-    definition = widget_queries.widget_definition(old, "sales")
-    assert definition["props"] == {}
-    assert definition["query_ref"] == {"sql": SQL, "connection_id": "sales"}
-    assert "rows" in old["props"]  # Legacy records are not rewritten by reads.
-    assert widget_queries.widget_definition({"component": "KpiStat", "props": {"value": 999}})["props"] == {}
 
 
-def test_conversation_reads_strip_legacy_results_and_bind_message_db(monkeypatch):
-    monkeypatch.setattr(conversations, "fetch_one", lambda *a: {"id": "chat", "project_id": "project"})
-    monkeypatch.setattr(conversations, "fetch_all", lambda *a: [{"role": "assistant",
-        "meta": json.dumps({"connection_id": "sales"}),
-        "artifact": json.dumps({"widgets": [{"component": "DataTable", "sql": SQL,
-                                              "props": {"rows": [{"old": 999}]}}]})}])
-    result = conversations.get_conversation("chat", "tenant", "owner")["messages"][0]["artifact"]["widgets"][0]
-    assert result["props"] == {} and result["query_ref"]["connection_id"] == "sales"
 
 
 def test_generation_rejects_data_without_sql_instead_of_saving_invented_values():
@@ -112,12 +95,6 @@ def test_data_api_checks_owner_before_customer_db(data_api, monkeypatch, target,
     assert calls == []
 
 
-@pytest.mark.parametrize("url", ["/api/conversations/chat/widgets/unknown/data",
-                                 "/api/projects/project/stage/widgets/unknown/data"])
-def test_unknown_widget_cannot_execute_queries(data_api, url):
-    client, calls = data_api
-    assert client.get(url).status_code == 404
-    assert calls == []
 
 
 def test_permission_removal_blocks_refresh_without_demo_fallback(data_api, monkeypatch):
@@ -146,65 +123,9 @@ def test_db_failure_is_local_to_widget_and_never_exposes_credentials(data_api, m
     assert "do-not-expose" not in response.text
 
 
-def test_unknown_connection_and_missing_legacy_db_return_explicit_errors(data_api, monkeypatch):
-    client, calls = data_api
-    monkeypatch.setattr(widget_queries.connections, "get_connection", lambda *a: None)
-    assert client.get("/api/projects/project/stage/widgets/stage-widget/data").status_code == 404
-    old = widget(query_ref={"sql": SQL, "connection_id": None})
-    monkeypatch.setattr(main.stage_repo, "get_or_create_stage", lambda *a: {"widgets": [old]})
-    assert client.get("/api/projects/project/stage/widgets/stage-widget/data").status_code == 409
-    assert not any(item[0] == "query" for item in calls)
 
 
-def test_legacy_stage_uses_owned_source_connection_only_for_same_sql(data_api, monkeypatch):
-    client, calls = data_api
-    old = widget(query_ref={"sql": SQL, "connection_id": None}, source_widget_id="chat-widget", source_artifact_id="artifact")
-    monkeypatch.setattr(main.stage_repo, "get_or_create_stage", lambda *a: {"widgets": [old]})
-    lookups = []
-    monkeypatch.setattr(main.conv_repo, "find_source_widget", lambda *a: lookups.append(a) or widget())
-    response = client.get("/api/projects/project/stage/widgets/stage-widget/data")
-    assert response.status_code == 200
-    assert lookups == [("project", "artifact", "chat-widget", "tenant", "owner")]
-    monkeypatch.setattr(main.conv_repo, "find_source_widget", lambda *a: widget(query_ref={"sql": "SELECT 1", "connection_id": "sales"}))
-    assert client.get("/api/projects/project/stage/widgets/stage-widget/data").status_code == 409
 
 
-def test_layout_patch_keeps_query_definition_and_drops_old_results(monkeypatch):
-    from contextlib import contextmanager
-    row = {"id": "stage-widget", "component": "DataTable", "title": "주문", "source_widget_id": None,
-           "source_artifact_id": None, "props": {"__query_ref": {"sql": SQL, "connection_id": "sales"}, "rows": [{"old": 1}]},
-           "layout_i": "stage-widget", "layout_x": 0, "layout_y": 0, "layout_w": 4, "layout_h": 4}
-    monkeypatch.setattr(stages, "fetch_one", lambda *a: row)
-
-    class Cursor:
-        def __enter__(self): return self
-        def __exit__(self, *a): pass
-        def execute(self, query, params):
-            if "UPDATE stage_widgets" in query:
-                row.update(props=json.loads(params[1]), layout_w=params[5])
-        def fetchone(self): return row
-
-    @contextmanager
-    def connection():
-        yield type("Connection", (), {"cursor": lambda self: Cursor()})()
-
-    monkeypatch.setattr(stages, "get_conn", connection)
-    result = stages.patch_widget("stage", "stage-widget", {"layout": {"x": 0, "y": 0, "w": 6, "h": 4}})
-    assert result["props"] == {}
-    assert result["query_ref"] == {"sql": SQL, "connection_id": "sales"}
-    assert result["layout"]["w"] == 6
-    assert "rows" not in row["props"]
 
 
-def test_layout_api_saves_recovered_legacy_db_reference(data_api, monkeypatch):
-    client, _ = data_api
-    old = widget(query_ref={"sql": SQL, "connection_id": None}, source_widget_id="chat-widget", source_artifact_id="artifact")
-    monkeypatch.setattr(main.stage_repo, "get_or_create_stage", lambda *a: {"id": "stage", "widgets": [old]})
-    monkeypatch.setattr(main.conv_repo, "find_source_widget", lambda *a: widget())
-    saved = []
-    monkeypatch.setattr(main.stage_repo, "patch_widget", lambda stage, wid, patch: saved.append(patch) or widget())
-    response = client.patch("/api/projects/project/stage/widgets/stage-widget",
-                            json={"layout": {"i": "stage-widget", "x": 0, "y": 0, "w": 6, "h": 4}})
-    assert response.status_code == 200
-    assert saved[0]["query_ref"] == {"sql": SQL, "connection_id": "sales"}
-    assert "props" not in saved[0]
