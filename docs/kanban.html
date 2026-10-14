@@ -211,7 +211,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   <div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">12</div></div>
 <div class="kpi wip"><div class="label">진행 중</div><div class="num">0</div></div>
 <div class="kpi verify"><div class="label">검증 대기</div><div class="num">0</div></div>
-<div class="kpi plan"><div class="label">계획</div><div class="num">15</div></div></div>
+<div class="kpi plan"><div class="label">계획</div><div class="num">14</div></div></div>
   <div class="filters" role="group" aria-label="기능 영역 필터"><button type="button" class="chip on" data-area="all">전체</button>
 <button type="button" class="chip a0" data-area="a0">인증·프로젝트</button>
 <button type="button" class="chip a1" data-area="a1">DB 연결</button>
@@ -249,15 +249,14 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 </div></div>
 <div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
 <div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
-<div class="col plan"><div class="col-head"><span class="dot"></span>계획<span class="count">15</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>1</span></div>
+<div class="col plan"><div class="col-head"><span class="dot"></span>계획<span class="count">14</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>1</span></div>
 <div class="card"><div class="t">관리자 사용자 관리</div><div class="n">현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</div></div>
 </div>
 <div class="group a1" data-area="a1"><div class="area">DB 연결<span>2</span></div>
 <div class="card"><div class="t">DB 구조 파악(ERD)</div><div class="n">DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</div></div>
 <div class="card"><div class="t">다른 DB 적용 가능성 검토</div><div class="n">PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</div></div>
 </div>
-<div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>2</span></div>
-<div class="card"><div class="t">유사한 과거 대화 표시 여부 결정</div><div class="n">백엔드는 같은 프로젝트의 비슷한 과거 대화를 임베딩으로 찾아 채팅 API <code>related_messages</code>로 반환하지만 프런트가 표시하지 않는다. 표시할지, 기능을 정리할지 결정</div></div>
+<div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>1</span></div>
 <div class="card"><div class="t">LLM 호출 장애 대응</div><div class="n">요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</div></div>
 </div>
 <div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>

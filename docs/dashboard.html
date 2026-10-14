@@ -970,7 +970,7 @@ docker compose exec backend pytest -q
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
 <p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p>
 </section>
-<section id="progress"><span class="badge done">완료 12</span> <span class="badge wip">진행 중 0</span> <span class="badge verify">검증 대기 0</span> <span class="badge plan">계획 15</span>
+<section id="progress"><span class="badge done">완료 12</span> <span class="badge wip">진행 중 0</span> <span class="badge verify">검증 대기 0</span> <span class="badge plan">계획 14</span>
 <h1>sql2widget 진행도</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>진행도</td></tr>
@@ -1014,7 +1014,6 @@ docker compose exec backend pytest -q
 <tr><td>DB 연결</td><td>DB 구조 파악(ERD)</td><td>DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</td><td>표시</td></tr>
 <tr><td>DB 연결</td><td>다른 DB 적용 가능성 검토</td><td>PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</td><td>표시</td></tr>
 <tr><td>예상 질문</td><td>예상 질문 검증</td><td>예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>유사한 과거 대화 표시 여부 결정</td><td>백엔드는 같은 프로젝트의 비슷한 과거 대화를 임베딩으로 찾아 채팅 API <code>related_messages</code>로 반환하지만 프런트가 표시하지 않는다. 표시할지, 기능을 정리할지 결정</td><td>표시</td></tr>
 <tr><td>채팅·에이전트</td><td>LLM 호출 장애 대응</td><td>요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</td><td>표시</td></tr>
 <tr><td>위젯·Stage</td><td>위젯 래퍼</td><td>위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</td><td>표시</td></tr>
 <tr><td>위젯·Stage</td><td>위젯 옵션</td><td>위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</td><td>표시</td></tr>
