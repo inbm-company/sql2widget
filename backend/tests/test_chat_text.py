@@ -1,7 +1,5 @@
 """Explanation content stays in the message body, alongside data widgets."""
 
-from types import SimpleNamespace
-
 import pytest
 
 from app import agent_service
@@ -35,24 +33,20 @@ def test_explanation_only_plan_has_no_widget_artifact(monkeypatch):
     content, artifact = agent_service._materialize_plan(
         {"summary": "구조 설명", "widgets": [{"component": "MarkdownBlock",
                                               "props": {"markdown": "orders.id는 주문 ID입니다."}}]},
-        db_url="unused", allowed_tables={"orders"}, message="구조?", include_sources=False)
+        db_url="unused", allowed_tables={"orders"}, message="구조?")
     assert content == "구조 설명\n\norders.id는 주문 ID입니다."
     assert artifact == {"type": "answer", "widgets": []}
 
 
-def test_grounded_guidance_moves_to_body_and_preserves_query_and_sources(monkeypatch):
-    sources = [{"doc_id": "d", "title": "공격 대응", "section": "차단", "excerpt": "출처의 대응 설명"}]
-    monkeypatch.setattr(agent_service, "get_document_provider", lambda:
-        SimpleNamespace(search=lambda *a, **k: sources))
+def test_attack_question_adds_no_document_sources_and_preserves_query():
     sql = "SELECT count(*) AS count FROM attack_events"
     content, artifact = agent_service._materialize_plan(
         {"summary": "공격 조회 결과", "widgets": [{"component": "DataTable", "sql": sql}]},
         db_url="unused", allowed_tables={"attack_events"}, message="공격 보여줘",
         connection_id="soc", prepared_results={sql: [{"count": 3}]})
-    assert "출처의 대응 설명" in content
-    assert [w["component"] for w in artifact["widgets"]] == ["DataTable", "SourceList"]
+    assert content == "공격 조회 결과"
+    assert [w["component"] for w in artifact["widgets"]] == ["DataTable"]
     assert artifact["widgets"][0]["query_ref"] == {"connection_id": "soc", "sql": sql}
-    assert artifact["widgets"][1]["props"]["sources"][0]["title"] == "공격 대응"
     merged_body, merged_artifact = agent_service._merge_outputs([
         ("테이블 설명", {"type": "answer", "widgets": []}), (content, artifact)])
     assert merged_body.startswith("테이블 설명\n\n공격 조회 결과")

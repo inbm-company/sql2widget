@@ -12,7 +12,6 @@ from app.agent_plan import (BudgetExceeded, LOOP_SECONDS, PlanError,
 from app import question_similarity, schema_linking
 from app.chat_flow import conversation_flow
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
-from app.documents import build_solution_from_sources, get_document_provider
 from app.data_plan import DataPlanError
 from app.data_agent import run_data_agent
 from app.intent_router import RouteError, choices_for, decide_route
@@ -105,7 +104,6 @@ def _materialize_plan(
     evidence: list[dict[str, Any]] | None = None,
     deadline: float | None = None,
     prepared_results: dict[str, list[dict[str, Any]]] | None = None,
-    include_sources: bool = True,
 ) -> tuple[str, dict[str, Any]]:
     summary = plan.get("summary") or "결과를 준비했습니다."
     widgets_in = plan.get("widgets") or []
@@ -154,33 +152,6 @@ def _materialize_plan(
                 "props": props,
             }
         )
-
-    # Document grounding for attack-like questions
-    provider = get_document_provider()
-    sources = provider.search(message, tenant_id="demo", limit=3) if include_sources else []
-    if include_sources and ("공격" in message or "attack" in message.lower() or any(
-        "공격" in (w.get("title") or "") for w in widgets
-    )):
-        solution = build_solution_from_sources(sources)
-        explanations.append(solution["markdown"])
-        if sources:
-            widgets.append(
-                {
-                    "widget_id": _wid(),
-                    "component": "SourceList",
-                    "title": "문서 출처",
-                    "props": {
-                        "sources": [
-                            {
-                                "title": s["title"],
-                                "version": s.get("version"),
-                                "section": s.get("section"),
-                            }
-                            for s in sources
-                        ]
-                    },
-                }
-            )
 
     summary = "\n\n".join([summary, *explanations])
     if not widgets:
@@ -334,7 +305,7 @@ def _run_single(
                   "props": spec["props"], "sql": result["sql"]}
         _, artifact = _materialize_plan({"widgets": [widget]}, db_url=db_url, allowed_tables=allowed,
             message=message, connection_id=used_conn, prepared_results={result["sql"]: result["rows"]},
-            include_sources=False, deadline=deadline)
+            deadline=deadline)
         return artifact["widgets"][0]
 
     plan, data_meta, prepared = run_data_agent(message, schema=plan_schema, full_schema=schema_text,
@@ -346,7 +317,7 @@ def _run_single(
         meta["retried"] = True
         meta["schema_link"]["escalated_to_full"] = link["source"] != "full"
     summary, artifact = _materialize_plan(plan, db_url=db_url, allowed_tables=allowed, message=message,
-        connection_id=used_conn, prepared_results=prepared, include_sources=bool(plan["widgets"]), deadline=deadline)
+        connection_id=used_conn, prepared_results=prepared, deadline=deadline)
     if data_meta["data_stop"] != "done" and not plan["widgets"]:
         summary = ""
     return summary, artifact, meta

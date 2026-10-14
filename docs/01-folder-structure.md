@@ -34,7 +34,7 @@
 | `frontend/src/StageCanvas.jsx` | 위젯 핀보드, 그래프 탭 없음 |
 | `frontend/src/AdminPanel.jsx` | AI 설정과 DB 연결·권한·예상 질문 |
 | `frontend/src/widgets/QueryWidget.jsx`, `widgetData.js` | 채팅·Stage·Viewer의 SWR 데이터 조회·새로고침·로딩/오류와 데이터 없는 복사 정의 |
-| `frontend/src/widgets/WidgetRenderer.jsx` | 16개 허용 위젯. BarChart와 신규 분석 4종은 TanStack Charts, 나머지 차트는 Recharts |
+| `frontend/src/widgets/WidgetRenderer.jsx` | 허용 위젯. BarChart와 신규 분석 4종은 TanStack Charts, 나머지 차트는 Recharts |
 | `frontend/src/widgets/tanstackBarChart.js` | 기존 BarChart props를 고정된 TanStack 막대 차트 정의로 변환 |
 | `frontend/src/widgets/tanstackAnalyticalCharts.js` | 누적 막대·히트맵·산점도·히스토그램의 고정된 TanStack 정의·범례·툴팁 |
 | `frontend/src/api.js`, `aiSettings.js`, `store.js` | 앱별 토큰·AI 설정·API·SWR 키 |
@@ -48,5 +48,8 @@
 | `compose.production.yml` | 칸반·대시보드 공개용 `public-docs/` 읽기 전용 마운트. 독립 운영 구성. 2026-10-06 sql2widget VPS 배포 확인 |
 | `.github/workflows/` | 기존 SQL 테스트·이미지·배포 파이프라인의 기능 경계 갱신 |
 | `docs/features/`, `docs/progress.md` | 구현 명세·현재 상태 |
-| `docs/dashboard.html`, `docs/kanban.html` | 위 마크다운의 정적 스냅샷 |
+| `docs/dashboard.html`, `docs/kanban.html` | `scripts/render_docs.py`가 위 마크다운에서 생성한 HTML. 직접 수정하지 않음 |
+| `docs/templates/` | 두 HTML의 틀(스타일·영역 필터 스크립트) |
+| `docs/temp/` | 보관 기록. 진행도 이전 형식의 히스토리(`progress-history-2026-10-14.md`) |
+| `scripts/render_docs.py` | 마크다운에서 두 HTML 생성, `--check`로 동기화 검사. 외부 의존성 없음 |
 | `docs/project-separation-proposal.md` | 합의된 범위·기능 소유권·구현 결과 |

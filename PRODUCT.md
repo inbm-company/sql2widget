@@ -48,9 +48,7 @@ Confirmed:
 
 Explicitly undecided:
 
-- Whether a later version should add dashboard templates that reproduce a designed Orion poster (for example Hexagon planet). Current product rule: no templates.
-- Question-similarity tuning so paraphrases emit the same furniture (test harness not built).
-- Composed Circle catalog (ring × size × repeat × companion) as runtime furniture.
+- Automated evaluation of paraphrased questions for equivalent metrics, periods and aggregation, plus suitable widgets. Question interpretation and SQL/widget generation already exist; the dedicated comparison tool is not built. Identical widget types are not required.
 
 ## Brand Commitments
 

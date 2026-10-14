@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Viewer 전용 화면 |
-| 기준일 | 2026-10-13 (위젯별 조회 포함) |
+| 기준일 | 2026-10-14 (Orion 정리 계획 제외, 기존 동작 유지) |
 | 관련 문서 | [stage.md](stage.md), [auth.md](auth.md)(역할/권한) |
 | 관련 코드 | `frontend/src/ViewerStagePage.jsx`, `frontend/src/StageCanvas.jsx`(`readOnly`/`variant` props), `frontend/src/main.jsx`(라우팅) |
 
@@ -27,7 +27,7 @@
 | 저장 상태 표시줄 | 표시 | 표시 안 함 |
 | 빈 Stage 안내 문구 | "대화의 결과 위젯을 여기로 드래그하세요" | "배치된 위젯이 없습니다." |
 
-`variant="orion"`은 시각적 스타일 클래스만 바꾼다(어두운 톤의 레거시 뷰어 자리표시 — [DESIGN.md](../../DESIGN.md)는 이를 "정식 토큰이 아닌 잔재"로 명시하고 있다. 정리 필요 항목은 [progress.md](../progress.md)에서 추적 예정).
+`variant="orion"`은 시각적 스타일 클래스만 바꾼다. 어두운 톤의 레거시 뷰어 자리표시이며 [DESIGN.md](../../DESIGN.md)는 이를 "정식 토큰이 아닌 잔재"로 명시한다. 별도 스타일 정리 작업은 현재 계획에서 제외했으며 기존 화면 동작은 유지한다.
 
 ### 주의할 점
 

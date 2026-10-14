@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sql2widget · 문서 대시보드</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --blue: #0066cc;
+    --blue-dim: rgba(0,102,204,0.08);
+    --ink: #1e1e1e;
+    --body-ink: #3c3c3c;
+    --mute: #717171;
+    --line: #e8e8e8;
+    --sidebar-bg: #fafafa;
+    --paper: #ffffff;
+    --code-bg: #f6f6f6;
+    --sidebar-w: 280px;
+    --done: #1a7f4b;
+    --wip: #0066cc;
+    --plan: #b45309;
+    --verify: #717171;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+    color: var(--body-ink);
+    background: var(--paper);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  a { color: var(--blue); }
+
+  /* --- layout --- */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar-w); flex: 0 0 var(--sidebar-w);
+    background: var(--sidebar-bg); border-right: 1px solid var(--line);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: 20px 16px 40px;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;
+    padding: 0 8px;
+  }
+  .brand .name { font-weight: 700; font-size: 15px; color: var(--ink); }
+  .brand .sub { font-size: 11px; color: var(--mute); }
+  .search-box { margin: 14px 0 18px; padding: 0 8px; }
+  .search-box input {
+    width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 13px; font-family: inherit; background: var(--paper);
+  }
+  .search-box input:focus { outline: none; border-color: var(--blue); }
+
+  nav.toc { font-size: 13.5px; }
+  nav.toc .group-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--mute); font-weight: 600; margin: 18px 8px 6px;
+  }
+  nav.toc .group-label:first-child { margin-top: 0; }
+  nav.toc a {
+    display: block; padding: 6px 8px; border-radius: 6px; color: var(--body-ink);
+    text-decoration: none; margin-bottom: 1px;
+  }
+  nav.toc a:hover { background: var(--line); }
+  nav.toc a.active { background: var(--blue-dim); color: var(--blue); font-weight: 600; }
+  nav.toc .fcode {
+    float: right; font-family: ui-monospace, monospace; font-size: 10px; color: var(--mute);
+  }
+  nav.toc a.active .fcode { color: var(--blue); }
+  nav.toc .external { color: var(--mute); font-size: 12.5px; }
+
+  .menu-btn {
+    display: none; position: fixed; top: 12px; left: 12px; z-index: 20;
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--paper); font-size: 16px; align-items: center; justify-content: center;
+  }
+
+  main {
+    flex: 1 1 auto; min-width: 0;
+    padding: 48px 56px 120px; max-width: 880px;
+  }
+  .doc-meta {
+    font-size: 12px; color: var(--mute); margin-bottom: 4px;
+  }
+  .doc-title {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--blue); margin: 64px 0 4px;
+  }
+  section:first-of-type .doc-title { margin-top: 0; }
+  h1.page { font-size: 26px; font-weight: 700; margin: 0 0 18px; color: var(--ink); letter-spacing: -0.01em; }
+  h2 { font-size: 19px; font-weight: 650; margin: 34px 0 12px; color: var(--ink); scroll-margin-top: 20px; }
+  h3 { font-size: 15.5px; font-weight: 650; margin: 26px 0 10px; color: var(--ink); scroll-margin-top: 20px; }
+  h4 { font-size: 13.5px; font-weight: 650; margin: 18px 0 8px; color: var(--ink); }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 30px 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 0 0 18px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--mute); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; background: var(--code-bg); }
+  tr:last-child td { border-bottom: none; }
+
+  code {
+    font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; overflow-x: auto; margin: 0 0 16px;
+  }
+  pre code { background: none; padding: 0; font-size: 12.5px; line-height: 1.5; }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 1px 7px; border-radius: 999px; margin-right: 6px; vertical-align: middle;
+  }
+  .badge.done { color: var(--done); background: rgba(26,127,75,0.1); }
+  .badge.wip { color: var(--wip); background: var(--blue-dim); }
+  .badge.plan { color: var(--plan); background: rgba(180,83,9,0.1); }
+  .badge.verify { color: var(--verify); background: rgba(113,113,113,0.12); }
+  .badge.high { color: #c2410c; background: rgba(194,65,12,0.1); }
+
+  .note {
+    border: 1px solid var(--line); border-left: 3px solid var(--blue); background: var(--blue-dim);
+    border-radius: 6px; padding: 10px 14px; margin: 0 0 16px; font-size: 13.5px;
+  }
+
+  .page-nav {
+    display: flex; justify-content: space-between; margin-top: 48px; padding-top: 20px;
+    border-top: 1px solid var(--line); font-size: 13px;
+  }
+  .page-nav a { text-decoration: none; }
+  .page-nav .to-top { color: var(--mute); }
+
+  footer.doc-footer {
+    max-width: 880px; margin: 0 56px; padding: 24px 0 80px; color: var(--mute); font-size: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .menu-btn { display: flex; }
+    .sidebar {
+      position: fixed; z-index: 15; left: 0; top: 0;
+      transform: translateX(-100%); transition: transform 0.2s ease;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    }
+    .sidebar.open { transform: translateX(0); }
+    main { padding: 72px 20px 100px; }
+    footer.doc-footer { margin: 0 20px; }
+  }
+</style>
+<script>
+// 짧은 운영 주소에서도 기존 문서 상대 링크를 유지한다. 로컬 HTML 보기는 그대로 둔다.
+if (location.pathname === "/kanban" || location.pathname === "/docs") {
+  const base = document.createElement("base");
+  base.href = "/docs/";
+  document.head.appendChild(base);
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("a[href]").forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href.startsWith("#")) link.setAttribute("href", location.pathname + location.search + href);
+      else if (/^dashboard\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^dashboard\.html/, "/docs"));
+      else if (/^kanban\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^kanban\.html/, "/kanban"));
+    });
+  });
+}
+</script>
+</head>
+<body>
+  <!-- scripts/render_docs.py에서 생성: 원본 Markdown을 수정한다. -->
+  <button class="menu-btn" id="menuBtn" aria-label="목차 열기">☰</button>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="name">sql2widget</span><span class="sub">프로젝트 문서 · 다섯 분류</span></div>
+      <div class="search-box"><input type="text" id="tocSearch" placeholder="문서 검색…" /></div>
+      <nav class="toc" id="toc">{{toc}}</nav>
+    </aside>
+    <main id="main">{{sections}}</main>
+  </div>
+  <footer class="doc-footer">메인규칙·폴더 구조·기능·진행도·임시의 원본 Markdown에서 생성한 보기다.
+    <code>python3 scripts/render_docs.py</code>로 갱신한다. <a href="kanban.html">칸반</a> · <a href="../README.md">문서 입구</a>
+  </footer>
+<script>
+(function () {
+  var toc = document.getElementById('toc');
+  var links = Array.prototype.slice.call(toc.querySelectorAll('a[data-id]'));
+  var sections = links.map(function (a) {
+    return document.getElementById(a.getAttribute('data-id'));
+  });
+
+  function setActive(id) {
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('data-id') === id);
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) setActive(entry.target.id);
+      });
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function (s) { if (s) observer.observe(s); });
+  }
+
+  var searchInput = document.getElementById('tocSearch');
+  searchInput.addEventListener('input', function () {
+    var q = searchInput.value.trim().toLowerCase();
+    toc.querySelectorAll('a').forEach(function (a) {
+      var text = a.textContent.toLowerCase();
+      a.style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+    });
+    toc.querySelectorAll('.group-label').forEach(function (label) {
+      var next = label.nextElementSibling;
+      var anyVisible = false;
+      while (next && !next.classList.contains('group-label')) {
+        if (next.style.display !== 'none') anyVisible = true;
+        next = next.nextElementSibling;
+      }
+      label.style.display = anyVisible ? '' : 'none';
+    });
+  });
+
+  var menuBtn = document.getElementById('menuBtn');
+  var sidebar = document.getElementById('sidebar');
+  menuBtn.addEventListener('click', function () {
+    sidebar.classList.toggle('open');
+  });
+  toc.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') sidebar.classList.remove('open');
+  });
+})();
+</script>
+</body>
+</html>

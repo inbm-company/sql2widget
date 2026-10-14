@@ -1,0 +1,230 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>sql2widget · 칸반</title><style>
+    :root {
+      --blue: #0066cc;
+      --blue-dim: rgba(0, 102, 204, 0.1);
+      --ink: #1e1e1e;
+      --mute: #717171;
+      --line: #e8e8e8;
+      --paper: #fafafa;
+      --card: #ffffff;
+      --done: #1a7f4b;
+      --done-dim: rgba(26, 127, 75, 0.1);
+      --wip: #0066cc;
+      --wip-dim: rgba(0, 102, 204, 0.1);
+      --plan: #b45309;
+      --plan-dim: rgba(180, 83, 9, 0.1);
+      --verify: #7c3aed;
+      --verify-dim: rgba(124, 58, 237, 0.1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 1px 1px, #ebebeb 1px, transparent 0) 0 0 / 22px 22px,
+        var(--paper);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+    header.top {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      gap: 24px; margin-bottom: 28px; padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--blue); font-weight: 600; margin: 0 0 6px;
+    }
+    h1 { font-size: 28px; font-weight: 650; letter-spacing: -0.03em; margin: 0; }
+    .meta { text-align: right; color: var(--mute); font-size: 13px; }
+    .meta strong { display: block; color: var(--ink); font-size: 15px; font-weight: 600; }
+    .meta a { color: var(--blue); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+
+    .thesis {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+    .thesis p { margin: 0; font-size: 15.5px; max-width: 74ch; }
+    .thesis em { font-style: normal; color: var(--blue); font-weight: 600; }
+
+    .kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 28px;
+    }
+    .kpi {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 16px 18px; min-height: 92px; border-top: 3px solid var(--line-c, var(--line));
+    }
+    .kpi.done { border-top-color: var(--done); }
+    .kpi.wip { border-top-color: var(--wip); }
+    .kpi.plan { border-top-color: var(--plan); }
+    .kpi.verify { border-top-color: var(--verify); }
+    .kpi .label { font-size: 11px; color: var(--mute); letter-spacing: 0.04em; text-transform: uppercase; }
+    .kpi .num {
+      font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+      font-size: 30px; font-weight: 600; letter-spacing: -0.04em; margin-top: 6px;
+    }
+    .kpi .sub { font-size: 12px; color: var(--mute); margin-top: 4px; }
+
+    h2 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--mute); margin: 32px 0 12px;
+      display: flex; align-items: baseline; justify-content: space-between;
+    }
+    h2 span.hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; color: var(--mute); }
+
+    .board {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .col {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px; min-height: 120px;
+    }
+    .col-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+      font-size: 13px; font-weight: 600;
+    }
+    .col-head .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .col-head .count {
+      margin-left: auto; font-family: ui-monospace, monospace; font-size: 12px;
+      color: var(--mute); font-weight: 400;
+    }
+    .col.done .dot { background: var(--done); }
+    .col.wip .dot { background: var(--wip); }
+    .col.plan .dot { background: var(--plan); }
+    .col.verify .dot { background: var(--verify); }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chip {
+      font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    }
+    .chip::before {
+      content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      margin-right: 6px; background: var(--ac, var(--mute)); vertical-align: 1px;
+    }
+    .chip.on { border-color: var(--ink); background: var(--ink); color: #fff; }
+    .group { margin-bottom: 12px; }
+    .group:last-child { margin-bottom: 0; }
+    .group.hidden { display: none; }
+    .area {
+      display: flex; align-items: center; gap: 6px; margin: 0 0 6px;
+      font-size: 11px; font-weight: 600; color: var(--ac, var(--mute)); letter-spacing: 0.02em;
+    }
+    .area::before { content: ""; width: 3px; height: 12px; border-radius: 2px; background: var(--ac, var(--mute)); }
+    .area span { margin-left: auto; font-family: ui-monospace, monospace; font-weight: 400; color: var(--mute); }
+    .group .card { border-left: 3px solid var(--ac, var(--line)); }
+    .a0 { --ac: #0f766e; } .a1 { --ac: #2563eb; } .a2 { --ac: #b45309; } .a3 { --ac: #be185d; }
+    .a4 { --ac: #1a7f4b; } .a5 { --ac: #7c3aed; } .a6 { --ac: #c2410c; } .a7 { --ac: #475569; }
+
+    .card {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+      margin-bottom: 8px; background: #fff; font-size: 12.5px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card .t { font-weight: 600; margin-bottom: 4px; }
+    .card .n { color: var(--mute); font-size: 11.5px; line-height: 1.5; }
+    .card .n a { color: var(--blue); text-decoration: none; }
+    .card .n a:hover { text-decoration: underline; }
+    .pri {
+      display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 1px 6px; border-radius: 999px; margin-bottom: 6px;
+    }
+    .pri.high { color: #c2410c; background: rgba(194,65,12,0.1); }
+    .pri.med { color: var(--blue); background: var(--blue-dim); }
+    .pri.low { color: var(--mute); background: rgba(113,113,113,0.12); }
+
+    .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .box {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .box h3 { margin: 0 0 12px; font-size: 15px; }
+    .flist { display: flex; flex-direction: column; gap: 10px; }
+    .frow {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .frow:last-child { border-bottom: none; padding-bottom: 0; }
+    .frow a { color: var(--ink); font-weight: 600; text-decoration: none; }
+    .frow a:hover { color: var(--blue); }
+    .frow .desc { color: var(--mute); font-size: 12.5px; margin-top: 2px; }
+    .frow .fcode {
+      font-family: ui-monospace, monospace; font-size: 11px; color: var(--mute);
+      white-space: nowrap;
+    }
+
+    .mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+
+    footer {
+      margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--line);
+      color: var(--mute); font-size: 12px;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 960px) {
+      .board { grid-template-columns: 1fr 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .cols2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .board { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      header.top, .meta { display: block; text-align: left; }
+      .meta { margin-top: 12px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; }
+    }
+  </style><script>
+// 짧은 운영 주소에서도 기존 문서 상대 링크를 유지한다. 로컬 HTML 보기는 그대로 둔다.
+if (location.pathname === "/kanban" || location.pathname === "/docs") {
+  const base = document.createElement("base");
+  base.href = "/docs/";
+  document.head.appendChild(base);
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("a[href]").forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href.startsWith("#")) link.setAttribute("href", location.pathname + location.search + href);
+      else if (/^dashboard\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^dashboard\.html/, "/docs"));
+      else if (/^kanban\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^kanban\.html/, "/kanban"));
+    });
+  });
+}
+</script>
+</head><body>
+<!-- scripts/render_docs.py에서 생성: docs/progress.md를 수정한다. -->
+<div class="wrap">
+  <header class="top"><div><p class="kicker">sql2widget</p><h1>진행도</h1></div>
+    <div class="meta"><strong>{{date}}</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
+  </header>
+  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
+  <div class="kpis">{{kpis}}</div>
+  <div class="filters" role="group" aria-label="기능 영역 필터">{{filters}}</div>
+  <section class="board">{{board}}</section>
+  <h2>현재 상태와 검증 범위</h2><section class="box">{{summary}}</section>
+  <h2>기능 문서</h2><section class="cols2">{{features}}</section>
+  <footer><a href="../AGENTS.md">메인규칙</a> · <a href="01-folder-structure.md">폴더 구조</a> · <a href="features/README.md">기능</a> · <a href="progress.md">진행도</a> · <a href="temp/">임시</a>
+    <p>원본에서 생성한 보기다. 서버의 실시간 상태·새 테스트 결과·운영 배포 완료를 자동 판정하지 않는다.</p>
+  </footer>
+</div>
+<script>
+// 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.
+document.querySelectorAll(".chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    const area = chip.dataset.area;
+    document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c === chip));
+    document.querySelectorAll(".group").forEach((g) => g.classList.toggle("hidden", area !== "all" && g.dataset.area !== area));
+  });
+});
+</script>
+</body></html>

@@ -22,12 +22,12 @@
 
 | 기능 | 한 줄 설명 | 상세 문서 |
 |------|-----------|-----------|
-| 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`viewer` 역할 구분, 로컬/운영 로그인 아이디 분리 | [auth.md](docs/features/auth.md) |
+| 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`user`/`viewer` 역할 구분, 로컬/운영 로그인 아이디 분리 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
 | 채팅(에이전트) | 요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내 | [chat.md](docs/features/chat.md) |
 | 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 테이블 구조·인사·잡담·일반 개념은 전체 본문 답변(구조 설명은 테이블별 표 지원), 설명용 MarkdownBlock을 생성하지 않음. 확신이 낮으면 세 경로 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
 | 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
-| Artifact/위젯 표시 | 16개 허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
+| Artifact/위젯 표시 | 허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 조회 정의·배치 자동 저장·새로고침 후 현재 데이터 조회 | [stage.md](docs/features/stage.md) |
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |
 | 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지 | [admin.md](docs/features/admin.md) |
@@ -57,9 +57,9 @@
 | [docs/01-folder-structure.md](docs/01-folder-structure.md) | 폴더·파일 단위 설명 | 완료 |
 | [docs/project-separation-proposal.md](docs/project-separation-proposal.md) | DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록 | 구현 완료 — 로컬 독립 실행·테스트와 sql2widget 운영 배포 검증 |
 | [docs/features/*.md](docs/features/README.md) | 기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리) | 완료 — `docs/기능명세서.md` 대체함(삭제됨) |
-| [docs/progress.md](docs/progress.md) | 작업 진행 상황 (완료/진행중/예정/보류) | 완료 — `docs/현황.html` 대체함(삭제됨) |
-| [docs/dashboard.html](docs/dashboard.html) | `features/*.md` + `progress.md` 전체를 GitBook 스타일(좌측 목차 + 본문)로 묶어 보여주는 HTML 문서 | 완료 |
-| [docs/kanban.html](docs/kanban.html) | `features/*.md` + `progress.md`를 시각화한 칸반형 정적 보드 | 완료 |
+| [docs/progress.md](docs/progress.md) | 기능 영역별 진행도 (완료/진행 중/검증 대기/계획) | 완료 — `docs/현황.html` 대체함(삭제됨) |
+| [docs/dashboard.html](docs/dashboard.html) | `AGENTS.md`·폴더 구조·`features/*.md`·`progress.md`를 좌측 목차 + 본문으로 묶은 HTML. `scripts/render_docs.py`가 생성 | 완료 |
+| [docs/kanban.html](docs/kanban.html) | `progress.md`를 기능 영역 필터가 있는 칸반으로 보여주는 HTML. `scripts/render_docs.py`가 생성 | 완료 |
 | [docs/PLAN.md](docs/PLAN.md) | 최초 기획서 (P0~P6 로드맵). 구현과 다르면 구현이 기준 | 유지 — 히스토리 참고용 |
 | [docs/UI_BRIEF.md](docs/UI_BRIEF.md) | DESIGN.md 이전의 초기 비주얼 방향 메모 | 유지 — 히스토리 참고용 |
 | [docs/design/README.md](docs/design/README.md) | Figma/Stitch 익스포트 보관 안내 | 유지 |
@@ -80,17 +80,17 @@
 
 ### 3.5 문서 수정 시 동기화 절차
 
-`docs/dashboard.html`/`docs/kanban.html`은 빌드 스크립트가 없다. **원본 마크다운을 손으로 복사해 넣은 정적 스냅샷**이라, 원본을 고쳐도 저절로 반영되지 않는다. 아래 관계를 지킨다.
+`docs/dashboard.html`/`docs/kanban.html`은 `scripts/render_docs.py`가 원본 마크다운에서 생성한다. HTML을 직접 고치지 않는다.
 
-| 원본(고치는 곳) | 반영해야 할 파생 문서 | 무엇을 맞추는가 |
-|---|---|---|
-| [docs/progress.md](docs/progress.md) 2~5절(완료/진행중/예정/보류) | [docs/kanban.html](docs/kanban.html) `<section class="board">` | 항목을 추가/이동/삭제하면 **같은 턴에** 해당 컬럼의 `.card`를 똑같이 추가/이동/삭제하고, `.col-head .count` 숫자를 실제 카드 개수와 일치시킨다. **칸반과 progress.md의 항목 수·내용이 어긋나면 안 된다** — 둘 중 하나만 고치고 끝내지 않는다. |
-| [docs/progress.md](docs/progress.md) 전체 | [docs/dashboard.html](docs/dashboard.html) `<section id="progress">` | 요약 배지(`완료 14` 등 카운트), 완료/진행중 목록, 예정 표, 보류 문단을 progress.md와 동일하게 맞춘다. |
-| `docs/features/*.md` 아무 파일 | [docs/dashboard.html](docs/dashboard.html)의 대응 `<section id="{파일명}">` | 그 섹션 본문을 원본 마크다운 내용과 맞춘다. **새 기능 문서를 추가했으면** 좌측 `<nav class="toc">`에 링크(`<a href="#id" data-id="id">`)도 추가한다. |
-| `AGENTS.md` 4절(공통 확정 규칙) | [docs/dashboard.html](docs/dashboard.html) `<section id="overview">` | 규칙 문구가 달라지면 그대로 옮긴다(예: Mock 관련 규칙이 바뀌었는데 대시보드에 옛 문구가 남아있으면 안 됨). |
-| `docs/features/README.md`의 표 | [docs/kanban.html](docs/kanban.html) "기능 문서" 섹션 | 새 문서가 추가되면 카드/행을 같이 추가한다. |
+| 원본(고치는 곳) | 생성되는 곳 |
+|---|---|
+| `AGENTS.md` | `docs/dashboard.html` 메인규칙 섹션 |
+| [docs/01-folder-structure.md](docs/01-folder-structure.md) | `docs/dashboard.html` 폴더 구조 섹션 |
+| [docs/features/README.md](docs/features/README.md) 색인 표와 각 `docs/features/*.md` | `docs/dashboard.html` 기능 섹션, `docs/kanban.html` 기능 문서 목록 |
+| [docs/progress.md](docs/progress.md) | `docs/dashboard.html` 진행도 섹션, `docs/kanban.html` 보드·현재 상태·검증 기록 |
+| `docs/templates/dashboard.html`, `docs/templates/kanban.html` | 두 HTML의 틀(스타일·필터 스크립트) |
 
-**순서**: 원본 마크다운을 먼저 고친다 → 영향받는 HTML 파일을 같은 작업 안에서 바로 고친다 → "나중에 한번에 재생성"으로 미루지 않는다(미루면 드리프트가 누적된다 — 실제로 2026-09-22 세션 중 `docs/progress.md`에 항목 하나를 추가하고 `kanban.html`/`dashboard.html`을 안 고쳐서 바로 어긋난 사례가 있었다).
+**순서**: 원본 마크다운을 고친다 → `python3 scripts/render_docs.py`로 두 HTML을 생성한다 → `python3 scripts/render_docs.py --check`로 일치를 확인한다. 새 기능 문서는 `docs/features/README.md` 색인 표에 `| [파일명](파일명) | ... |` 행을 추가해야 생성 대상에 들어간다.
 
 ---
 
@@ -117,7 +117,6 @@
 - 고객 DB는 **읽기 전용 `SELECT`만**. 앱이 DML을 실행하지 않는다.
 - 위젯 컴포넌트 이름은 서버 화이트리스트(`ALLOWED_COMPONENTS`) 검증. 목록 밖 이름은 채팅에서는 `DataTable` 폴백, Stage 저장은 400으로 거부.
 - 채팅 응답은 항상 실 LLM 호출로만 만든다(OpenAI-compatible). 키가 없거나 호출이 실패하면 **키워드 매칭 등으로 추측해서 대신 답하지 않고 에러를 그대로 반환**한다 — 에러를 성공한 것처럼 위장하지 않는다.
-- 외부 문서 검색은 `DocumentProvider` 인터페이스로 추상화. 현재 구현은 Mock.
 - 감사 로그에는 행위만 남긴다. 사용자 데이터를 수정하는 쿼리는 없다.
 
 ### 4.3 보안/운영 규칙
@@ -140,10 +139,10 @@
 |------|------------------|
 | 기능 동작·API·응답 형태 | `docs/features/*.md` 해당 문서와 그 문서의 기준일 |
 | 파일·모듈 추가/삭제/역할 변경 | `docs/01-folder-structure.md` |
-| 작업 상태 변화(완료/진행중/예정/보류) | `docs/progress.md` → `docs/kanban.html`·`docs/dashboard.html` (3.5절) |
+| 작업 상태 변화(완료/진행 중/검증 대기/계획) | `docs/progress.md` → `python3 scripts/render_docs.py` (3.5절) |
 | 환경변수 추가/변경 | `.env.example`, `README.md`, 운영에 필요하면 `deployment/README.md` |
 | 새 세션이 알아야 할 동작·경로·주의사항 | `PROJECT_HANDOFF.md`, 본 문서 2절 기능 개요 표 |
-| 본 문서 4절 규칙 문구 | `docs/dashboard.html` `<section id="overview">` (3.5절) |
+| 본 문서 문구 | `python3 scripts/render_docs.py` (3.5절) |
 
 작업 완료를 보고하기 전에 위 표로 누락을 점검한다. 갱신하지 않은 항목이 있으면 이유를 함께 적는다. 문서 작성 절차는 `docs-sync` 스킬을 따른다.
 
@@ -156,11 +155,11 @@
 - 언어: 한국어. 코드 식별자·경로는 원문 그대로.
 - 새 파일명은 영문 kebab-case (`01-folder-structure.md`, `features/chat.md`). 기존 한국어 파일명(`기능명세서.md` 등)은 대체되며 신규 명명 규칙을 따르지 않는다.
 - 기능 문서는 `docs/기능명세서.md`의 관례를 유지: **기획이 아니라 현재 동작하는 구현이 기준.** 코드와 문서가 다르면 코드가 맞다.
-- `docs/progress.md`의 상태 라벨은 4종으로 고정: `완료` / `진행중` / `예정` / `보류`.
+- `docs/progress.md`의 상태 라벨은 4종으로 고정: `완료` / `진행 중` / `검증 대기` / `계획`. 각 행은 `영역 | 항목 | 내용 | 칸반` 4열이며 영역은 칸반 필터가 된다. `칸반` 열은 `표시`/`미표시`로, 기능 단위 항목만 `표시`하고 세부 변경 기록은 `미표시`로 둔다.
 - 각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).
 
 ---
 
 ## 6. 문서 세트 상태
 
-1~5번 문서(본 문서, 폴더 구조, 기능별 문서, 진행 상황, `dashboard.html`+`kanban.html`) 모두 완료. 이후에는 코드가 바뀔 때마다 해당 기능 문서와 `docs/progress.md`를 갱신하고, `docs/dashboard.html`/`docs/kanban.html`은 그 내용을 반영해 다시 만든다.
+1~5번 문서(본 문서, 폴더 구조, 기능별 문서, 진행도, `dashboard.html`+`kanban.html`) 모두 완료. 이후에는 코드가 바뀔 때마다 해당 기능 문서와 `docs/progress.md`를 갱신하고 `python3 scripts/render_docs.py`로 두 HTML을 다시 생성한다.

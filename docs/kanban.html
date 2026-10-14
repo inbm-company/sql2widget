@@ -13,8 +13,8 @@
       --wip-dim: rgba(0, 102, 204, 0.1);
       --plan: #b45309;
       --plan-dim: rgba(180, 83, 9, 0.1);
-      --hold: #717171;
-      --hold-dim: rgba(113, 113, 113, 0.12);
+      --verify: #7c3aed;
+      --verify-dim: rgba(124, 58, 237, 0.1);
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; }
@@ -64,7 +64,7 @@
     .kpi.done { border-top-color: var(--done); }
     .kpi.wip { border-top-color: var(--wip); }
     .kpi.plan { border-top-color: var(--plan); }
-    .kpi.hold { border-top-color: var(--hold); }
+    .kpi.verify { border-top-color: var(--verify); }
     .kpi .label { font-size: 11px; color: var(--mute); letter-spacing: 0.04em; text-transform: uppercase; }
     .kpi .num {
       font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
@@ -98,7 +98,30 @@
     .col.done .dot { background: var(--done); }
     .col.wip .dot { background: var(--wip); }
     .col.plan .dot { background: var(--plan); }
-    .col.hold .dot { background: var(--hold); }
+    .col.verify .dot { background: var(--verify); }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chip {
+      font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    }
+    .chip::before {
+      content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      margin-right: 6px; background: var(--ac, var(--mute)); vertical-align: 1px;
+    }
+    .chip.on { border-color: var(--ink); background: var(--ink); color: #fff; }
+    .group { margin-bottom: 12px; }
+    .group:last-child { margin-bottom: 0; }
+    .group.hidden { display: none; }
+    .area {
+      display: flex; align-items: center; gap: 6px; margin: 0 0 6px;
+      font-size: 11px; font-weight: 600; color: var(--ac, var(--mute)); letter-spacing: 0.02em;
+    }
+    .area::before { content: ""; width: 3px; height: 12px; border-radius: 2px; background: var(--ac, var(--mute)); }
+    .area span { margin-left: auto; font-family: ui-monospace, monospace; font-weight: 400; color: var(--mute); }
+    .group .card { border-left: 3px solid var(--ac, var(--line)); }
+    .a0 { --ac: #0f766e; } .a1 { --ac: #2563eb; } .a2 { --ac: #b45309; } .a3 { --ac: #be185d; }
+    .a4 { --ac: #1a7f4b; } .a5 { --ac: #7c3aed; } .a6 { --ac: #c2410c; } .a7 { --ac: #475569; }
 
     .card {
       border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
@@ -178,4 +201,119 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   });
 }
 </script>
-</head><body><div class="wrap"><header class="top"><div><p class="kicker">sql2widget</p><h1>작업 진행 상황</h1></div><div class="meta"><strong>2026-10-14</strong><a href="dashboard.html">문서 대시보드 ↗</a></div></header><div class="thesis"><p>DB 채팅·위젯 Stage. 문서 그래프는 독립 doc2graph로 분리했다.</p></div><div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">23</div></div><div class="kpi wip"><div class="label">진행중</div><div class="num">2</div></div><div class="kpi plan"><div class="label">예정</div><div class="num">6</div></div><div class="kpi hold"><div class="label">보류</div><div class="num">1</div></div></div><section class="board"><div class="col done"><div class="col-head"><span class="dot"></span>완료<span class="count">24</span></div><div class="card"><div class="t"><p>응답 대기 중 사용자 질문 중복 표시 수정</p></div><div class="n"><p>2026-10-14 SWR 재조회에서 이번 질문이 확인되면 임시 말풍선만 숨김. 과거 동일 질문은 유지하고 임시 질문·대기 표시는 해당 대화로 제한. 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>설명 답변 본문 표시 — 테이블 구조·SOC 출처 설명의 MarkdownBlock 생성 제거</p></div><div class="n"><p>2026-10-14 전체 설명·테이블별 컬럼 표를 채팅 본문에 표시. 과거 채팅 설명 카드는 본문으로 표시하고 데이터 위젯·출처·기존 Stage 항목 유지. 관련 회귀 테스트 작성, 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a>, <a href="features/widgets-artifact.md">widgets-artifact.md</a></p></div></div><div class="card"><div class="t"><p>로그인/세션, JWT access+refresh, 역할 분리(admin/user/viewer)·로컬/운영 로그인 아이디 분리</p></div><div class="n"><p><a href="features/auth.md">auth.md</a>. 2026-10-06 운영 비밀번호 동기화 후 관리자·Viewer HTTPS 로그인/세션/프로젝트 조회 200, 로컬 로그인 유지 확인</p></div></div><div class="card"><div class="t"><p>프로젝트·대화 CRUD — 프로젝트 삭제·연관 데이터 정리·New chat 생성 오류 수정</p></div><div class="n"><p><a href="features/projects-conversations.md">projects-conversations.md</a></p></div></div><div class="card"><div class="t"><p>Artifact 위젯 렌더 + SQL 미리보기 · TanStack Charts와 분석 위젯 4종 추가</p></div><div class="n"><p>2026-10-13 누적 막대·히트맵·산점도·히스토그램 추가, 카탈로그 16개. SQL 변환·예상 질문·Stage 저장 경로 연결. Artifact JSON 전체 복사 버튼과 버튼 왼쪽 10px 성공·실패 안내 추가. 백엔드 전체 124개·프런트 14개 테스트·Vite 빌드 통과. 실제 Global Sales 데모 DB SELECT·Stage 추가/재조회·Viewer 4종 표시 확인. 실 LLM은 AI 키 미설정으로 미검증. <a href="features/widgets-artifact.md">widgets-artifact.md</a> 2026-10-14 채팅 프리뷰를 제목 포함 320px로 고정하고 내용·SQL 패널이 남은 공간을 채우도록 수정. 이번 높이 변경의 테스트·빌드·브라우저 검증은 사용자 승인 전 미실행.</p></div></div><div class="card"><div class="t"><p>위젯 자체 데이터 조회 — 결과 비저장·원본 DB/SQL 정의 저장</p></div><div class="n"><p>2026-10-13 채팅·Stage·Viewer의 위젯별 GET·새로고침·로딩/오류 구현. 현재 소유자·tenant·역할 테이블 권한 검사, 기존 위젯 DB 정보 복원. 실제 Global Sales DB 7종 SELECT·임시 Stage 결과 비저장 검증, 브라우저 대역의 조회/새로고침/오류 복구/Viewer 확인. 전체 백엔드 169개 통과·기존 일반 대화 기대값 불일치 2개 실패, 프런트 23개·빌드 통과. 실 LLM·운영 배포는 미실행. <a href="features/widgets-artifact.md">widgets-artifact.md</a></p></div></div><div class="card"><div class="t"><p>Stage 드래그·이동·리사이즈·자동 저장·복원, 채팅과 Stage 너비 조절</p></div><div class="n"><p><a href="features/stage.md">stage.md</a></p></div></div><div class="card"><div class="t"><p>Viewer 읽기 전용 화면(<code>/p/:id/view</code>)</p></div><div class="n"><p><a href="features/viewer.md">viewer.md</a></p></div></div><div class="card"><div class="t"><p>Admin 유지 + 별도 AI 설정·DB 관리 패널 — DB 연결 등록/테스트, 역할별 테이블 권한, 배경 클릭 닫기</p></div><div class="n"><p><a href="features/admin.md">admin.md</a></p></div></div><div class="card"><div class="t"><p>SOC + Global Sales 샘플 DB, 서비스 DB Docker Compose 구성</p></div><div class="n"><p><code>docker-compose.yml</code></p></div></div><div class="card"><div class="t"><p>Northwind 로컬 시드, SKAX NMS 로컬·운영 스냅샷 복원·연결 등록</p></div><div class="n"><p><code>backend/scripts/seed_northwind_recent.py</code>, <code>seed_skax_nms.py</code></p></div></div><div class="card"><div class="t"><p>실 LLM 전용 채팅 에이전트(OpenAI-compatible, Gemini) — 스키마 컨텍스트 전달, 결과 기반 SQL 수정·위젯 재선택, 미완료 시 부분 결과·사유 반환(Mock 키워드 매칭 폴백은 2026-09-22 완전 삭제)</p></div><div class="n"><p><a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>Provider별 AI 연결 설정·요청 분리, 로컬 OpenAI 호환 모델 지원(서버 모델 목록 select), Jev 공통 키 입력·저장</p></div><div class="n"><p>2026-10-13 관련 백엔드 80개·프런트 8개 테스트 및 Vite 빌드 통과. 실제 브라우저의 Jev 입력 마스킹·저장·Provider 전환·새로고침 복원을 확인하고 기존 설정을 복원. Jev API는 대역으로 검증, 실키 호출은 미실행. <a href="features/admin.md">admin.md</a> 2026-10-14 Gemini 기본값만 3.8 Flash로 변경. 저장된 3.6 모델·키·다른 Provider·사용자 지정 다른 모델은 유지하며 기존 2.5 모델 전환 규칙 보존. 이번 모델 변경의 테스트·실모델 호출·빌드·브라우저 검증은 승인 전 미실행.</p></div></div><div class="card"><div class="t"><p><code>llm_usage</code> 사용량 기록 골격(테이블 적재)</p></div><div class="n"><p><a href="features/admin.md">admin.md</a> 데이터 모델</p></div></div><div class="card"><div class="t"><p>문서 체계 정비 — <code>AGENTS.md</code>/<code>CLAUDE.md</code>, <code>docs/01-folder-structure.md</code>, <code>docs/features/*.md</code>, 본 문서, <code>docs/dashboard.html</code>, <code>docs/kanban.html</code></p></div><div class="n"><p>이번 문서화 작업 1~5번 전체 완료</p></div></div><div class="card"><div class="t"><p>DB별 예상 질문 유사도 DB — 전체 테이블 질문 생성 → 유사 질문 참조 답변 생성</p></div><div class="n"><p><a href="features/similarity-search-design.md">similarity-search-design.md</a></p></div></div><div class="card"><div class="t"><p>채팅 의도 라우팅 — Jev Choice(실패 시 2회 재시도 후 채팅 LLM 판단) → 데이터 조회 / 테이블 구조 답변 / 되묻기 선택지</p></div><div class="n"><p>단위 테스트와 실제 Jev 호출(2026-10-01, <code>jev-1.13.0</code>)로 확인 — Jev 경로·401 폴백·되묻기 모두 동작. <code>ROUTE_MIN_CONFIDENCE</code> 0.5는 아직 검증 전 초기값. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>큰 DB의 SQL 계획 스키마 줄이기 — 허용 테이블 20개 초과 시 유사 질문이 쓴 테이블, 매칭이 없으면 전체 허용 스키마 전달, 실패 시 전체 스키마로 재시도</p></div><div class="n"><p>단위 테스트와 Northwind 실행(임계값 5로 낮춤)으로 확인. 100개 이상 DB(SKAX NMS)는 미검증. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>채팅 처리 내역 표시·저장 — 선택 경로·분류 방식, SQL 테이블 선택·유사 질문 참조</p></div><div class="n"><p><code>messages.meta</code> 저장으로 새로고침 후 유지. 과거 답변은 기록 없음. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>일반 대화 — 인사·잡담·일반 지식·개념 설명</p></div><div class="n"><p>2026-10-13 <code>general_chat</code> 경로·Jev/LLM 분류·세 경로 선택지·전체 본문 답변·처리 내역 표시 구현. 고객 DB 스키마 조회는 DB 경로에서만 수행. 사용자 요청에 따라 테스트·빌드·브라우저 검증 미실행. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>에이전트 루프 및 위젯 선택·SQL 생성 분리</p></div><div class="n"><p>2026-10-13 SQL 데이터셋 생성·실행 후 실제 컬럼·타입·행 수로 복수 위젯 선택·개별 생성. 각 실제 호출 결과에서 다음 작업 결정, 같은 SQL의 여러 위젯 컬럼 연결·Stage 보존. 도구 호출 순서·SQL 수·생성 위젯 수·판단 호출·재계획 구분, 부분 결과·한도·반복 중단 구현. 테스트·검증용 빌드·브라우저 검증은 사용자 승인 전 미실행. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>대화 문맥·후속 질문 처리 및 IME 조합 중 전송 방지</p></div><div class="n"><p>최근 20개 메시지 범위의 같은 DB 응답 이력을 라우터·SQL 계획·복구·구조 답변에 전달. 다른 DB·DB 정보 없는 과거 이력은 제외. 2026-10-13 관련 백엔드 테스트 70개, 프런트 테스트 4개, Vite 빌드 통과. 테스트 대역으로 검증했고 실모델·브라우저 IME·실 DB 재조회 검증은 미실행. <a href="features/chat.md">chat.md</a></p></div></div><div class="card"><div class="t"><p>운영 배포 파이프라인</p></div><div class="n"><p>2026-10-01 Actions 테스트·GHCR 이미지 게시·VPS 실배포 성공 확인. SKAX 운영 DB 스냅샷 복원·연결·역할 권한 등록과 배포 후 읽기 전용 검사 포함. <a href="../deployment/README.md">deployment/README.md</a> 2026-10-14 칸반·문서 대시보드 HTML을 운영 /docs/kanban.html·/docs/dashboard.html에 공개. 기존 앱 이미지로 프런트만 재생성했고 백엔드·DB·계정은 변경하지 않음. 공개 URL 응답·업로드 파일 일치 검사는 사용자 승인 전 미실행. 2026-10-14 로컬·원격 main의 분기된 기록을 병합해 기존 앱 변경과 HTML 공개 설정을 함께 푸시. 최초 최신 코드 CI는 백엔드 80개 통과·3개 실패(현행 계획·평가·데이터 실행 구조와 맞지 않는 테스트 대역). 세 테스트의 대역을 현재 호출 구조로 갱신했으며 수정 후 결과는 GitHub Actions의 최신 실행을 확인한다. 2026-10-14 사용자 승인으로 운영 칸반 주소를 /kanban, 문서 대시보드 주소를 /docs로 변경. 기존 /docs/kanban.html·/docs/dashboard.html 및 끝 슬래시 주소는 새 주소로 301 연결. 푸시 후 별도 테스트·빌드·브라우저·접속 검증은 사용자 요청으로 실행하지 않는다. 2026-10-14 로컬 Vite에도 /kanban·/docs와 이전 주소 301 연결 추가. 로컬 Compose가 docs/를 읽기 전용으로 마운트하며 직접 npm run dev 실행도 같은 HTML을 제공한다. 테스트·빌드·브라우저 접속 검증은 사용자 요청으로 미실행.</p></div></div><div class="card"><div class="t"><p>DB/문서 프로젝트 분리 및 독립 실행</p></div><div class="n"><p>sql2widget: DB 채팅·위젯 Stage, doc2graph: 문서 채팅·그래프. 동일 기본 UI, 독립 계정/설정/DB/볼륨, 기존 데이터 이전 없음. A 81/B 56 백엔드·A 4/B 15 프런트 테스트 및 빌드 통과. 교차 토큰 거부/기능 API 분리, SQL/Stage API·문서 업로드/적재/그래프 UI 확인. 2026-10-06 sql2widget 운영 전환 완료(6a88140): CI 테스트·이미지 게시·VPS 배포, HTTPS/API·기존 계정/프로젝트/대화 보존 확인. 실모델 유료 호출은 미실행</p></div></div></div><div class="col wip"><div class="col-head"><span class="dot"></span>진행중<span class="count">2</span></div><div class="card"><div class="t"><p>채팅 메시지 임베딩·유사도 검색(pgvector, <code>chat_vector</code> DB)</p></div><div class="n"><p>백엔드 저장·검색(<code>message_embeddings.py</code>)까지 완료, API가 <code>related_messages</code> 반환. <strong>프론트 미표시</strong> — <code>App.jsx</code>가 아직 렌더링 안 함</p></div></div><div class="card"><div class="t"><p>실 LLM 경로 하드닝</p></div><div class="n"><p>데이터 호출 루프·단계당 SQL 수정 5회·시간/호출 제한은 구현, 실모델 검증과 레이트리밋/서킷브레이커는 미완료. <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a></p></div></div></div><div class="col plan"><div class="col-head"><span class="dot"></span>예정<span class="count">6</span></div><div class="card"><div class="t"><p>질문 유사도 테스트 하니스 — 비슷한 질문이 같은 furniture를 내는지 검증</p></div><div class="n"><p>HIGH · <a href="../PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a>, 2026-09-03 스냅샷 #7과 동일 항목, 미착수</p></div></div><div class="card"><div class="t"><p>Circle 게이지 조합 카탈로그 (ring × size × companion)</p></div><div class="n"><p>MED · 스냅샷 #9와 동일, <code>ALLOWED_COMPONENTS</code>에 아직 없음</p></div></div><div class="card"><div class="t"><p>Viewer에 남은 다크 Orion 자리표시(CSS <code>variant=&quot;orion&quot;</code>) 정리</p></div><div class="n"><p>LOW · <a href="../DESIGN.md">DESIGN.md</a>가 &quot;정식 토큰 아님&quot;으로 명시. <a href="features/viewer.md">viewer.md</a> 참고</p></div></div><div class="card"><div class="t"><p>실 RAG(문서 검색) 고도화 — 현재 <code>DocumentProvider</code>는 Mock 고정 문서만</p></div><div class="n"><p>LOW · 고정 SOC 데모 출처 보조 기능. 사용자 업로드 문서 그래프는 doc2graph 소유</p></div></div><div class="card"><div class="t"><p>LLM 사용량(<code>llm_usage</code>) 조회 UI</p></div><div class="n"><p>미지정 · 기록만 되고 화면에서 보여주지 않음. <a href="features/admin.md">admin.md</a></p></div></div><div class="card"><div class="t"><p>Stage 쓰기 API에 role 기반 서버측 검사 추가 여부</p></div><div class="n"><p>미지정 · 현재는 소유자 검사만 있고 <code>readOnly</code>는 프론트 전용. <a href="features/stage.md">stage.md</a> 주의 항목 — 취약점이 아니라 설계 확인 필요 항목으로 분류</p></div></div></div><div class="col hold"><div class="col-head"><span class="dot"></span>보류<span class="count">1</span></div><div class="card"><div class="t"><p>완성 Orion 대시보드 템플릿을 넣을지</p></div><div class="n"><p>스냅샷 #8과 동일. <a href="../PRODUCT.md">PRODUCT.md</a> &quot;Explicitly undecided&quot;에 명시. <strong>현재 기본 규칙은 &quot;핀보드만, 템플릿 없음&quot;</strong>이며, 이 규칙을 바꾸려면 합의가 필요하다(<a href="../AGENTS.md">AGENTS.md</a> 제품 규칙 2)</p></div></div></div></section><h2>기능 문서</h2><section class="cols2"><div class="box"><h3><a href="dashboard.html#auth">기능: 로그인/세션</a></h3><a href="features/auth.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#projects-conversations">기능: 프로젝트 · 대화</a></h3><a href="features/projects-conversations.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#chat">기능: DB 채팅</a></h3><a href="features/chat.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#widgets-artifact">기능: Artifact / 위젯 카탈로그</a></h3><a href="features/widgets-artifact.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#stage">기능: Stage (핀보드)</a></h3><a href="features/stage.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#viewer">기능: Viewer 화면</a></h3><a href="features/viewer.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a></h3><a href="features/admin.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#similarity-search-design">기능: DB별 예상 질문 유사도 검색</a></h3><a href="features/similarity-search-design.md">원문 명세 ↗</a></div><div class="box"><h3><a href="dashboard.html#graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a></h3><a href="features/graph-rag-sources.md">원문 명세 ↗</a></div></section><footer><a href="progress.md">progress.md 원문</a> · <a href="features/README.md">기능 색인</a> · sql2widget 운영 배포는 2026-10-06 검증 완료. 실모델 유료 응답은 미검증.</footer></div></body></html>
+</head><body>
+<!-- scripts/render_docs.py에서 생성: docs/progress.md를 수정한다. -->
+<div class="wrap">
+  <header class="top"><div><p class="kicker">sql2widget</p><h1>진행도</h1></div>
+    <div class="meta"><strong>2026-10-14</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
+  </header>
+  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
+  <div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">12</div></div>
+<div class="kpi wip"><div class="label">진행 중</div><div class="num">0</div></div>
+<div class="kpi verify"><div class="label">검증 대기</div><div class="num">0</div></div>
+<div class="kpi plan"><div class="label">계획</div><div class="num">15</div></div></div>
+  <div class="filters" role="group" aria-label="기능 영역 필터"><button type="button" class="chip on" data-area="all">전체</button>
+<button type="button" class="chip a0" data-area="a0">인증·프로젝트</button>
+<button type="button" class="chip a1" data-area="a1">DB 연결</button>
+<button type="button" class="chip a2" data-area="a2">채팅·에이전트</button>
+<button type="button" class="chip a3" data-area="a3">예상 질문</button>
+<button type="button" class="chip a4" data-area="a4">위젯·Stage</button>
+<button type="button" class="chip a5" data-area="a5">AI 설정</button>
+<button type="button" class="chip a6" data-area="a6">배포·운영</button>
+<button type="button" class="chip a7" data-area="a7">외부 연계</button></div>
+  <section class="board"><div class="col done"><div class="col-head"><span class="dot"></span>완료<span class="count">12</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>2</span></div>
+<div class="card"><div class="t">로그인·세션 관리</div><div class="n">이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md">기능</a></div></div>
+<div class="card"><div class="t">프로젝트·대화 관리</div><div class="n">생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md">기능</a></div></div>
+</div>
+<div class="group a1" data-area="a1"><div class="area">DB 연결<span>1</span></div>
+<div class="card"><div class="t">DB 연결·테이블 권한 관리</div><div class="n">관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md">기능</a></div></div>
+</div>
+<div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>4</span></div>
+<div class="card"><div class="t">질문 라우팅·일반 대화·DB 구조 설명</div><div class="n">Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md">기능</a></div></div>
+<div class="card"><div class="t">요청 계획·SQL 조회·에이전트 실행</div><div class="n">요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md">기능</a></div></div>
+<div class="card"><div class="t">대화 문맥·후속 질문 처리</div><div class="n">최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md">기능</a></div></div>
+<div class="card"><div class="t">채팅 답변·처리 내역 표시</div><div class="n">본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md">기능</a></div></div>
+</div>
+<div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>
+<div class="card"><div class="t">DB별 예상 질문 검색</div><div class="n">예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md">기능</a></div></div>
+</div>
+<div class="group a4" data-area="a4"><div class="area">위젯·Stage<span>2</span></div>
+<div class="card"><div class="t">위젯 카탈로그·미리보기</div><div class="n">허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md">기능</a></div></div>
+<div class="card"><div class="t">위젯별 현재 데이터 조회</div><div class="n">결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md">기능</a></div></div>
+</div>
+<div class="group a5" data-area="a5"><div class="area">AI 설정<span>1</span></div>
+<div class="card"><div class="t">AI 연결 설정</div><div class="n">Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md">기능</a></div></div>
+</div>
+<div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
+<div class="card"><div class="t">독립 배포·운영 문서 공개</div><div class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md">배포</a></div></div>
+</div></div>
+<div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
+<div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
+<div class="col plan"><div class="col-head"><span class="dot"></span>계획<span class="count">15</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>1</span></div>
+<div class="card"><div class="t">관리자 사용자 관리</div><div class="n">현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</div></div>
+</div>
+<div class="group a1" data-area="a1"><div class="area">DB 연결<span>2</span></div>
+<div class="card"><div class="t">DB 구조 파악(ERD)</div><div class="n">DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</div></div>
+<div class="card"><div class="t">다른 DB 적용 가능성 검토</div><div class="n">PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</div></div>
+</div>
+<div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>2</span></div>
+<div class="card"><div class="t">유사한 과거 대화 표시 여부 결정</div><div class="n">백엔드는 같은 프로젝트의 비슷한 과거 대화를 임베딩으로 찾아 채팅 API <code>related_messages</code>로 반환하지만 프런트가 표시하지 않는다. 표시할지, 기능을 정리할지 결정</div></div>
+<div class="card"><div class="t">LLM 호출 장애 대응</div><div class="n">요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</div></div>
+</div>
+<div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>
+<div class="card"><div class="t">예상 질문 검증</div><div class="n">예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</div></div>
+</div>
+<div class="group a4" data-area="a4"><div class="area">위젯·Stage<span>4</span></div>
+<div class="card"><div class="t">위젯 래퍼</div><div class="n">위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</div></div>
+<div class="card"><div class="t">위젯 옵션</div><div class="n">위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</div></div>
+<div class="card"><div class="t">위젯 표현(옵션) 수정 (채팅·수동)</div><div class="n">생성된 위젯의 표현만 고치려고 질문을 다시 하지 않도록, 이미 만든 위젯을 채팅으로 요청하거나 직접(수동) 조작해 바로 수정하는 방법. 모든 옵션과 전체 변경 이력을 한꺼번에 하지 않는다</div></div>
+<div class="card"><div class="t">위젯 행동</div><div class="n">래퍼끼리 값을 주고받는 구조. 전역 필터·위젯 간 제어·드릴다운은 값을 내보내면 연결된 위젯이 다시 조회하는 같은 동작이다. 조회 정의에 필터를 받을 자리를 마련하는 것이 전제. 추가(2026-10-14): 최소 범위는 같은 위젯의 기간·차원만 바꿔 다시 조회하는 것. 범용 위젯 연결·드릴다운은 필수 아님. 어떤 조건을 반복해서 바꿀지 좁혀 비교한다. 분류 이견: 필요성 높음(Stage 재사용의 핵심) / 범위 판단</div></div>
+</div>
+<div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
+<div class="card"><div class="t">감사 로그</div><div class="n">행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</div></div>
+</div>
+<div class="group a7" data-area="a7"><div class="area">외부 연계<span>4</span></div>
+<div class="card"><div class="t">데이터 반출 필요성 검토</div><div class="n">위젯 조회 결과를 앱 밖에서 써야 하는지와 범위(화면 결과 1000행 한도·전체 결과), 방식(파일·조회 API·반출 없음), 권한 범위 결정</div></div>
+<div class="card"><div class="t">데이터 값 기반 이벤트·훅 필요성 검토</div><div class="n">조회 결과 값이 조건을 만족할 때 이벤트를 발생시키거나 외부 훅을 호출해야 하는지 결정. 필요하면 규칙·판단 이력·중복 억제·전달 채널·웹훅 관리로 확장</div></div>
+<div class="card"><div class="t">정기 리포트</div><div class="n">저장된 위젯 조회를 정해진 때 실행해 결과를 정기적으로 전달. 이벤트·훅과 별도 기능</div></div>
+<div class="card"><div class="t">임베드 필요성 검토</div><div class="n">위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</div></div>
+</div></div></section>
+  <h2>현재 상태와 검증 범위</h2><section class="box"><h2>현재 상태</h2>
+<p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md">stage.md</a>·<a href="features/viewer.md">viewer.md</a>에 유지한다.</p>
+<p>기능 영역: 인증·프로젝트 · DB 연결 · 채팅·에이전트 · 예상 질문 · 위젯·Stage · 외부 연계 · AI 설정 · 배포·운영.</p>
+<h2>검증 기록</h2>
+<p>아래는 기존 기록의 요약이며 이번 정리에서 재실행한 결과가 아니다. 당시 서술 원문은 <a href="temp/progress-history-2026-10-14.md">이전 기록</a>에 보관한다.</p>
+<table><thead><tr><th>시점</th><th>범위</th><th>기록된 결과</th><th>한계</th></tr></thead><tbody>
+<tr><td>10-01</td><td>질문 라우팅</td><td>단위 테스트, 실제 Jev 호출(<code>jev-1.13.0</code>)로 Jev 경로·401 폴백·되묻기 확인</td><td><code>ROUTE_MIN_CONFIDENCE</code> 0.5는 검증 전 초기값</td></tr>
+<tr><td>10-01</td><td>운영 배포 파이프라인</td><td>Actions 테스트·이미지 게시·VPS 실배포, SKAX 운영 DB 복원·권한 등록</td><td>—</td></tr>
+<tr><td>10-06</td><td>프로젝트 분리·운영 전환</td><td>백엔드 81·프런트 4 테스트·빌드, HTTPS·API·기존 계정/프로젝트/대화 보존, 운영 로그인 확인</td><td>실모델 유료 호출 미실행</td></tr>
+<tr><td>10-13</td><td>분석 위젯 4종</td><td>백엔드 124·프런트 14 테스트·빌드, Global Sales 실 DB 조회·Stage·Viewer 표시</td><td>실 LLM 미검증</td></tr>
+<tr><td>10-13</td><td>위젯별 현재 데이터 조회</td><td>백엔드 169 통과·2 실패(일반 대화 기대값), 프런트 23·빌드, 실 DB 7종 조회</td><td>실 LLM·운영 미실행</td></tr>
+<tr><td>10-13</td><td>AI 연결 설정</td><td>백엔드 80·프런트 8 테스트·빌드, 브라우저 Jev 입력·저장·복원</td><td>Jev API는 대역</td></tr>
+<tr><td>10-13</td><td>대화 문맥·IME</td><td>백엔드 70·프런트 4 테스트·빌드</td><td>테스트 대역, 실모델·브라우저 IME 미실행</td></tr>
+<tr><td>10-14</td><td>실모델 동작</td><td>사용자 확인: 에이전트 실행 루프 재구성·일반 대화 경로를 실모델로 확인</td><td>자동 테스트·빌드는 미실행</td></tr>
+</tbody></table></section>
+  <h2>기능 문서</h2><section class="cols2"><div class="box"><h3><a href="dashboard.html#auth">기능: 로그인/세션</a></h3><a href="features/auth.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#projects-conversations">기능: 프로젝트 · 대화</a></h3><a href="features/projects-conversations.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#chat">기능: DB 채팅</a></h3><a href="features/chat.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#widgets-artifact">기능: Artifact / 위젯 카탈로그</a></h3><a href="features/widgets-artifact.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#stage">기능: Stage (핀보드)</a></h3><a href="features/stage.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#viewer">기능: Viewer 화면</a></h3><a href="features/viewer.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a></h3><a href="features/admin.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#similarity-search-design">기능: DB별 예상 질문 유사도 검색</a></h3><a href="features/similarity-search-design.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a></h3><a href="features/graph-rag-sources.md">원문 ↗</a></div></section>
+  <footer><a href="../AGENTS.md">메인규칙</a> · <a href="01-folder-structure.md">폴더 구조</a> · <a href="features/README.md">기능</a> · <a href="progress.md">진행도</a> · <a href="temp/">임시</a>
+    <p>원본에서 생성한 보기다. 서버의 실시간 상태·새 테스트 결과·운영 배포 완료를 자동 판정하지 않는다.</p>
+  </footer>
+</div>
+<script>
+// 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.
+document.querySelectorAll(".chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    const area = chip.dataset.area;
+    document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c === chip));
+    document.querySelectorAll(".group").forEach((g) => g.classList.toggle("hidden", area !== "all" && g.dataset.area !== area));
+  });
+});
+</script>
+</body></html>

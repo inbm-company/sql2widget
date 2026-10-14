@@ -56,6 +56,7 @@ npm run build
 
 로컬 HTML 보기: [칸반](http://localhost:5175/kanban) · [문서 대시보드](http://localhost:5175/docs)
 
+두 HTML은 원본 마크다운에서 `python3 scripts/render_docs.py`로 생성한다(`--check`로 일치 확인).
 로컬 Vite는 `docs/kanban.html`·`docs/dashboard.html`을 `/kanban`·`/docs`로 제공한다.
 이전 HTML 주소와 끝 슬래시 주소는 새 주소로 301 연결한다. Docker Compose는 `docs/`를
 `/docs`에 읽기 전용으로 마운트하며, 직접 `frontend`에서 `npm run dev`를 실행할 때도 지원한다.

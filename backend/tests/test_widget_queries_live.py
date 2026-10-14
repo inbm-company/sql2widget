@@ -24,7 +24,6 @@ def test_live_query_definitions_store_no_results_and_fetch_under_viewer_permissi
     user = {"id": "user_admin", "tenant_id": "tenant_demo", "role": "viewer"}
     connection = connections.get_connection("dbconn_global", user["tenant_id"])
     allowed = connections.allowed_tables_for_role(user["tenant_id"], connection["id"], user["role"])
-    monkeypatch.setattr(agent_service, "get_document_provider", lambda: type("Provider", (), {"search": lambda *a, **k: []})())
     _, artifact = agent_service._materialize_plan({"widgets": [{"component": component, "title": "검증", "sql": sql}]},
         db_url=connections.connection_url(connection), allowed_tables=allowed, message="조회", connection_id=connection["id"])
     definition = artifact["widgets"][0]

@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — Artifact 표시 및 위젯 카탈로그 |
-| 기준일 | 2026-10-14 (설명 답변 본문 표시·채팅 프리뷰 320px) |
+| 기준일 | 2026-10-14 (설명 답변 본문 표시·채팅 프리뷰 320px·SOC 문서 출처 제거) |
 | 관련 문서 | [chat.md](chat.md)(Artifact 생성), [stage.md](stage.md)(Stage로 이동) |
 | 관련 코드 | `backend/app/config.py`(`ALLOWED_COMPONENTS`), `backend/app/agent.py`(`sanitize_artifact`), `backend/app/agent_service.py`(`_materialize_plan`), `backend/app/widget_queries.py`, `backend/app/catalog_props.py`, `backend/app/widget_props.py`(`rows_to_props`), `frontend/src/widgets/QueryWidget.jsx`, `frontend/src/widgets/widgetData.js`, `frontend/src/widgets/catalogSettings.js`, `frontend/src/widgets/DataTable.jsx`, `frontend/src/widgets/tableData.js`, `frontend/src/widgets/CatalogCards.jsx`, `frontend/src/widgets/tanstackCatalogCharts.js`, `frontend/src/widgets/WidgetRenderer.jsx`, `frontend/src/widgets/tanstackBarChart.js`, `frontend/src/widgets/tanstackAnalyticalCharts.js`, `frontend/src/sqlHelpers.js`, `frontend/src/App.jsx`(`AssistantAnswer`, `ArtifactPreviewCard`) |
 
@@ -24,7 +24,7 @@
 채팅은 필요한 SQL 데이터셋을 먼저 생성·실행하고 실제 컬럼·타입·행 수를 받은 뒤 여러 위젯을 선택한다. 같은 결과를 여러 위젯이 공유할 수 있으며 위젯마다 `column_map`으로 역할을 연결한다. 예를 들어 국가·제품·매출 조회 하나로 원본 DataTable과 국가별 매출 BarChart를 만들 수 있다. 실제 도구 호출마다 결과를 받아 다음 작업을 결정하고 각 위젯을 별도로 생성한다. 여러 단계 결과는 하나의 Artifact로 모으며 아래 데이터 없는 정의·위젯별 현재 조회 방식은 유지한다. 자세한 흐름은 [채팅 명세](chat.md#위젯-선택과-sql-생성-분리)를 따른다.
 
 - `MarkdownBlock` 설명을 본문으로 옮긴 뒤 표시할 위젯이 남아 있을 때만 **Widget / JSON** 세그먼트 토글이 뜬다(`AssistantAnswer`). `artifact_id`만 있는 빈 Artifact에는 표시하지 않는다. JSON 복사는 화면에 남은 위젯 정의를 대상으로 한다.
-- 테이블 구조 설명은 전체 채팅 본문으로 반환하며 테이블별 설명·컬럼 표를 본문에서 읽는다. 새 설명 답변과 SOC 출처 기반 해결 방안은 `MarkdownBlock`을 생성하지 않는다. 과거 채팅의 `MarkdownBlock`은 본문에 표시하고, 이미 Stage에 저장된 항목은 호환성을 위해 기존 렌더러로 표시한다. 기존 저장 데이터는 수정하지 않는다.
+- 테이블 구조 설명은 전체 채팅 본문으로 반환하며 테이블별 설명·컬럼 표를 본문에서 읽는다. 새 설명 답변은 `MarkdownBlock`을 생성하지 않는다. 과거 채팅의 `MarkdownBlock`은 본문에 표시하고, 이미 Stage에 저장된 항목은 호환성을 위해 기존 렌더러로 표시한다. 기존 저장 데이터는 수정하지 않는다.
 - Widget 뷰: 위젯마다 `ArtifactPreviewCard` — 제목, 렌더러, (가능하면) SQL 보기 토글, "Add to stage" 버튼.
 - 채팅 미리보기 카드는 테두리·제목을 포함해 높이 320px로 고정한다. 제목 아래 남은 공간을 조회 영역·정적 위젯·SQL 패널이 채우며 새로고침 버튼은 조회 영역 안에 포함된다. Stage·Viewer 위젯은 기존 배치 높이를 따른다.
 - JSON 뷰: Artifact의 위젯 정의를 pretty-print. 조회 결과 행·차트 데이터·KPI 값은 포함하지 않는다.
