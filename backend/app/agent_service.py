@@ -9,6 +9,7 @@ from typing import Any
 from app.agent import sanitize_artifact
 from app.agent_plan import (BudgetExceeded, LOOP_SECONDS, PlanError,
                             SAFETY_STEPS, evaluate, make_plan, model_context, single_step_plan)
+from app.chat_cancellation import cancellation_checkpoint, check_cancelled
 from app import question_similarity, schema_linking
 from app.chat_flow import conversation_flow
 from app.config import ALLOWED_COMPONENTS, DEMO_CUSTOMER_DATABASE_URL
@@ -215,6 +216,7 @@ def _answer_general(
     return content.strip(), {"type": "answer", "widgets": []}, meta
 
 
+@cancellation_checkpoint
 def _run_single(
     message: str,
     *,
@@ -232,6 +234,7 @@ def _run_single(
     original_request: str | None = None,
     deadline: float,
     execution_state: dict[str, int],
+    trace: dict | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any]]:
     meta: dict[str, Any] = {"provider": effective_provider()}
     db_url, used_conn, allowed = _resolve_db_url(tenant_id, connection_id, role=user_role)
@@ -264,6 +267,10 @@ def _run_single(
     for key in ("confidence", "jev_error"):
         if decision.get(key) is not None:
             meta[f"route_{key}"] = decision[key]
+
+    if trace is not None:
+        trace.update({key: meta[key] for key in ("route", "route_source", "route_confidence", "route_candidate")
+                      if key in meta})
 
     if decision["clarify"]:
         return _clarify(
@@ -333,6 +340,7 @@ def _merge_outputs(outputs):
     return content, {"type": "answer", "widgets": []}
 
 
+@cancellation_checkpoint
 def run_agent(
     message: str, *, tenant_id: str, user_id: str, user_role: str = "user",
     conversation_id: str | None = None, connection_id: str | None = None,
@@ -358,6 +366,7 @@ def run_agent(
         meta["plan"] = plan
         pending = list(plan["steps"])
         while pending:
+            check_cancelled()
             step = pending.pop(0)
             if time.monotonic() >= deadline or len(done) >= SAFETY_STEPS:
                 stop, stop_reason = "budget", "실행 시간 또는 단계 한도에 도달했습니다."
@@ -366,28 +375,38 @@ def run_agent(
                 stop, stop_reason = "no_progress", "같은 작업이 반복되어 진행하지 못했습니다."
                 break
             seen.add((step["route"], step["query"]))
+            step_trace = {"query": step["query"], "expected_route": step["route"],
+                          "plan_revision": replans, "status": "error", "verdict": "incomplete",
+                          "reason": "목표 평가를 완료하지 못했습니다."}
+            meta["steps"].append(step_trace)
             try:
                 content, artifact, step_meta = _run_single(step["query"], tenant_id=tenant_id, user_id=user_id,
                     user_role=user_role, conversation_id=conversation_id, connection_id=connection_id,
                     llm_settings=settings, embedding_result=embedding_result if step["query"] == message else None,
                     forced_route=forced_route, project_id=project_id, messages=current_messages,
                     expected_route=step["route"], original_request=message, deadline=deadline,
-                    execution_state=execution_state)
+                    execution_state=execution_state, trace=step_trace)
             except (AgentRunError, DataPlanError) as exc:
                 if not outputs:
                     raise AgentRunError(str(exc)) from exc
+                for key in ("route_source", "route_confidence", "route_candidate"):
+                    meta.pop(key, None)
+                meta.update({key: step_trace[key] for key in ("route", "route_source", "route_confidence", "route_candidate")
+                             if key in step_trace})
                 stop, stop_reason = "incomplete", "남은 단계의 AI 처리 또는 SQL 생성에 실패했습니다."
-                meta["steps"].append({"expected_route": step["route"], "status": "error",
-                                      "verdict": "incomplete", "reason": stop_reason})
+                step_trace.update(status="error", verdict="incomplete", reason=stop_reason)
                 break
             evidence = step_meta.pop("result_evidence", [])
             data_stop = step_meta.pop("data_stop", "done")
             data_reason = step_meta.pop("data_stop_reason", None)
+            for key in ("route_source", "route_confidence", "route_candidate"):
+                meta.pop(key, None)
             meta.update(step_meta)
+            step_trace.update({key: step_meta[key] for key in ("route", "route_source", "route_confidence", "route_candidate")
+                               if key in step_meta})
             if artifact.get("type") == "choices":
                 stop, stop_reason = "clarify", "처리 경로를 확인해야 합니다."
-                meta["steps"].append({"expected_route": step["route"], "route": "clarify",
-                                      "status": "needs_user", "verdict": "pause", "reason": stop_reason})
+                step_trace.update(route="clarify", status="needs_user", verdict="pause", reason=stop_reason)
                 if not outputs:
                     meta["loop_stop"] = "clarify"
                     return content, artifact, meta
@@ -400,11 +419,8 @@ def run_agent(
             outputs.append((content, artifact))
             current_messages.extend([{"role": "user", "content": step["query"]},
                 {"role": "assistant", "content": content, "artifact": artifact, "meta": step_meta}])
-            step_trace = {"route": route, "expected_route": step["route"], "status": "ok",
-                          "verdict": "incomplete", "reason": "목표 평가를 완료하지 못했습니다.",
-                          **{key: step_meta[key] for key in ("widget_selection", "sql_generation", "widget_creation",
-                                                             "actions", "decision_calls") if key in step_meta}}
-            meta["steps"].append(step_trace)
+            step_trace.update(status="ok", **{key: step_meta[key] for key in (
+                "widget_selection", "sql_generation", "widget_creation", "actions", "decision_calls") if key in step_meta})
             if data_stop != "done":
                 stop, stop_reason = data_stop, data_reason or "데이터 조회와 위젯 생성을 완료하지 못했습니다."
                 step_trace.update(status="incomplete", verdict="incomplete", reason=stop_reason)

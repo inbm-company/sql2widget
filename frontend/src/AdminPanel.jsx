@@ -232,6 +232,7 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
               <select value={aiSettings.provider} onChange={(e) => switchProvider(e.target.value)}>
                 <option value="gemini">Gemini</option>
                 <option value="openai">OpenAI 호환</option>
+                <option value="together">Together AI</option>
                 <option value="local">로컬 모델 (OpenAI 호환)</option>
               </select>
             </label>
@@ -253,6 +254,10 @@ export default function AdminPanel({ open, onClose, mode = "admin", projectId, p
               <button type="button" className="ghost" onClick={loadLocalModels} disabled={loadingModels}>{loadingModels ? "불러오는 중…" : "모델 목록 새로고침"}</button>
               {localModelsError ? <p className="muted small">모델 목록을 불러오지 못해 직접 입력합니다: {localModelsError}</p> : null}
               <p className="muted small">Base URL은 백엔드에서 접근할 주소입니다. Docker에서 호스트 서버에 연결할 때는 host.docker.internal을 사용하세요. 임베딩 모델이 없으면 채팅만 사용할 수 있습니다.</p>
+            </> : null}
+            {aiSettings.provider === "together" ? <>
+              <label>Embedding model (전용 엔드포인트, 선택)<input value={aiSettings.embeddingModel} onChange={(e) => setAiForm((f) => ({ ...f, embeddingModel: e.target.value }))} placeholder="사용 가능한 전용 임베딩 모델 ID" /></label>
+              <p className="muted small">Together 서버리스는 임베딩을 제공하지 않습니다. 예상 질문 유사도 검색에는 같은 Base URL에서 호출 가능한 전용 임베딩 모델이 필요합니다.</p>
             </> : null}
             <p className="muted small">설정은 Provider별로 이 브라우저에 저장됩니다. 저장한 Provider를 채팅과 예상 질문 생성·검색에 사용합니다.</p>
             <label>Jev API key<input name="jevApiKey" type="password" value={jevApiKey}

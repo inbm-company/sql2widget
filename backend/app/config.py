@@ -40,8 +40,13 @@ CHAT_VECTOR_DATABASE_URL = env(
 CHAT_EMBEDDING_DIM = int(env("CHAT_EMBEDDING_DIM", "1536"))
 LLM_PROVIDER = env("LLM_PROVIDER", "mock")
 LLM_API_KEY = env("LLM_API_KEY", "")
-LLM_BASE_URL = env("LLM_BASE_URL", "http://host.docker.internal:11434/v1" if LLM_PROVIDER == "local" else "https://api.openai.com/v1")
-LLM_MODEL = env("LLM_MODEL", "" if LLM_PROVIDER == "local" else "gpt-4o-mini")
+LLM_BASE_URL = env("LLM_BASE_URL", {
+    "local": "http://host.docker.internal:11434/v1",
+    "together": "https://api.together.ai/v1",
+}.get(LLM_PROVIDER, "https://api.openai.com/v1"))
+LLM_MODEL = env("LLM_MODEL", {
+    "local": "", "together": "Qwen/Qwen3.5-9B",
+}.get(LLM_PROVIDER, "gpt-4o-mini"))
 LLM_EMBEDDING_MODEL = env("LLM_EMBEDDING_MODEL", "")
 # 채팅 의도 라우팅(TypeSafe Jev). 키가 없으면 라우팅을 일반 LLM이 대신한다.
 TYPESAFE_API_KEY = env("TYPESAFE_API_KEY", "")

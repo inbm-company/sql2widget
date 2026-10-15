@@ -52,6 +52,11 @@
 .chat-trace-evidence blockquote { margin: 6px 0 0; padding-left: 8px; border-left: 2px solid var(--border); white-space: pre-wrap; }
 .chat-trace-evidence blockquote span { display: block; color: var(--muted); margin-bottom: 4px; }
 
+.chat-trace-steps > summary { cursor: pointer; color: var(--ink); }
+.chat-trace-step { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+.chat-trace-step-question { margin: 0 0 4px; font-weight: 500; white-space: pre-wrap; }
+.chat-trace-step-route { color: var(--muted); margin-bottom: 4px; }
+
 /* Thin overlay-style scrollbars */
 * {
   box-sizing: border-box;

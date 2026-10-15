@@ -81,12 +81,16 @@ services:
       DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db:5432/agent4any
       DEMO_CUSTOMER_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-customer:5432/agent4any_customer_demo
       STAGE_GLOBAL_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-stage-global:5432/agent4any_stage_global
+      NORTHWIND_DATABASE_URL: ${NORTHWIND_DATABASE_URL:?Set NORTHWIND_DATABASE_URL}
       SKAX_NMS_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-skax-nms:5432/agent4any_skax_nms
       CHAT_VECTOR_DATABASE_URL: postgresql://agent4any:${POSTGRES_PASSWORD}@db-chat-vector:5432/agent4any_chat_vector
       GRAPH_ENABLED: "false"
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
       CORS_ORIGINS: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
+    networks:
+      - default
+      - northwind
     depends_on:
       db: {condition: service_healthy}
       db-customer: {condition: service_healthy}
@@ -112,6 +116,10 @@ services:
       - ./public-docs:/usr/share/nginx/html/docs:ro
     depends_on:
       backend: {condition: service_healthy}
+networks:
+  northwind:
+    external: true
+    name: ai-performance_default
 volumes:
   pg_data:
   pg_customer_data:

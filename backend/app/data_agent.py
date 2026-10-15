@@ -3,6 +3,7 @@
 import json
 import time
 
+from app.chat_cancellation import check_cancelled
 from app.agent_plan import BudgetExceeded, MAX_REPLANS, PlanError, SAFETY_STEPS, choose_data_action
 from app.data_plan import DataPlanError, MAX_QUERIES, MAX_WIDGETS, generate_sql, select_widgets
 from app.query import QueryError, execute_readonly
@@ -26,6 +27,7 @@ def run_data_agent(message, *, schema, full_schema, history, references, context
     model = {}
     try:
         while True:
+            check_cancelled()
             if time.monotonic() >= deadline:
                 raise BudgetExceeded("실행 시간 또는 작업 호출 한도에 도달했습니다.")
             state = {"queries": [_view(query) for query in queries.values()],

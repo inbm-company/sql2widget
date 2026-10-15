@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from app import config
+from app.chat_cancellation import cancellation_checkpoint
 from app.db import execute
 from app.prompts import SCHEMA_HINT, QUESTION_CATALOG_HINT
 from app.providers import provider_name, resolve_provider
@@ -64,6 +65,7 @@ def _error_message(exc, api_key=""):
     return message.replace("\n", " ")[:500]
 
 
+@cancellation_checkpoint
 def embed_texts(texts: list[str], *, runtime_provider=None, runtime_api_key=None,
                runtime_base_url=None, runtime_embedding_model=None) -> dict[str, Any]:
     if not texts:
@@ -91,6 +93,7 @@ def embed_text(text: str, **settings) -> dict[str, Any]:
     return {**result, "embedding": vectors[0] if vectors else None}
 
 
+@cancellation_checkpoint
 def json_with_llm(
     system_hint: str,
     user_content: dict[str, Any],

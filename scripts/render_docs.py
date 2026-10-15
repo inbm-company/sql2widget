@@ -43,8 +43,10 @@ def web_links(content, documents):
 
 def link_target(target, source):
     """Resolve Markdown-relative links from the generated HTML's docs directory."""
-    if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("#"):
+    if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", target):
         return target
+    if target.startswith("#"):
+        return os.path.relpath(source, DOCS) + target
     path, separator, fragment = target.partition("#")
     return os.path.relpath(source.parent / path, DOCS) + (separator + fragment if separator else "")
 
@@ -86,6 +88,10 @@ def render(markdown, source, document_id=None):
     i = 0
     while i < len(lines):
         line = lines[i]
+        if source == DOCS / "progress.md" and (re.fullmatch(r"작업 ID: `([a-z][a-z0-9-]*)`", line)
+                                                or re.fullmatch(r'<a id="[a-z][a-z0-9-]*"></a>', line)):
+            i += 1
+            continue
         if not line.strip():
             i += 1
             continue
@@ -106,6 +112,10 @@ def render(markdown, source, document_id=None):
             attribute = ""
             if document_id:
                 slug = re.sub(r"[^\w\- ]", "", heading[2].lower()).replace(" ", "-")
+                if document_id == "progress" and level == 3:
+                    task_id = re.search(r"^작업 ID: `([a-z][a-z0-9-]*)`", "\n".join(lines[i + 1:i + 5]), re.MULTILINE)
+                    if task_id:
+                        slug = task_id[1]
                 count = headings.get(slug, 0)
                 headings[slug] = count + 1
                 anchor = f"{document_id}--{slug}" + (f"-{count}" if count else "")
@@ -164,6 +174,33 @@ def feature_documents():
     return documents
 
 
+def task_details(body):
+    """Read task details from progress.md; state and area stay in the status tables."""
+    details = {}
+    for block in re.split(r"(?=^### )", body, flags=re.MULTILINE):
+        if not block.startswith("### "):
+            continue
+        title, _, content = block.partition("\n")
+        identifier = re.search(r"^작업 ID: `([a-z][a-z0-9-]*)`\s*$", content, re.MULTILINE)
+        if not identifier:
+            raise SystemExit(f"작업 상세에 고유 작업 ID가 필요합니다: {title[4:]}")
+        key = identifier[1]
+        if key in details:
+            raise SystemExit(f"중복 작업 ID: {key}")
+        details[key] = (title[4:].strip(), content[:identifier.start()] + content[identifier.end():])
+    return details
+
+
+def task_reference(row, details):
+    """Require an explicit link so a card cannot silently show another task's details."""
+    link = re.fullmatch(r"\[([^\]]+)\]\(#([a-z][a-z0-9-]*)\)", row[1])
+    if not link or link[2] not in details:
+        raise SystemExit(f"표시 카드의 작업 상세 연결을 확인하세요: {row[1]}")
+    if details[link[2]][0] != link[1]:
+        raise SystemExit(f"카드와 상세의 제목이 다릅니다: {row[1]}")
+    return link[1], link[2]
+
+
 def progress_sections():
     source = DOCS / "progress.md"
     sections = {}
@@ -202,6 +239,7 @@ def area_key(area, order):
 def outputs():
     features = feature_documents()
     progress, sections = progress_sections()
+    details = task_details(sections.get("작업 상세", ""))
     counts = {title: len(progress_rows(sections[title])) for title, _ in STATUSES}
     entries = [("1. 메인규칙", [("overview", "프로젝트 목적·기능·규칙", ROOT / "AGENTS.md")]),
                ("2. 폴더 구조", [("structure", "디렉터리와 파일 역할", DOCS / "01-folder-structure.md")]),
@@ -227,6 +265,8 @@ def outputs():
     dashboard = dashboard.replace("{{sections}}", "\n".join(body))
     kpis = []
     columns = []
+    task_templates = []
+    used_tasks = set()
     areas = area_order(sections)
     filters = ['<button type="button" class="chip on" data-area="all">전체</button>']
     filters += [f'<button type="button" class="chip {area_key(area, areas)}" data-area="{area_key(area, areas)}">'
@@ -244,8 +284,19 @@ def outputs():
             cards.append(f'<div class="group {akey}" data-area="{akey}"><div class="area">'
                          + html.escape(area) + f'<span>{len(grouped)}</span></div>')
             for row in grouped:
-                cards.append('<div class="card"><div class="t">' + inline(row[1], progress)
-                             + '</div><div class="n">' + inline(row[2], progress) + '</div></div>')
+                label, task_id = task_reference(row, details)
+                if task_id in used_tasks:
+                    raise SystemExit(f"표시 카드가 작업 ID를 중복 사용합니다: {task_id}")
+                used_tasks.add(task_id)
+                cards.append(f'<button type="button" class="card" data-task="{task_id}" '
+                             + 'aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">'
+                             + html.escape(label) + '</span><span class="n">'
+                             + inline(re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", row[2]), progress)
+                             + '</span><span class="card-more">상세 보기 ↗</span></button>')
+                task_templates.append(f'<template id="task-{task_id}" '
+                                      + f'data-title="{html.escape(label, quote=True)}" '
+                                      + f'data-area="{html.escape(area, quote=True)}" data-status="{title}">'
+                                      + render(details[task_id][1], progress, "task-" + task_id) + '</template>')
             cards.append('</div>')
         if not cards:
             cards.append('<p class="mono">현재 기록된 항목 없음</p>')
@@ -260,7 +311,8 @@ def outputs():
     kanban = (DOCS / "templates/kanban.html").read_text()
     for token, replacement in (("date", date), ("kpis", "\n".join(kpis)), ("filters", "\n".join(filters)),
                                ("board", "\n".join(columns)),
-                               ("summary", summary), ("features", "\n".join(cards))):
+                               ("summary", summary), ("features", "\n".join(cards)),
+                               ("task_details", "\n".join(task_templates))):
         kanban = kanban.replace("{{" + token + "}}", replacement)
     return {DOCS / "dashboard.html": web_links(dashboard, documents_by_path),
             DOCS / "kanban.html": web_links(kanban, documents_by_path)}

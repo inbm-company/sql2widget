@@ -118,6 +118,15 @@ Resolve references from recent_turns; make each query self-contained without
 discarding requested dates, filters, comparisons, metrics, ranking criteria or output types.
 Do not execute writes, create a finished dashboard, or add unrequested tasks.
 Use at most max_steps. Expected routes are advisory and checked again by routing.
+Split by independently requested outcomes, not by punctuation or every clause.
+Keep filters, time ranges, comparisons and requested presentation with the question they qualify.
+Do not merge separate questions just because they use the same route; repeated routes are allowed.
+Keep a comparison of two things as one question when it asks for one comparative result.
+Preserve the requested order, moving a prerequisite before its dependent question only when necessary.
+For a dependent question, state which earlier result it needs; do not invent that result during planning.
+For example, "show this month's sales chart and explain the tables used" needs two steps:
+first the sales chart, then the structure of the tables actually used by that step.
+Each query must preserve the user's language, entities, constraints and requested action.
 """
 
 

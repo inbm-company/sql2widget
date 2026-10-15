@@ -516,6 +516,8 @@ function Workspace({ user, onLogout }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [pendingMessage, setPendingMessage] = useState(null);
+  const chatRequestRef = useRef(null);
+  const [chatNotice, setChatNotice] = useState(null);
   const [chatError, setChatError] = useState("");
   const [newChatError, setNewChatError] = useState("");
   const [adminOpen, setAdminOpen] = useState(false);
@@ -567,6 +569,12 @@ function Workspace({ user, onLogout }) {
     }
   }, [sending]);
 
+  useEffect(() => () => chatRequestRef.current?.abort(), []);
+
+  function stopResponse() {
+    chatRequestRef.current?.abort();
+  }
+
   async function newProject() {
     const project = await api.createProject("새 프로젝트");
     await mutateProjects();
@@ -590,7 +598,11 @@ function Workspace({ user, onLogout }) {
 
   async function sendMessage(text, route = null) {
     const message = text.trim();
-    if (!message || !activeId || sending) return;
+    if (!message || !activeId || chatRequestRef.current) return;
+    const controller = new AbortController();
+    chatRequestRef.current = controller;
+    const requestConversationId = activeId;
+    setChatNotice(null);
     setSending(true);
     setPendingMessage({
       conversationId: activeId,
@@ -600,14 +612,22 @@ function Workspace({ user, onLogout }) {
     setChatError("");
     if (text === input) setInput("");
     try {
-      await api.chat(activeId, message, connectionId || null, route);
+      await api.chat(activeId, message, connectionId || null, route, controller.signal);
       await mutateConv();
       await mutateConvs();
       await swrMutate(storeKeys.stage(activeProjectId));
     } catch (err) {
-      setChatError(err?.message || "응답 생성에 실패했습니다. 다시 시도해 주세요.");
-      if (text === input || !input) setInput(message);
+      if (controller.signal.aborted) {
+        setChatNotice({ conversationId: requestConversationId, text: "응답 생성을 중지했습니다." });
+        // Keep the question already saved by the server, without a duplicate draft.
+        swrMutate(storeKeys.conversation(requestConversationId)).catch(() => {});
+        mutateConvs().catch(() => {});
+      } else {
+        setChatError(err?.message || "응답 생성에 실패했습니다. 다시 시도해 주세요.");
+        if (text === input || !input) setInput(message);
+      }
     } finally {
+      chatRequestRef.current = null;
       setSending(false);
       setPendingMessage(null);
     }
@@ -831,6 +851,7 @@ function Workspace({ user, onLogout }) {
             {canEdit ? (
               <div className="composer-wrap">
                 {chatError ? <p className="error chat-send-error">{chatError}</p> : null}
+                {chatNotice?.conversationId === activeId ? <p className="muted" role="status">{chatNotice.text}</p> : null}
                 <div className="composer-box">
                   <textarea
                     rows={1}
@@ -849,11 +870,12 @@ function Workspace({ user, onLogout }) {
                     <button
                       type="button"
                       className="composer-send"
-                      disabled={sending || !input.trim()}
-                      onClick={send}
-                      aria-label="Send"
+                      disabled={!sending && !input.trim()}
+                      onClick={sending ? stopResponse : send}
+                      aria-label={sending ? "응답 생성 중지" : "Send"}
+                      title={sending ? "응답 생성 중지" : "Send"}
                     >
-                      ↑
+                      {sending ? "■" : "↑"}
                     </button>
                   </div>
                 </div>

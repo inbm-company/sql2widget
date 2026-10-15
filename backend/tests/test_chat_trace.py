@@ -24,3 +24,13 @@ def test_trace_excludes_raw_errors_credentials_and_reference_sql():
     assert message_meta({"provider": "gemini", "route": "clarify"}) == {"route": "clarify"}
 
 
+
+
+def test_actual_subquestions_route_order_and_replans_are_preserved_in_saved_trace():
+    raw = {"route": "general_chat", "steps": [
+        {"query": "원래 질문", "route": "general_chat", "expected_route": "general_chat", "plan_revision": 0},
+        {"query": "재계획 질문", "route": "general_chat", "expected_route": "general_chat", "plan_revision": 1}]}
+    trace = message_meta(raw)
+    assert trace["steps"] == raw["steps"]
+    raw["steps"][1]["query"] = "변경됨"
+    assert trace["steps"][1]["query"] == "재계획 질문"

@@ -4,9 +4,10 @@ from app import config
 from .gemini import GeminiProvider
 from .local import LocalProvider
 from .openai import OpenAIProvider
+from .together import TogetherProvider
 
 ALIASES = {"google": "gemini", "openai_compatible": "openai", "compatible": "openai"}
-PROVIDERS = {"openai": OpenAIProvider, "gemini": GeminiProvider, "local": LocalProvider}
+PROVIDERS = {"openai": OpenAIProvider, "gemini": GeminiProvider, "local": LocalProvider, "together": TogetherProvider}
 
 
 def provider_name(value):
@@ -31,7 +32,7 @@ def resolve_provider(*, runtime_provider=None, runtime_api_key=None, runtime_mod
     return provider_class(
         api_key=runtime_api_key or (config.LLM_API_KEY if use_server_key else ""),
         model=runtime_model or (config.LLM_MODEL if use_server and name != "gemini" else None),
-        base_url=(runtime_base_url if name in {"local", "openai"} else None)
+        base_url=(runtime_base_url if name in {"local", "openai", "together"} else None)
             or (config.LLM_BASE_URL if use_server and name != "gemini" else None),
         embedding_model=embedding_model,
     )

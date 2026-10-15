@@ -71,15 +71,50 @@ async function request(path, options = {}, { retry = true } = {}) {
 
   const controller = new AbortController();
   const timeoutMs = options.timeoutMs ?? 15000;
+  const abortFromCaller = () => controller.abort(options.signal.reason);
+  if (options.signal?.aborted) abortFromCaller();
+  else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers,
-      signal: options.signal || controller.signal,
+      signal: controller.signal,
     });
+
+    if (res.status === 401 && retry && getRefreshToken() && !path.includes("/auth/")) {
+      // Token refresh is shared; cancel only this caller's wait.
+      await new Promise((resolve, reject) => {
+        const abort = () => reject(controller.signal.reason);
+        if (controller.signal.aborted) { abort(); return; }
+        controller.signal.addEventListener("abort", abort, { once: true });
+        const cleanup = () => controller.signal.removeEventListener("abort", abort);
+        refreshAccessToken().then(
+          (token) => { cleanup(); resolve(token); },
+          (err) => { cleanup(); reject(err); },
+        );
+      });
+      return await request(path, options, { retry: false });
+    }
+
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = body.detail || JSON.stringify(body);
+      } catch (err) {
+        if (controller.signal.aborted) throw err;
+      }
+      const err = new Error(detail);
+      err.status = res.status;
+      throw err;
+    }
+
+    if (res.status === 204) return null;
+    return await res.json();
   } catch (err) {
+    if (options.signal?.aborted) throw options.signal.reason;
     if (err?.name === "AbortError") {
       const timeoutErr = new Error(`Request timed out: ${path}`);
       timeoutErr.status = 0;
@@ -88,28 +123,8 @@ async function request(path, options = {}, { retry = true } = {}) {
     throw err;
   } finally {
     clearTimeout(timer);
+    options.signal?.removeEventListener("abort", abortFromCaller);
   }
-
-  if (res.status === 401 && retry && getRefreshToken() && !path.includes("/auth/")) {
-    await refreshAccessToken();
-    return request(path, options, { retry: false });
-  }
-
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const body = await res.json();
-      detail = body.detail || JSON.stringify(body);
-    } catch {
-      /* ignore */
-    }
-    const err = new Error(detail);
-    err.status = res.status;
-    throw err;
-  }
-
-  if (res.status === 204) return null;
-  return res.json();
 }
 
 export const api = {
@@ -149,9 +164,10 @@ export const api = {
     request(`/api/conversations/${id}`, {
       method: "DELETE",
     }),
-  chat: (conversationId, message, connectionId, route = null) =>
+  chat: (conversationId, message, connectionId, route = null, signal = undefined) =>
     request("/api/chat", {
       method: "POST",
+      signal,
       // Allow the 180s agent loop plus embeddings and in-flight request overhead.
       timeoutMs: 360000,
       body: JSON.stringify({

@@ -10,6 +10,7 @@ from psycopg.rows import dict_row
 from app import config, local_models, question_similarity
 from app.agent_service import AgentRunError, run_agent
 from app.chat_trace import message_meta
+from app.chat_cancellation import check_cancelled, run_chat
 from app.auth import (
     create_access_token,
     get_current_user,
@@ -205,7 +206,11 @@ def delete_conversation(conversation_id: str, user=Depends(get_current_user)):
 
 
 @app.post("/api/chat")
-def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
+async def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
+    return await run_chat(request, lambda: _chat(body, request, user))
+
+
+def _chat(body: ChatRequest, request: Request, user):
     conv = conv_repo.get_conversation(body.conversation_id, user["tenant_id"], user["id"])
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -214,6 +219,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     if len(jev_key) > 8192 or "\r" in jev_key or "\n" in jev_key:
         raise HTTPException(status_code=400, detail="Jev API 키는 8,192자 이하의 한 줄 문자열이어야 합니다.")
 
+    check_cancelled()
     user_msg = conv_repo.add_message(body.conversation_id, "user", body.message, None)
     conv_repo.touch_title_from_message(body.conversation_id, body.message)
 
@@ -235,6 +241,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         runtime_base_url=llm_settings["base_url"] or None,
         runtime_embedding_model=llm_settings["embedding_model"],
     )
+    check_cancelled()
     if embed_result["embedding"]:
         related_messages = embed_repo.search_similar(
             user["tenant_id"], embed_result["embedding"], limit=5
@@ -250,6 +257,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
     elif embed_result["error"]:
         embedding_error = embed_result["error"]
 
+    check_cancelled()
     try:
         summary, artifact, meta = run_agent(
             body.message,
@@ -266,10 +274,7 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    assistant_msg = conv_repo.add_message(
-        body.conversation_id, "assistant", summary, artifact, meta=message_meta(meta)
-    )
-
+    check_cancelled()
     assistant_embed = embed_text(
         summary,
         runtime_provider=llm_settings["provider"] or None,
@@ -277,6 +282,11 @@ def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
         runtime_base_url=llm_settings["base_url"] or None,
         runtime_embedding_model=llm_settings["embedding_model"],
     )
+    check_cancelled()
+    assistant_msg = conv_repo.add_message(
+        body.conversation_id, "assistant", summary, artifact, meta=message_meta(meta)
+    )
+
     if assistant_embed["embedding"]:
         embed_repo.upsert_embedding(
             tenant_id=user["tenant_id"],

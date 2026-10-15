@@ -30,7 +30,7 @@
 | Artifact/위젯 표시 | 허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
 | Stage 배치 | 채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, `react-grid-layout`으로 이동·리사이즈, 조회 정의·배치 자동 저장·새로고침 후 현재 데이터 조회 | [stage.md](docs/features/stage.md) |
 | Viewer 전용 화면 | `/p/{projectId}/view` — 채팅·편집 없이 Stage만 읽기 전용으로 표시 | [viewer.md](docs/features/viewer.md) |
-| 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지 | [admin.md](docs/features/admin.md) |
+| 관리자 — DB 연결/권한/AI 설정 | 고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 Gemini/OpenAI/Together/로컬 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지 | [admin.md](docs/features/admin.md) |
 
 데모 데이터셋은 두 개이며 동등하게 취급한다: `dbconn_demo`(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), `dbconn_global`(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(`cinamon`, `dbconn_skax_nms`)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.
 
@@ -156,6 +156,7 @@
 - 새 파일명은 영문 kebab-case (`01-folder-structure.md`, `features/chat.md`). 기존 한국어 파일명(`기능명세서.md` 등)은 대체되며 신규 명명 규칙을 따르지 않는다.
 - 기능 문서는 `docs/기능명세서.md`의 관례를 유지: **기획이 아니라 현재 동작하는 구현이 기준.** 코드와 문서가 다르면 코드가 맞다.
 - `docs/progress.md`의 상태 라벨은 4종으로 고정: `완료` / `진행 중` / `검증 대기` / `계획`. 각 행은 `영역 | 항목 | 내용 | 칸반` 4열이며 영역은 칸반 필터가 된다. `칸반` 열은 `표시`/`미표시`로, 기능 단위 항목만 `표시`하고 세부 변경 기록은 `미표시`로 둔다.
+- 표시 카드의 항목은 `[제목](#작업-id)`로 같은 문서의 `## 작업 상세`에 연결한다. 상세는 `### 제목` 다음에 `작업 ID:`와 백틱으로 감싼 영문 ID를 적고, 같은 ID의 Markdown 앵커를 둔다. ID는 제목·상태 변경에도 유지한다. 상태·영역은 상태 표에서만 관리하고 계획의 범위안·미정 정책·완료 기준안을 확정된 구현과 구분한다.
 - 각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).
 
 ---

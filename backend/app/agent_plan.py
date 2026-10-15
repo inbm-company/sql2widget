@@ -42,7 +42,7 @@ def _steps(raw, fallback_query):
     for item in raw:
         if not isinstance(item, dict) or item.get("route") not in ANSWER_ROUTES:
             raise PlanError("계획에 지원하지 않는 처리 경로가 있습니다.")
-        query = item.get("query") or fallback_query
+        query = item.get("query") or (fallback_query if len(raw) == 1 else None)
         if not isinstance(query, str) or not query.strip():
             raise PlanError("계획 단계의 질문이 비어 있습니다.")
         steps.append({"route": item["route"], "query": query.strip(),

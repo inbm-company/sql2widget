@@ -185,6 +185,37 @@
       body { background: #fff; }
       .wrap { padding: 0; }
     }
+    .card { display: block; width: 100%; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+    .card .t, .card .n { display: block; }
+    .card .n { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    .card:hover { border-color: var(--ac, var(--blue)); }
+    .card:focus-visible, .task-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .card-more { display: block; margin-top: 8px; font-size: 11px; color: var(--blue); }
+    body.task-open { overflow: hidden; }
+    .task-dialog {
+      position: fixed; inset: 0 0 0 auto; margin: 0; border: 0; border-left: 1px solid var(--line);
+      padding: 0; width: min(760px, 100vw); max-width: none; height: 100dvh; max-height: none;
+      color: var(--ink); background: var(--card); box-shadow: -12px 0 40px rgba(0,0,0,0.12);
+    }
+    .task-dialog[open] { display: flex; flex-direction: column; }
+    .task-dialog::backdrop { background: rgba(0,0,0,0.25); }
+    .task-head { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-bottom: 1px solid var(--line); }
+    .task-heading { flex: 1; min-width: 0; }
+    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 12px; }
+    .task-title { margin: 0; color: var(--ink); font-size: 22px; line-height: 1.4; letter-spacing: -0.02em; }
+    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; cursor: pointer; }
+    .task-body { flex: 1; min-height: 0; padding: 24px 28px 48px; overflow: auto; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
+    .task-body h4 { margin: 26px 0 10px; font-size: 16px; }
+    .task-body h4:first-child { margin-top: 0; }
+    .task-body p { margin: 0 0 14px; }
+    .task-body ul, .task-body ol { margin: 0 0 18px; padding-left: 22px; }
+    .task-body a { color: var(--blue); }
+    .task-body pre { padding: 14px; background: var(--paper); overflow: auto; border-radius: 6px; }
+    .task-body code { font-size: 0.9em; background: var(--paper); padding: 1px 4px; border-radius: 3px; }
+    .task-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-body th, .task-body td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    @media (max-width: 640px) { .task-head { padding: 18px; } .task-body { padding: 20px 18px 36px; } }
+    @media print { .task-dialog[open] { display: none; } }
   </style><script>
 // 짧은 운영 주소에서도 기존 문서 상대 링크를 유지한다. 로컬 HTML 보기는 그대로 둔다.
 if (location.pathname === "/kanban" || location.pathname === "/docs") {
@@ -221,7 +252,49 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
     <p>원본에서 생성한 보기다. 서버의 실시간 상태·새 테스트 결과·운영 배포 완료를 자동 판정하지 않는다.</p>
   </footer>
 </div>
+<dialog class="task-dialog" id="taskDialog" aria-labelledby="taskTitle" aria-describedby="taskMeta">
+  <div class="task-head">
+    <div class="task-heading"><p class="task-meta" id="taskMeta"></p><h3 class="task-title" id="taskTitle"></h3></div>
+    <button type="button" class="task-close" id="taskClose" aria-label="상세 닫기">닫기 ×</button>
+  </div>
+  <div class="task-body" id="taskBody"></div>
+</dialog>
+{{task_details}}
 <script>
+// 카드 요약과 progress.md의 상세를 같은 작업 ID로 연결한다.
+const taskDialog = document.getElementById("taskDialog");
+const taskBody = document.getElementById("taskBody");
+let openedCard = null;
+document.querySelector(".board").addEventListener("click", (event) => {
+  const card = event.target.closest("button[data-task]");
+  if (!card) return;
+  const detail = document.getElementById("task-" + card.dataset.task);
+  if (!detail) return;
+  openedCard = card;
+  document.getElementById("taskTitle").textContent = detail.dataset.title;
+  document.getElementById("taskMeta").textContent = detail.dataset.status + " · " + detail.dataset.area;
+  taskBody.replaceChildren(detail.content.cloneNode(true));
+  if (location.pathname === "/kanban" || location.pathname === "/docs") {
+    taskBody.querySelectorAll("a[data-web-href]").forEach((link) => {
+      link.setAttribute("href", link.dataset.webHref);
+    });
+  }
+  taskBody.scrollTop = 0;
+  document.body.classList.add("task-open");
+  taskDialog.showModal();
+});
+document.getElementById("taskClose").addEventListener("click", () => taskDialog.close());
+taskDialog.addEventListener("click", (event) => {
+  if (event.target !== taskDialog) return;
+  const bounds = taskDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+    taskDialog.close();
+  }
+});
+taskDialog.addEventListener("close", () => {
+  document.body.classList.remove("task-open");
+  if (openedCard) openedCard.focus({ preventScroll: true });
+});
 // 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.
 document.querySelectorAll(".chip").forEach((chip) => {
   chip.addEventListener("click", () => {

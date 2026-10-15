@@ -3,12 +3,16 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | sql2widget 폴더 구조 |
-| 기준일 | 2026-10-14 |
+| 기준일 | 2026-10-15 |
 | 관련 문서 | [AGENTS](../AGENTS.md), [기능 색인](features/README.md) |
 
 | 경로 | 역할 |
 |------|------|
+| `backend/app/providers/together.py`, `backend/tests/test_together_provider.py` | Together OpenAI 호환 어댑터·임베딩 제약, 공급자/URL별 키 격리·JSON 요청·전용 임베딩 차원 회귀 검사 |
 | `backend/app/main.py` | 이 앱의 인증·프로젝트·대화·채팅 API와 DB/Stage API |
+| `backend/tests/test_question_plan.py`, `frontend/tests/chatTrace.test.js` | 하위 질문 조건 보존·누락 거부, 경로 순서/반복과 재계획 질문 표시 회귀 검사 |
+| `backend/tests/test_question_steps.py` | 여러 질문 실행·동일 경로 복귀·부분 실패·되묻기·재계획 질문 연결 검사(모델/DB 대역) |
+| `backend/app/chat_cancellation.py` | 채팅 연결 종료 감지·요청별 취소 신호·동기 작업 경계 확인 |
 | `backend/app/agent_service.py` | 계획·단계별 분류/실행·평가·재계획 루프와 결과 병합, data_query/schema_qa/general_chat 실행 |
 | `backend/app/agent_plan.py` | 원래 요청의 단계 계획·목표 평가·재계획 결정, 모델 시간 예산과 루프 상한 |
 | `backend/app/data_plan.py` | 독립 SQL 데이터셋 생성과 실행 결과 기반 복수 위젯 선택의 별도 모델 호출·검증 |
@@ -50,6 +54,7 @@
 | `docs/features/`, `docs/progress.md` | 구현 명세·현재 상태 |
 | `docs/dashboard.html`, `docs/kanban.html` | `scripts/render_docs.py`가 위 마크다운에서 생성한 HTML. 직접 수정하지 않음 |
 | `docs/templates/` | 두 HTML의 틀(스타일·영역 필터 스크립트) |
+| `scripts/test_render_docs.py` | 작업 ID·제목/상세 연결·중복/누락 거부·카드 템플릿 연결의 생성기 회귀 테스트 |
 | `docs/temp/` | 보관 기록. 진행도 이전 형식의 히스토리(`progress-history-2026-10-14.md`) |
 | `scripts/render_docs.py` | 마크다운에서 두 HTML 생성·제목 앵커와 웹 문서 링크 지정, `--check`로 동기화 검사. 외부 의존성 없음 |
 | `docs/project-separation-proposal.md` | 합의된 범위·기능 소유권·구현 결과 |

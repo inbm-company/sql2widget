@@ -82,7 +82,7 @@
 
   main {
     flex: 1 1 auto; min-width: 0;
-    padding: 48px 56px 120px; max-width: 880px;
+    padding: 48px 56px 120px;
   }
   .doc-meta {
     font-size: 12px; color: var(--mute); margin-bottom: 4px;
@@ -139,7 +139,7 @@
   .page-nav .to-top { color: var(--mute); }
 
   footer.doc-footer {
-    max-width: 880px; margin: 0 56px; padding: 24px 0 80px; color: var(--mute); font-size: 12px;
+    margin: 0 56px; padding: 24px 0 80px; color: var(--mute); font-size: 12px;
   }
 
   @media (max-width: 900px) {
@@ -225,7 +225,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td>Artifact/위젯 표시</td><td>허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td><td><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">widgets-artifact.md</a></td></tr>
 <tr><td>Stage 배치</td><td>채팅 카드를 드래그하거나 버튼으로 프로젝트의 Stage(핀보드)에 추가, <code>react-grid-layout</code>으로 이동·리사이즈, 조회 정의·배치 자동 저장·새로고침 후 현재 데이터 조회</td><td><a href="features/stage.md" data-web-href="/docs#stage">stage.md</a></td></tr>
 <tr><td>Viewer 전용 화면</td><td><code>/p/{projectId}/view</code> — 채팅·편집 없이 Stage만 읽기 전용으로 표시</td><td><a href="features/viewer.md" data-web-href="/docs#viewer">viewer.md</a></td></tr>
-<tr><td>관리자 — DB 연결/권한/AI 설정</td><td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지</td><td><a href="features/admin.md" data-web-href="/docs#admin">admin.md</a></td></tr>
+<tr><td>관리자 — DB 연결/권한/AI 설정</td><td>고객 PostgreSQL 연결 등록·테스트·테이블 권한, 브라우저별 Gemini/OpenAI/Together/로컬 AI 연결 설정과 Provider 공통 Jev 키 입력·저장. Gemini 기본 모델은 gemini-3.8-flash이며 저장된 3.6 모델·키는 유지</td><td><a href="features/admin.md" data-web-href="/docs#admin">admin.md</a></td></tr>
 </tbody></table>
 <p>데모 데이터셋은 두 개이며 동등하게 취급한다: <code>dbconn_demo</code>(SOC 보안 — 서버/공격/인시던트/취약점/차단IP), <code>dbconn_global</code>(Global Sales — 지역/제품/월별매출). 로컬 개발용으로 Northwind, SKAX NMS 샘플 DB도 함께 시드된다. SKAX NMS(<code>cinamon</code>, <code>dbconn_skax_nms</code>)는 운영에도 별도 DB·영속 볼륨으로 복원하고 연결·역할 권한을 자동 등록한다.</p>
 <p>문서 업로드·엔티티 추출·문서 채팅·그래프 화면은 독립 <code>doc2graph</code>로 이동했다. 최소 그래프 기반은 <code>backend/app/graph_backend.py</code>에만 남겼으며 기본 미사용·UI 비표시다. 로컬 실행은 <code>.env.local</code>과 <code>sql2widget-local</code> Compose 이름으로 새 데이터를 사용한다. 토큰 issuer/브라우저 설정 키도 앱별로 분리했다.</p>
@@ -328,6 +328,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <li>새 파일명은 영문 kebab-case (<code>01-folder-structure.md</code>, <code>features/chat.md</code>). 기존 한국어 파일명(<code>기능명세서.md</code> 등)은 대체되며 신규 명명 규칙을 따르지 않는다.</li>
 <li>기능 문서는 <code>docs/기능명세서.md</code>의 관례를 유지: <strong>기획이 아니라 현재 동작하는 구현이 기준.</strong> 코드와 문서가 다르면 코드가 맞다.</li>
 <li><code>docs/progress.md</code>의 상태 라벨은 4종으로 고정: <code>완료</code> / <code>진행 중</code> / <code>검증 대기</code> / <code>계획</code>. 각 행은 <code>영역 | 항목 | 내용 | 칸반</code> 4열이며 영역은 칸반 필터가 된다. <code>칸반</code> 열은 <code>표시</code>/<code>미표시</code>로, 기능 단위 항목만 <code>표시</code>하고 세부 변경 기록은 <code>미표시</code>로 둔다.</li>
+<li>표시 카드의 항목은 <code>[제목](#작업-id)</code>로 같은 문서의 <code>## 작업 상세</code>에 연결한다. 상세는 <code>### 제목</code> 다음에 <code>작업 ID:</code>와 백틱으로 감싼 영문 ID를 적고, 같은 ID의 Markdown 앵커를 둔다. ID는 제목·상태 변경에도 유지한다. 상태·영역은 상태 표에서만 관리하고 계획의 범위안·미정 정책·완료 기준안을 확정된 구현과 구분한다.</li>
 <li>각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).</li>
 </ul>
 <hr>
@@ -338,11 +339,15 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <h1 id="structure--sql2widget-폴더-구조">sql2widget 폴더 구조</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>sql2widget 폴더 구조</td></tr>
-<tr><td>기준일</td><td>2026-10-14</td></tr>
+<tr><td>기준일</td><td>2026-10-15</td></tr>
 <tr><td>관련 문서</td><td><a href="../AGENTS.md" data-web-href="/docs#overview">AGENTS</a>, <a href="features/README.md" data-web-href="/docs#feature-index">기능 색인</a></td></tr>
 </tbody></table>
 <table><thead><tr><th>경로</th><th>역할</th></tr></thead><tbody>
+<tr><td><code>backend/app/providers/together.py</code>, <code>backend/tests/test_together_provider.py</code></td><td>Together OpenAI 호환 어댑터·임베딩 제약, 공급자/URL별 키 격리·JSON 요청·전용 임베딩 차원 회귀 검사</td></tr>
 <tr><td><code>backend/app/main.py</code></td><td>이 앱의 인증·프로젝트·대화·채팅 API와 DB/Stage API</td></tr>
+<tr><td><code>backend/tests/test_question_plan.py</code>, <code>frontend/tests/chatTrace.test.js</code></td><td>하위 질문 조건 보존·누락 거부, 경로 순서/반복과 재계획 질문 표시 회귀 검사</td></tr>
+<tr><td><code>backend/tests/test_question_steps.py</code></td><td>여러 질문 실행·동일 경로 복귀·부분 실패·되묻기·재계획 질문 연결 검사(모델/DB 대역)</td></tr>
+<tr><td><code>backend/app/chat_cancellation.py</code></td><td>채팅 연결 종료 감지·요청별 취소 신호·동기 작업 경계 확인</td></tr>
 <tr><td><code>backend/app/agent_service.py</code></td><td>계획·단계별 분류/실행·평가·재계획 루프와 결과 병합, data_query/schema_qa/general_chat 실행</td></tr>
 <tr><td><code>backend/app/agent_plan.py</code></td><td>원래 요청의 단계 계획·목표 평가·재계획 결정, 모델 시간 예산과 루프 상한</td></tr>
 <tr><td><code>backend/app/data_plan.py</code></td><td>독립 SQL 데이터셋 생성과 실행 결과 기반 복수 위젯 선택의 별도 모델 호출·검증</td></tr>
@@ -384,6 +389,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td><code>docs/features/</code>, <code>docs/progress.md</code></td><td>구현 명세·현재 상태</td></tr>
 <tr><td><code>docs/dashboard.html</code>, <code>docs/kanban.html</code></td><td><code>scripts/render_docs.py</code>가 위 마크다운에서 생성한 HTML. 직접 수정하지 않음</td></tr>
 <tr><td><code>docs/templates/</code></td><td>두 HTML의 틀(스타일·영역 필터 스크립트)</td></tr>
+<tr><td><code>scripts/test_render_docs.py</code></td><td>작업 ID·제목/상세 연결·중복/누락 거부·카드 템플릿 연결의 생성기 회귀 테스트</td></tr>
 <tr><td><code>docs/temp/</code></td><td>보관 기록. 진행도 이전 형식의 히스토리(<code>progress-history-2026-10-14.md</code>)</td></tr>
 <tr><td><code>scripts/render_docs.py</code></td><td>마크다운에서 두 HTML 생성·제목 앵커와 웹 문서 링크 지정, <code>--check</code>로 동기화 검사. 외부 의존성 없음</td></tr>
 <tr><td><code>docs/project-separation-proposal.md</code></td><td>합의된 범위·기능 소유권·구현 결과</td></tr>
@@ -550,7 +556,7 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <h1 id="chat--기능-db-채팅">기능: DB 채팅</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능: DB 채팅</td></tr>
-<tr><td>기준일</td><td>2026-10-14 (설명 답변 본문 표시·대기 질문 중복 표시 수정·SOC 문서 출처 제거)</td></tr>
+<tr><td>기준일</td><td>2026-10-15 (질문 분리·실행 경로 순서·위젯 생성 표시명·채팅 중지)</td></tr>
 <tr><td>관련 문서</td><td><a href="../README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/README.md">README</a>, <a href="features/README.md" data-web-href="/docs#feature-index">기능 색인</a></td></tr>
 </tbody></table>
 <h2 id="chat--db-선택과-질문">DB 선택과 질문</h2>
@@ -608,6 +614,30 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <p>기존 메시지 임베딩 저장·검색과 <code>related_messages</code> 응답은 A에 유지한다. 예상 질문용 <code>question_catalog</code>와는 별개다. 프런트엔드는 related_messages를 아직 표시하지 않는다.</p>
 <p>Provider별 브라우저 AI 설정은 <code>sql2widget_ai_settings</code>에 보관하고 <code>X-LLM-*</code> 헤더로 요청한다. 모델 키가 없거나 호출이 실패하면 추측 응답 대신 오류를 표시한다.</p>
 <p>같은 설정의 Provider 공통 <code>jevApiKey</code>는 AI 설정 패널의 <code>Jev API key</code> 입력란에서 저장하고 채팅의 <code>X-Jev-API-Key</code> 헤더로만 전달한다. 요청 키를 우선 사용하며 빈 값·헤더 생략 시 서버 <code>TYPESAFE_API_KEY</code>를 사용한다. Jev 키는 모델 프롬프트나 대화 기록에 저장하지 않는다. 길이·줄바꿈 형식 오류는 메시지를 저장하기 전에 HTTP 400으로 거부한다. 자세한 동작은 <a href="features/admin.md#jev-의도-분류-연결" data-web-href="/docs#admin--jev-의도-분류-연결">Jev 의도 분류 연결</a>을 따른다.</p>
+<h2 id="chat--응답-생성-중지">응답 생성 중지</h2>
+<ul>
+<li>응답 생성 중 전송 버튼은 <code>■</code> 중지 버튼으로 바뀐다. 마우스·키보드로 실행할 수 있고 접근성 이름은 “응답 생성 중지”다. 다른 대화로 이동해도 이 버튼은 현재 진행 중인 요청을 중지한다.</li>
+<li>중지는 채팅 HTTP 요청을 취소하고 대기 표시를 해제한다. 실패/시간 초과 오류나 질문 자동 재입력 대신 “응답 생성을 중지했습니다”를 해당 대화에 표시한다. 다음 질문으로 입력 중인 내용과 서버에 이미 저장된 사용자 질문은 유지한다. 로그아웃·화면 종료 시에도 진행 중 요청을 취소한다.</li>
+<li>서버는 연결 종료를 감지해 요청별 취소 신호를 설정한다. 모델/Jev 호출 전후·에이전트 단계 경계·답변 저장 전에 확인해 후속 실행·재시도와 취소된 답변 저장을 막는다. 다른 요청에는 영향을 주지 않는다. 취소 처리의 서버 상태 코드는 499이며 브라우저에서는 요청 취소로 처리한다.</li>
+<li>이미 진행 중인 동기 모델 호출·검색·DB 조회는 즉시 강제 종료하지 않는다. 해당 작업이 반환한 뒤 다음 경계에서 멈추므로 진행 중 호출의 비용까지 되돌리지는 않는다. 이미 완료·저장된 결과는 유지하며 완료와 중지가 겹치면 완료된 답변이 보일 수 있다. 요청 시간 제한은 중지 신호와 함께 유지한다.</li>
+<li>취소 회귀 테스트는 작성했으며 실행·빌드·브라우저 확인은 사용자 승인 대기다.</li>
+</ul>
+<h2 id="chat--처리-내역의-질문별-경로-표시">처리 내역의 질문별 경로 표시</h2>
+<ul>
+<li>SQL 조회부터 위젯 생성까지 수행하는 <code>data_query</code> 경로는 처리 내역의 요약·경로 순서·단계별 실제/예상 경로에서 “위젯 생성”으로 표시한다. 내부 경로 식별자와 분류·실행 방식은 유지하며 과거 기록에도 같은 표시명을 적용한다. 경로 번호는 하위 질문의 실행 순서이며 위젯 생성 개수나 개별 도구 호출 순서가 아니다.</li>
+<li>답변 완료 후 처리 내역의 요약과 “경로 순서”에는 실제 단계 순서대로 <code>1. 경로 A → 2. 경로 B → 3. 경로 A</code>를 표시한다. 같은 경로의 연속 실행·이전 경로로 복귀도 생략하거나 합치지 않는다. 실행 경로를 모르는 과거 실패 단계는 “경로 미기록”으로 남기며 예상 경로를 실제 선택으로 대신하지 않는다. 여러 단계일 때 상단 분류 방식은 마지막 단계의 값임을 표시하고 새 기록은 각 단계의 분류 방식도 함께 표시한다.</li>
+<li>실행 단계는 기본적으로 접혀 있고 “N개 단계 · 질문별 경로 보기”를 눌러 펼치거나 다시 접는다. 질문·실제 경로·예상 경로와의 차이·평가 결과·기존 상세 내역을 함께 확인한다. 종료 상태는 접어도 보인다.</li>
+<li>질문은 실행 기록의 <code>query</code>를 우선 표시한다. 기존 기록에 이 값이 없으면 재계획이 없고 같은 순서의 계획 경로가 실행 기록의 예상 경로와 일치하는 경우에만 계획의 질문을 사용한다. 재계획·누락 등으로 연결을 확인할 수 없으면 “질문 내용 미기록”으로 표시하며 질문을 추측하지 않는다.</li>
+<li>새 실행 기록 <code>meta.steps[]</code>에는 실제 하위 질문 <code>query</code>, 예상 경로 <code>expected_route</code>, 실제 경로 <code>route</code>, 분류 방식 <code>route_source</code>, 있는 경우 확신도 <code>route_confidence</code>, 최초 계획/재계획 차수 <code>plan_revision</code>을 남긴다. 되묻기 단계에도 질문을 기록하며 sql2widget의 부분 실패는 실패 전 확정한 경로를 보존한다. 응답·저장된 처리 내역에 동일하게 반영한다. 과거 데이터를 일괄 변환하지 않는다. 실시간 진행 표시는 추가하지 않는다.</li>
+</ul>
+<h2 id="chat--질문-분리와-단계-연결">질문 분리와 단계 연결</h2>
+<ul>
+<li>자동 계획은 문장 기호보다 독립적으로 요구한 결과를 기준으로 하위 질문을 나눈다. 같은 경로라도 서로 다른 질문은 별도 단계로 보존한다. 하나의 비교 결과를 요구한 질문은 비교 대상마다 나누지 않으며 날짜·조건·지표·원하는 표현 방식은 해당 질문에 유지한다.</li>
+<li>사용자 요청 순서를 유지하되 뒤 질문이 앞 결과를 필요로 하면 선행 작업부터 실행한다. 계획에서는 필요한 앞 결과를 명시하고 그 값을 지어내지 않는다. 문서/DB 조회와 일반 개념 설명이 섞인 요청도 각각의 질문으로 나눌 수 있으며 매 단계 실제 경로를 다시 분류한다.</li>
+<li>각 단계는 실제 하위 질문을 실행 기록에 직접 남긴다. 재계획으로 최초 계획과 실행 순서가 달라져도 질문과 경로의 연결을 유지한다. 다단계 계획에 질문이 빠졌으면 전체 원문을 임의로 복사해 여러 번 실행하지 않고 계획 오류로 처리한다. doc2graph의 다단계 질문을 500자에서 자르던 제한은 제거해 뒤 조건을 보존한다. 계획 단계 수 한도·자동 승인 금지·사용자가 직접 선택한 경로의 제약은 유지한다.</li>
+<li>같은 요청 안에서 완료된 질문·답변·위젯 정의는 기존 같은 DB 대화 문맥을 통해 다음 단계에 전달한다. SQL 데이터셋·위젯 생성 도구 호출은 하위 질문 내부 작업이며 질문 분리 단계 수와 구분한다.</li>
+<li>질문 분리·경로 반복/복귀·재계획·되묻기·저장 보존 회귀 테스트를 작성했다. 이번 변경의 테스트·검증용 빌드·브라우저 확인·실모델 호출은 실행하지 않았으며 다음 검증 단계로 남긴다. <a href="temp/chat-question-routing-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-question-routing-2026-10-15.md">작업 기록</a>을 참고한다.</li>
+</ul>
 </section>
 <section id="widgets-artifact">
 <h1 id="widgets-artifact--기능-artifact--위젯-카탈로그">기능: Artifact / 위젯 카탈로그</h1>
@@ -848,7 +878,7 @@ stage_widgets(
 <h1 id="admin--기능-관리자--db-연결--테이블-권한--ai-설정">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능 문서 — 관리자 패널</td></tr>
-<tr><td>기준일</td><td>2026-10-14 (Gemini 3.8 기본 모델 포함)</td></tr>
+<tr><td>기준일</td><td>2026-10-15 (Together AI 추가)</td></tr>
 <tr><td>관련 문서</td><td><a href="features/chat.md" data-web-href="/docs#chat">chat.md</a>(연결·권한·AI 설정이 실제로 쓰이는 곳)</td></tr>
 <tr><td>관련 코드</td><td><code>backend/app/repositories/connections.py</code>, <code>backend/app/crypto.py</code>, <code>backend/app/local_models.py</code>, <code>backend/app/main.py</code>(<code>/api/ai/local-models</code>, <code>/api/database-connections*</code>, <code>/api/table-permissions</code>), <code>frontend/src/AdminPanel.jsx</code>, <code>frontend/src/api.js</code>(<code>getAiSettings</code>/<code>setAiSettings</code>)</td></tr>
 </tbody></table>
@@ -883,11 +913,11 @@ stage_widgets(
 <li><code>schema_metadata()</code>가 이 허용 테이블만 골라 <code>information_schema</code>에서 컬럼·PK·FK를 읽어 실 LLM 프롬프트용 스키마 텍스트를 만든다 — 데이터 행은 절대 읽지 않는다.</li>
 </ul>
 <h2 id="admin--ai-연결-설정-브라우저-로컬">AI 연결 설정 (브라우저 로컬)</h2>
-<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, local }, jevApiKey }</code> 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
+<p>Admin 또는 별도 AI 설정 패널에서 Gemini, OpenAI 호환, Together AI, 로컬 모델을 선택한다. 설정은 이 브라우저의 <code>localStorage</code>(<code>sql2widget_ai_settings</code>)에 <code>{ provider, profiles: { gemini, openai, together, local }, jevApiKey }</code> 형태로 저장한다. 모델·키는 Provider별 프로필에, Jev 키는 최상위 공통 설정에 보관한다. Provider를 바꾸면 해당 설정을 불러오며 모델·키를 다른 Provider로 복사하지 않는다. 미저장 입력은 패널 안에서 Provider별로 유지하고, <strong>AI 설정 저장</strong>을 누른 Provider를 요청에 사용한다. 기존 단일 설정은 원래 Provider의 프로필로 읽어 보존한다.</p>
 <table><thead><tr><th>필드</th><th>동작</th></tr></thead><tbody>
-<tr><td>Provider</td><td>Gemini / OpenAI 호환 / 로컬 모델(OpenAI 호환)</td></tr>
-<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.8-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
-<tr><td>Base URL</td><td>OpenAI·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
+<tr><td>Provider</td><td>Gemini / OpenAI 호환 / Together AI / 로컬 모델(OpenAI 호환)</td></tr>
+<tr><td>Model</td><td>Gemini 기본 <code>gemini-3.8-flash</code>, OpenAI 기본 <code>gpt-4o-mini</code>, Together 기본 <code>Qwen/Qwen3.5-9B</code>, 로컬은 서버의 <code>/models</code> 목록에서 선택(조회 실패 시 직접 입력)</td></tr>
+<tr><td>Base URL</td><td>OpenAI·Together·로컬에서 입력 가능. 로컬 기본 <code>http://host.docker.internal:11434/v1</code>, Gemini는 Google 호환 URL 고정</td></tr>
 <tr><td>API key</td><td><code>type=&quot;password&quot;</code>, 로컬에서는 선택 사항</td></tr>
 <tr><td>Embedding model</td><td>로컬에서 같은 목록에서 선택(선택 사항, 조회 실패 시 직접 입력). 없으면 채팅만 가능하고 예상 질문 생성·검색은 사용할 수 없음</td></tr>
 <tr><td>Jev API key</td><td><code>type=&quot;password&quot;</code>, Provider 공통 의도 분류 키. 공백 제거 후 저장, 빈 값은 서버 설정 사용</td></tr>
@@ -900,6 +930,11 @@ stage_widgets(
 <li>키는 이 브라우저에만 남고 서버 DB에는 저장되지 않는다. 다른 Provider나 다른 서버 URL로 서버 기본 키를 전달하지 않는다.</li>
 <li>Gemini 기본값만 <code>gemini-3.8-flash</code>로 변경했다. 저장된 <code>gemini-3.6-flash</code>와 사용자 지정 다른 모델·API 키·임베딩 모델·Jev 키·다른 Provider 프로필은 유지한다. 기존 <code>gemini-2.5-flash</code>를 기본 모델로 전환하는 규칙은 유지한다(<code>aiSettings.js</code>). 백엔드 Gemini Provider도 모델 지정이 없으면 <code>gemini-3.8-flash</code>를 사용한다.</li>
 </ul>
+<h3 id="admin--together-ai">Together AI</h3>
+<p><strong>AI 설정 → Provider → Together AI</strong>를 선택하고 Together API 키를 입력한 뒤 저장한다. 기본 Base URL은 <code>https://api.together.ai/v1</code>, 채팅 모델은 <code>Qwen/Qwen3.5-9B</code>다. 모델·URL·키는 <code>together</code> 프로필에 따로 보관하며 기존 Gemini/OpenAI/로컬 설정과 Jev 공통 키를 유지한다. 서버 설정을 사용할 때도 기존 <code>LLM_PROVIDER=together</code>, <code>LLM_API_KEY</code>, <code>LLM_BASE_URL</code>, <code>LLM_MODEL</code>을 사용한다. 환경변수에 모델·URL을 명시했다면 해당 값을 Together용으로 함께 바꿔야 한다.</p>
+<p>사용자가 제시한 <code>openai/gpt-oss-20b</code>는 <a href="https://docs.together.ai/docs/deprecations">공식 제공 종료 목록</a>에 있으므로 기본값으로 사용하지 않는다. 사용할 수 있는 전용 엔드포인트가 있다면 Model과 Base URL을 직접 지정할 수 있다. 기본 모델은 <a href="https://docs.together.ai/docs/serverless/models">현재 서버리스 목록</a>에 있는 공식 대체 모델이다. 호출은 기존 <a href="https://docs.together.ai/docs/inference/openai-compatibility">OpenAI 호환 API</a>를 재사용하며 별도 SDK를 설치하지 않는다.</p>
+<p>Together는 현재 서버리스 임베딩 모델을 제공하지 않는다. 임베딩 기본값은 비워 두고, 미설정 호출은 명시적인 오류를 반환한다. 별도 임베딩 공급자로 자동 전환하거나 다른 프로필의 키를 재사용하지 않는다. 같은 Base URL에서 호출 가능한 전용 모델이 있을 때만 <strong>Embedding model</strong>에 지정한다. 임베딩 요청에는 <code>dimensions</code>를 보내지 않으며 반환된 원래 차원을 확인한다.</p>
+<p>채팅의 SQL 계획·위젯 생성에는 Together를 사용할 수 있다. 예상 질문 유사도 검색과 메시지 임베딩은 별도 전용 임베딩 모델이 없으면 사용하지 못한다. 전용 모델의 벡터 차원은 서버 <code>CHAT_EMBEDDING_DIM</code>(기본 1,536)과 일치해야 하며 자동 절단·패딩하지 않는다. 기존 벡터 데이터를 자동 변경하지 않는다.</p>
 <h2 id="admin--jev-의도-분류-연결">Jev 의도 분류 연결</h2>
 <p>관리자의 <strong>AI 설정 → Jev API key</strong>에 키를 입력하고 <strong>AI 설정 저장</strong>을 누르면 다음 채팅 요청부터 사용한다. 모든 Provider가 이 앱의 공통 Jev 키를 사용하므로 Provider 전환과 새로고침 후에도 유지된다. doc2graph의 키를 자동으로 가져오지 않는다.</p>
 <ul>
@@ -974,7 +1009,7 @@ docker compose exec backend pytest -q
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
 <p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p>
 </section>
-<section id="progress"><span class="badge done">완료 12</span> <span class="badge wip">진행 중 0</span> <span class="badge verify">검증 대기 0</span> <span class="badge plan">계획 14</span>
+<section id="progress"><span class="badge done">완료 12</span> <span class="badge wip">진행 중 0</span> <span class="badge verify">검증 대기 2</span> <span class="badge plan">계획 14</span>
 <h1 id="progress--sql2widget-진행도">sql2widget 진행도</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>진행도</td></tr>
@@ -987,18 +1022,18 @@ docker compose exec backend pytest -q
 <p>기능 영역: 인증·프로젝트 · DB 연결 · 채팅·에이전트 · 예상 질문 · 위젯·Stage · 외부 연계 · AI 설정 · 배포·운영.</p>
 <h2 id="progress--완료">완료</h2>
 <table><thead><tr><th>영역</th><th>항목</th><th>범위·근거</th><th>칸반</th></tr></thead><tbody>
-<tr><td>인증·프로젝트</td><td>로그인·세션 관리</td><td>이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md" data-web-href="/docs#auth">기능</a></td><td>표시</td></tr>
-<tr><td>인증·프로젝트</td><td>프로젝트·대화 관리</td><td>생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">기능</a></td><td>표시</td></tr>
-<tr><td>DB 연결</td><td>DB 연결·테이블 권한 관리</td><td>관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>질문 라우팅·일반 대화·DB 구조 설명</td><td>Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>요청 계획·SQL 조회·에이전트 실행</td><td>요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>대화 문맥·후속 질문 처리</td><td>최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>채팅 답변·처리 내역 표시</td><td>본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></td><td>표시</td></tr>
-<tr><td>예상 질문</td><td>DB별 예상 질문 검색</td><td>예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">기능</a></td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯 카탈로그·미리보기</td><td>허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯별 현재 데이터 조회</td><td>결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></td><td>표시</td></tr>
-<tr><td>AI 설정</td><td>AI 연결 설정</td><td>Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></td><td>표시</td></tr>
-<tr><td>배포·운영</td><td>독립 배포·운영 문서 공개</td><td>Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">배포</a></td><td>표시</td></tr>
+<tr><td>인증·프로젝트</td><td><a href="progress.md#authentication" data-web-href="/docs#progress--authentication">로그인·세션 관리</a></td><td>이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리</td><td>표시</td></tr>
+<tr><td>인증·프로젝트</td><td><a href="progress.md#projects-conversations" data-web-href="/docs#progress--projects-conversations">프로젝트·대화 관리</a></td><td>생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리</td><td>표시</td></tr>
+<tr><td>DB 연결</td><td><a href="progress.md#database-permissions" data-web-href="/docs#progress--database-permissions">DB 연결·테이블 권한 관리</a></td><td>관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#question-routing" data-web-href="/docs#progress--question-routing">질문 라우팅·일반 대화·DB 구조 설명</a></td><td>Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#agent-execution" data-web-href="/docs#progress--agent-execution">요청 계획·SQL 조회·에이전트 실행</a></td><td>요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#conversation-context" data-web-href="/docs#progress--conversation-context">대화 문맥·후속 질문 처리</a></td><td>최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#answer-trace" data-web-href="/docs#progress--answer-trace">채팅 답변·처리 내역 표시</a></td><td>본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지</td><td>표시</td></tr>
+<tr><td>예상 질문</td><td><a href="progress.md#question-similarity" data-web-href="/docs#progress--question-similarity">DB별 예상 질문 검색</a></td><td>예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-catalog" data-web-href="/docs#progress--widget-catalog">위젯 카탈로그·미리보기</a></td><td>허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-data" data-web-href="/docs#progress--widget-data">위젯별 현재 데이터 조회</a></td><td>결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시</td><td>표시</td></tr>
+<tr><td>AI 설정</td><td><a href="progress.md#ai-settings" data-web-href="/docs#progress--ai-settings">AI 연결 설정</a></td><td>Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장</td><td>표시</td></tr>
+<tr><td>배포·운영</td><td><a href="progress.md#deployment" data-web-href="/docs#progress--deployment">독립 배포·운영 문서 공개</a></td><td>Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개</td><td>표시</td></tr>
 </tbody></table>
 <h2 id="progress--진행-중">진행 중</h2>
 <table><thead><tr><th>영역</th><th>항목</th><th>상태</th><th>칸반</th></tr></thead><tbody>
@@ -1006,6 +1041,12 @@ docker compose exec backend pytest -q
 <h2 id="progress--검증-대기">검증 대기</h2>
 <p>구현은 끝났고 테스트·실제 화면·실모델 확인이 남은 항목이다.</p>
 <table><thead><tr><th>영역</th><th>항목</th><th>남은 확인</th><th>칸반</th></tr></thead><tbody>
+<tr><td>AI 설정</td><td>Together AI 프로바이더</td><td>2026-10-15 독립 프로필·OpenAI 호환 호출·Qwen3.5-9B 기본값·전용 임베딩 제한 안내. 회귀 테스트 작성, 테스트·빌드·동기화 검사·실모델·브라우저 미실행. <a href="features/admin.md#together-ai" data-web-href="/docs#admin--together-ai">기능</a></td><td>미표시</td></tr>
+<tr><td>배포·운영</td><td>칸반 작업 상세·사이드패널</td><td>2026-10-15 상태 표의 요약과 고유 작업 ID별 상세를 분리하고 카드 클릭·닫기·Esc·외부 클릭·포커스 복원 구현. 생성기 회귀 테스트 작성. 테스트·동기화 검사·브라우저 검증 미실행</td><td>미표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#question-steps" data-web-href="/docs#progress--question-steps">질문 분리·경로 순서·실행 단계 접기</a></td><td>2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td>처리 내역 위젯 생성 표시명</td><td>2026-10-15 <code>data_query</code>의 처리 내역 표시명을 데이터 조회에서 위젯 생성으로 변경. 내부 경로·실행 방식 유지. 기존 경로 요약 테스트·문서 동기화 확인은 승인 대기. <a href="features/chat.md#처리-내역의-질문별-경로-표시" data-web-href="/docs#chat--처리-내역의-질문별-경로-표시">기능</a></td><td>미표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#chat-cancellation" data-web-href="/docs#progress--chat-cancellation">채팅 응답 생성 중지</a></td><td>2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성</td><td>표시</td></tr>
+<tr><td>배포·운영</td><td>문서 대시보드 본문 폭</td><td>2026-10-15 본문·하단 안내의 880px 최대 폭 제한 제거. 생성 동기화·브라우저 확인 미실행, 운영 미반영</td><td>미표시</td></tr>
 <tr><td>배포·운영</td><td>칸반·대시보드 문서 링크</td><td>2026-10-15 공개 문서는 대시보드 항목·제목으로, 원문·임시 기록은 GitHub로 연결하도록 수정. 생성 동기화·링크 검사·변경 후 브라우저 확인 미실행, 운영 미반영</td><td>미표시</td></tr>
 <tr><td>채팅·에이전트</td><td>설명 본문 표시·대기 질문 중복 수정</td><td>2026-10-14 회귀 테스트 작성. 테스트 실행·브라우저 확인 미실행</td><td>미표시</td></tr>
 <tr><td>채팅·에이전트</td><td>SOC 문서 출처 제거</td><td>2026-10-14 고정 Mock 문서 출처 경로 삭제, 관련 테스트 수정. 테스트 미실행</td><td>미표시</td></tr>
@@ -1015,20 +1056,20 @@ docker compose exec backend pytest -q
 <h2 id="progress--계획">계획</h2>
 <p>2026-10-14 기능 제안 논의에서 정했다. 이름이 <code>필요성 검토</code>·<code>가능성 검토</code>인 항목은 결정이 완료 기준이며, 구현은 결정 뒤 별도 항목으로 올린다.</p>
 <table><thead><tr><th>영역</th><th>항목</th><th>업무 정의</th><th>칸반</th></tr></thead><tbody>
-<tr><td>인증·프로젝트</td><td>관리자 사용자 관리</td><td>현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</td><td>표시</td></tr>
-<tr><td>DB 연결</td><td>DB 구조 파악(ERD)</td><td>DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</td><td>표시</td></tr>
-<tr><td>DB 연결</td><td>다른 DB 적용 가능성 검토</td><td>PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</td><td>표시</td></tr>
-<tr><td>예상 질문</td><td>예상 질문 검증</td><td>예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</td><td>표시</td></tr>
-<tr><td>채팅·에이전트</td><td>LLM 호출 장애 대응</td><td>요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯 래퍼</td><td>위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯 옵션</td><td>위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯 표현(옵션) 수정 (채팅·수동)</td><td>생성된 위젯의 표현만 고치려고 질문을 다시 하지 않도록, 이미 만든 위젯을 채팅으로 요청하거나 직접(수동) 조작해 바로 수정하는 방법. 모든 옵션과 전체 변경 이력을 한꺼번에 하지 않는다</td><td>표시</td></tr>
-<tr><td>위젯·Stage</td><td>위젯 행동</td><td>래퍼끼리 값을 주고받는 구조. 전역 필터·위젯 간 제어·드릴다운은 값을 내보내면 연결된 위젯이 다시 조회하는 같은 동작이다. 조회 정의에 필터를 받을 자리를 마련하는 것이 전제. 추가(2026-10-14): 최소 범위는 같은 위젯의 기간·차원만 바꿔 다시 조회하는 것. 범용 위젯 연결·드릴다운은 필수 아님. 어떤 조건을 반복해서 바꿀지 좁혀 비교한다. 분류 이견: 필요성 높음(Stage 재사용의 핵심) / 범위 판단</td><td>표시</td></tr>
-<tr><td>외부 연계</td><td>데이터 반출 필요성 검토</td><td>위젯 조회 결과를 앱 밖에서 써야 하는지와 범위(화면 결과 1000행 한도·전체 결과), 방식(파일·조회 API·반출 없음), 권한 범위 결정</td><td>표시</td></tr>
-<tr><td>외부 연계</td><td>데이터 값 기반 이벤트·훅 필요성 검토</td><td>조회 결과 값이 조건을 만족할 때 이벤트를 발생시키거나 외부 훅을 호출해야 하는지 결정. 필요하면 규칙·판단 이력·중복 억제·전달 채널·웹훅 관리로 확장</td><td>표시</td></tr>
-<tr><td>외부 연계</td><td>정기 리포트</td><td>저장된 위젯 조회를 정해진 때 실행해 결과를 정기적으로 전달. 이벤트·훅과 별도 기능</td><td>표시</td></tr>
-<tr><td>외부 연계</td><td>임베드 필요성 검토</td><td>위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</td><td>표시</td></tr>
-<tr><td>배포·운영</td><td>감사 로그</td><td>행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</td><td>표시</td></tr>
+<tr><td>인증·프로젝트</td><td><a href="progress.md#admin-user-management" data-web-href="/docs#progress--admin-user-management">관리자 사용자 관리</a></td><td>여러 계정을 운영하기 위한 사용자 추가·비활성화·역할 지정. 프로젝트 공유는 별도 판단</td><td>표시</td></tr>
+<tr><td>DB 연결</td><td><a href="progress.md#database-map" data-web-href="/docs#progress--database-map">DB 구조 파악(ERD)</a></td><td>SQL 판단에 부족한 관계·설명·업무 용어를 확인하고 DB 지도 도입 범위 결정</td><td>표시</td></tr>
+<tr><td>DB 연결</td><td><a href="progress.md#database-compatibility" data-web-href="/docs#progress--database-compatibility">다른 DB 적용 가능성 검토</a></td><td>PostgreSQL 외 DB 수요와 SQL 검증·실행·스키마 조회의 분리 범위 검토</td><td>표시</td></tr>
+<tr><td>예상 질문</td><td><a href="progress.md#expected-question-validation" data-web-href="/docs#progress--expected-question-validation">예상 질문 검증</a></td><td>대표 질문별 정답과 표현·기간·집계 차이를 기준으로 예상 질문 품질 평가</td><td>표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#llm-failure-handling" data-web-href="/docs#progress--llm-failure-handling">LLM 호출 장애 대응</a></td><td>호출량 제한·연속 실패 시 중단·복구 정책으로 LLM 장애 영향 제한</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-wrapper" data-web-href="/docs#progress--widget-wrapper">위젯 래퍼</a></td><td>공통 위젯에 갱신 상태·조회 기간·옵션·행동 진입점을 정리</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-options" data-web-href="/docs#progress--widget-options">위젯 옵션</a></td><td>위젯별 허용 표현 옵션을 하나의 정의로 관리하고 변경 이력·되돌리기 검토</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-presentation-editing" data-web-href="/docs#progress--widget-presentation-editing">위젯 표현(옵션) 수정 (채팅·수동)</a></td><td>기존 위젯의 표현을 채팅·직접 조작으로 수정하는 최소 흐름 정의</td><td>표시</td></tr>
+<tr><td>위젯·Stage</td><td><a href="progress.md#widget-interaction" data-web-href="/docs#progress--widget-interaction">위젯 행동</a></td><td>기간·차원 변경과 재조회부터 검토하고 위젯 간 값 전달 범위를 별도 결정</td><td>표시</td></tr>
+<tr><td>외부 연계</td><td><a href="progress.md#data-export-review" data-web-href="/docs#progress--data-export-review">데이터 반출 필요성 검토</a></td><td>앱 밖에서 필요한 결과 범위·반출 방식·권한 결정</td><td>표시</td></tr>
+<tr><td>외부 연계</td><td><a href="progress.md#data-event-review" data-web-href="/docs#progress--data-event-review">데이터 값 기반 이벤트·훅 필요성 검토</a></td><td>조회 값의 조건 충족 시 외부 이벤트가 필요한지와 운영 범위 결정</td><td>표시</td></tr>
+<tr><td>외부 연계</td><td><a href="progress.md#scheduled-report" data-web-href="/docs#progress--scheduled-report">정기 리포트</a></td><td>저장된 위젯 조회의 정기 실행과 결과 전달 방식 검토</td><td>표시</td></tr>
+<tr><td>외부 연계</td><td><a href="progress.md#widget-embed-review" data-web-href="/docs#progress--widget-embed-review">임베드 필요성 검토</a></td><td>외부 화면에 위젯을 표시할 필요성과 게시·접근·조회 조건 범위 결정</td><td>표시</td></tr>
+<tr><td>배포·운영</td><td><a href="progress.md#audit-log" data-web-href="/docs#progress--audit-log">감사 로그</a></td><td>행위 기록 적재와 관리자 조회 범위 정의. 사용량 화면은 제외</td><td>표시</td></tr>
 </tbody></table>
 <h2 id="progress--검증-기록">검증 기록</h2>
 <p>아래는 기존 기록의 요약이며 이번 정리에서 재실행한 결과가 아니다. 당시 서술 원문은 <a href="temp/progress-history-2026-10-14.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/progress-history-2026-10-14.md">이전 기록</a>에 보관한다.</p>
@@ -1042,6 +1083,408 @@ docker compose exec backend pytest -q
 <tr><td>10-13</td><td>대화 문맥·IME</td><td>백엔드 70·프런트 4 테스트·빌드</td><td>테스트 대역, 실모델·브라우저 IME 미실행</td></tr>
 <tr><td>10-14</td><td>실모델 동작</td><td>사용자 확인: 에이전트 실행 루프 재구성·일반 대화 경로를 실모델로 확인</td><td>자동 테스트·빌드는 미실행</td></tr>
 </tbody></table>
+<h2 id="progress--작업-상세">작업 상세</h2>
+<p>각 표시 카드의 제목은 아래 작업 상세에 연결한다. 상태·영역·칸반 표시 여부는 위 상태 표에서만 관리하고, 상세의 작업 ID는 제목·상태가 바뀌어도 유지한다. 계획의 작업 범위·완료 기준안은 검토용이며 미정 정책을 확정된 구현으로 보지 않는다.</p>
+<h3 id="progress--authentication">로그인·세션 관리</h3>
+<h4 id="progress--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>사용자별 독립 계정과 세션으로 앱의 접근 범위를 지킨다.</p>
+<h4 id="progress--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md" data-web-href="/docs#auth">기능</a></p>
+<h4 id="progress--경계와-주의할-점">경계와 주의할 점</h4>
+<p>인증과 프로젝트 공유는 별개이며, 사용자 관리 화면의 구현 여부를 로그인 기능에서 추정하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--projects-conversations">프로젝트·대화 관리</h3>
+<h4 id="progress--목적과-사용자-동작-1">목적과 사용자 동작</h4>
+<p>프로젝트와 대화를 관리하고 삭제 시 연관 데이터를 정리한다.</p>
+<h4 id="progress--기록된-범위와-근거-1">기록된 범위와 근거</h4>
+<p>생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">기능</a></p>
+<h4 id="progress--경계와-주의할-점-1">경계와 주의할 점</h4>
+<p>다른 소유자에 대한 접근과 삭제 범위는 현재 프로젝트 명세를 기준으로 확인한다.</p>
+<h4 id="progress--검증-근거와-후속-확인-1">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--database-permissions">DB 연결·테이블 권한 관리</h3>
+<h4 id="progress--목적과-사용자-동작-2">목적과 사용자 동작</h4>
+<p>허용한 고객 DB와 테이블 안에서만 조회하도록 연결과 역할 권한을 관리한다.</p>
+<h4 id="progress--기록된-범위와-근거-2">기록된 범위와 근거</h4>
+<p>관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></p>
+<h4 id="progress--경계와-주의할-점-2">경계와 주의할 점</h4>
+<p>서비스 DB와 고객 DB를 혼용하지 않으며 고객 데이터 쓰기를 이 기능의 범위에 포함하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-2">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--question-routing">질문 라우팅·일반 대화·DB 구조 설명</h3>
+<h4 id="progress--목적과-사용자-동작-3">목적과 사용자 동작</h4>
+<p>질문의 의도에 맞는 처리 경로를 선택하고 후속 실행을 계획한다.</p>
+<h4 id="progress--기록된-범위와-근거-3">기록된 범위와 근거</h4>
+<p>Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="progress--경계와-주의할-점-3">경계와 주의할 점</h4>
+<p>경로 분류·되묻기·조회 실행은 구분해 기록한다. 분류 성공이 답변 정확성을 보장하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-3">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--agent-execution">요청 계획·SQL 조회·에이전트 실행</h3>
+<h4 id="progress--목적과-사용자-동작-4">목적과 사용자 동작</h4>
+<p>요청 목표를 단계별 조회와 위젯 생성으로 해결하고 결과를 보고 재계획한다.</p>
+<h4 id="progress--기록된-범위와-근거-4">기록된 범위와 근거</h4>
+<p>요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="progress--경계와-주의할-점-4">경계와 주의할 점</h4>
+<p>실행 한도·부분 결과·미완료 이유를 실제 결과와 구분해서 안내한다.</p>
+<h4 id="progress--검증-근거와-후속-확인-4">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--conversation-context">대화 문맥·후속 질문 처리</h3>
+<h4 id="progress--목적과-사용자-동작-5">목적과 사용자 동작</h4>
+<p>같은 대화의 이전 질문과 결과를 이용해 후속 질문의 대상을 해석한다.</p>
+<h4 id="progress--기록된-범위와-근거-5">기록된 범위와 근거</h4>
+<p>최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="progress--경계와-주의할-점-5">경계와 주의할 점</h4>
+<p>기록된 문맥 범위 밖의 데이터나 다른 DB 응답을 같은 결과로 추정하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-5">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--answer-trace">채팅 답변·처리 내역 표시</h3>
+<h4 id="progress--목적과-사용자-동작-6">목적과 사용자 동작</h4>
+<p>답변 내용과 처리 과정을 사용자가 따라갈 수 있게 표시한다.</p>
+<h4 id="progress--기록된-범위와-근거-6">기록된 범위와 근거</h4>
+<p>본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="progress--경계와-주의할-점-6">경계와 주의할 점</h4>
+<p>처리 내역은 저장된 실행 근거이며 과거 로그를 새 실행 결과처럼 표시하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-6">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--question-similarity">DB별 예상 질문 검색</h3>
+<h4 id="progress--목적과-사용자-동작-7">목적과 사용자 동작</h4>
+<p>비슷한 질문에 연결된 SQL·위젯을 현재 조회 계획에 참고한다.</p>
+<h4 id="progress--기록된-범위와-근거-7">기록된 범위와 근거</h4>
+<p>예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">기능</a></p>
+<h4 id="progress--경계와-주의할-점-7">경계와 주의할 점</h4>
+<p>유사 질문 검색 결과와 현재 DB에서 실행한 결과를 구분한다. 품질 검증 계획은 별도 항목이다.</p>
+<h4 id="progress--검증-근거와-후속-확인-7">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--widget-catalog">위젯 카탈로그·미리보기</h3>
+<h4 id="progress--목적과-사용자-동작-8">목적과 사용자 동작</h4>
+<p>허용된 위젯과 미리보기로 조회 결과를 표현한다.</p>
+<h4 id="progress--기록된-범위와-근거-8">기록된 범위와 근거</h4>
+<p>허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></p>
+<h4 id="progress--경계와-주의할-점-8">경계와 주의할 점</h4>
+<p>채팅 미리보기와 Stage 배치는 구분하며 카탈로그 밖의 위젯을 임의로 추가하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-8">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--widget-data">위젯별 현재 데이터 조회</h3>
+<h4 id="progress--목적과-사용자-동작-9">목적과 사용자 동작</h4>
+<p>저장한 조회 정의를 통해 위젯을 표시할 때 현재 DB 값을 읽는다.</p>
+<h4 id="progress--기록된-범위와-근거-9">기록된 범위와 근거</h4>
+<p>결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></p>
+<h4 id="progress--경계와-주의할-점-9">경계와 주의할 점</h4>
+<p>저장된 정의와 현재 조회 결과, 빈 결과·실패·잘림을 구분해 확인한다.</p>
+<h4 id="progress--검증-근거와-후속-확인-9">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--ai-settings">AI 연결 설정</h3>
+<h4 id="progress--목적과-사용자-동작-10">목적과 사용자 동작</h4>
+<p>Provider별 연결과 AI 동작 설정을 사용자가 관리한다.</p>
+<h4 id="progress--기록된-범위와-근거-10">기록된 범위와 근거</h4>
+<p>Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></p>
+<h4 id="progress--경계와-주의할-점-10">경계와 주의할 점</h4>
+<p>설정 보관과 실제 공급자 호출 성공은 다르다. 키·모델의 존재만으로 실모델 검증을 완료 처리하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-10">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--deployment">독립 배포·운영 문서 공개</h3>
+<h4 id="progress--목적과-사용자-동작-11">목적과 사용자 동작</h4>
+<p>앱을 독립적으로 배포하고 운영·문서 주소를 제공한다.</p>
+<h4 id="progress--기록된-범위와-근거-11">기록된 범위와 근거</h4>
+<p>Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">배포</a></p>
+<h4 id="progress--경계와-주의할-점-11">경계와 주의할 점</h4>
+<p>배포 이력은 당시 버전의 결과이며 현재 변경의 운영 반영 여부는 별도로 확인한다.</p>
+<h4 id="progress--검증-근거와-후속-확인-11">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--question-steps">질문 분리·경로 순서·실행 단계 접기</h3>
+<h4 id="progress--목적과-사용자-동작-12">목적과 사용자 동작</h4>
+<p>질문 분리와 실행 순서를 처리 내역에서 이해할 수 있게 한다.</p>
+<h4 id="progress--기록된-범위와-근거-12">기록된 범위와 근거</h4>
+<p>2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시. 회귀 테스트 작성, 테스트·빌드·브라우저·실모델 검증은 다음 단계. <a href="temp/chat-question-routing-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-question-routing-2026-10-15.md">기록</a></p>
+<h4 id="progress--경계와-주의할-점-12">경계와 주의할 점</h4>
+<p>대역 테스트 작성과 실모델의 질문 분리 정확도 검증을 구분한다. 세부 변경은 연결된 기록을 기준으로 한다.</p>
+<h4 id="progress--검증-근거와-후속-확인-12">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--chat-cancellation">채팅 응답 생성 중지</h3>
+<h4 id="progress--목적과-사용자-동작-13">목적과 사용자 동작</h4>
+<p>진행 중인 응답 생성을 사용자가 중지할 수 있도록 한 변경이다.</p>
+<h4 id="progress--기록된-범위와-근거-13">기록된 범위와 근거</h4>
+<p>2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성. 테스트·빌드·브라우저 검증 미실행. <a href="features/chat.md#응답-생성-중지" data-web-href="/docs#chat--응답-생성-중지">기능</a></p>
+<h4 id="progress--경계와-주의할-점-13">경계와 주의할 점</h4>
+<p>화면 중지·요청 취소·서버 후속 실행 및 저장 차단을 나눠 확인한다. 중지 전에 완료된 작업의 소급 취소를 가정하지 않는다.</p>
+<h4 id="progress--검증-근거와-후속-확인-13">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p>
+<h3 id="progress--admin-user-management">관리자 사용자 관리</h3>
+<h4 id="progress--배경과-목적">배경과 목적</h4>
+<p>여러 사람이 각자의 계정으로 서비스를 사용해야 할 때 관리자가 계정을 운영할 수 있어야 한다. 개인 계정 하나로 사용하는 상황에서는 필요성이 낮으므로 필요성과 도입 시점을 먼저 판단한다.</p>
+<h4 id="progress--현재-상태-1">현재 상태</h4>
+<p>로그인·내 정보 조회·토큰 갱신과 역할 검사는 제공한다. 기본 시드 로그인 계정은 admin·viewer이며, user 역할 값이 있다는 사실과 관리자용 사용자 관리 화면이 있다는 사실은 구분한다. 현재 프로젝트·대화는 사용자 소유권으로 접근을 제한한다.</p>
+<h4 id="progress--작업-범위안">작업 범위안</h4>
+<ul>
+<li>관리 대상 계정의 목록과 상태 확인.</li>
+<li>관리자의 사용자 추가.</li>
+<li>기존 사용자 비활성화.</li>
+<li>사용자 역할 지정·변경과 화면·서버 권한의 일관성 확인.</li>
+</ul>
+<h4 id="progress--프로젝트-공유와의-관계">프로젝트 공유와의 관계</h4>
+<p>계정을 추가했다고 다른 사용자의 프로젝트를 볼 수 있는 것은 아니다. 계정 관리와 프로젝트 공유의 필요성·도입 시점은 각각 판단한다. 공유를 도입할 때에는 대상 사용자와 열람·편집 범위를 별도로 정의한다.</p>
+<h4 id="progress--결정할-사항">결정할 사항</h4>
+<ul>
+<li>관리자 직접 생성과 초대 중 어떤 방식으로 계정을 만들지.</li>
+<li>최초 비밀번호 설정·재설정 방식.</li>
+<li>관리자가 관리할 수 있는 사용자의 범위.</li>
+<li>비활성화 시 기존 Access·Refresh 세션의 처리 시점.</li>
+<li>비활성 사용자가 소유한 프로젝트·대화의 보관과 접근 정책.</li>
+<li>자기 계정 및 마지막 관리자 계정의 비활성화·역할 변경 허용 여부.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안">완료 판단 기준안</h4>
+<p>정책을 확정한 뒤 관리자에게 허용된 계정 조작이 가능하고 비관리자의 조작은 서버에서 거부되는지 확인한다. 중복 계정·허용되지 않은 역할 변경을 처리하고, 비활성화·역할 변경이 확정한 인증 정책에 반영돼야 한다. 사용자 관리 조작으로 프로젝트 공유 권한이 생기지 않아야 한다.</p>
+<h4 id="progress--관련-문서">관련 문서</h4>
+<ul>
+<li><a href="features/auth.md" data-web-href="/docs#auth">현재 로그인·세션·역할</a></li>
+<li><a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">현재 프로젝트·대화</a></li>
+</ul>
+<h4 id="progress--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</p>
+<h3 id="progress--database-map">DB 구조 파악(ERD)</h3>
+<h4 id="progress--배경과-목적-1">배경과 목적</h4>
+<p>컬럼·PK·선언된 FK만으로 질문의 업무 의미와 관계를 해석하기 어려운지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위">검토할 작업 범위</h4>
+<p>실제 오답 질문을 기준으로 빠진 관계·테이블 설명·업무 용어를 정리한다. 그 정보의 보관·갱신과 ERD 화면의 필요성을 각각 검토한다.</p>
+<h4 id="progress--결정할-사항-1">결정할 사항</h4>
+<ul>
+<li>어떤 질문이 현재 구조 정보만으로 실패하는지.</li>
+<li>선언된 FK 외 관계를 누가 확인할지.</li>
+<li>스키마 변경을 언제 감지·반영할지.</li>
+<li>영속 지도·ERD·자동 추론 중 필요한 범위.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-1">완료 판단 기준안</h4>
+<p>대표 질문에서 부족한 구조 정보를 설명하고 필요한 보완 범위를 결정한다. 지도를 구현할 경우 갱신 전후 SQL 해석이 개선되는지 확인한다.</p>
+<h4 id="progress--관련-문서-1">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">DB 연결과 권한</a>, <a href="features/chat.md" data-web-href="/docs#chat">SQL 계획·실행</a></p>
+<h4 id="progress--기존-계획논의-기록-1">기존 계획·논의 기록</h4>
+<p>DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</p>
+<h3 id="progress--database-compatibility">다른 DB 적용 가능성 검토</h3>
+<h4 id="progress--배경과-목적-2">배경과 목적</h4>
+<p>다른 DB에 실제로 연결해야 하는 사용 상황이 있는지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위-1">검토할 작업 범위</h4>
+<p>필요한 DB 제품과 대표 조회를 고르고 연결·구조 조회·읽기 전용 SQL 검증에서 PostgreSQL 전용 부분을 정리한다.</p>
+<h4 id="progress--결정할-사항-2">결정할 사항</h4>
+<ul>
+<li>우선 지원할 DB와 버전.</li>
+<li>지원 범위와 제외할 SQL 문법.</li>
+<li>읽기 전용 권한 확보 방식.</li>
+<li>기존 PostgreSQL 동작 유지 범위.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-2">완료 판단 기준안</h4>
+<p>지원 여부·우선 대상·필요한 분리 작업을 결정 문서로 남긴다. 검토 완료를 다른 DB 지원 완료로 표시하지 않는다.</p>
+<h4 id="progress--관련-문서-2">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">DB 연결</a>, <a href="features/chat.md" data-web-href="/docs#chat">현재 SQL 경로</a></p>
+<h4 id="progress--기존-계획논의-기록-2">기존 계획·논의 기록</h4>
+<p>PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</p>
+<h3 id="progress--expected-question-validation">예상 질문 검증</h3>
+<h4 id="progress--배경과-목적-3">배경과 목적</h4>
+<p>같은 의도의 표현끼리 결과가 같아도 모두 틀렸을 수 있어 정답과 비교하는 기준이 필요하다.</p>
+<h4 id="progress--검토할-작업-범위-2">검토할 작업 범위</h4>
+<p>대표 질문별 기대 결과를 정의하고 표현 변경·기간·집계 조건을 나눠 비교한다. 결과 검증과 SQL 구조 검증의 범위를 구분한다.</p>
+<h4 id="progress--결정할-사항-3">결정할 사항</h4>
+<ul>
+<li>대표 질문과 정답 작성자.</li>
+<li>허용할 결과 차이.</li>
+<li>기간·집계 해석 기준.</li>
+<li>피드백·관리자 승인과 별도로 운영할 범위.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-3">완료 판단 기준안</h4>
+<p>틀린 결과끼리의 일치와 실제 정답 일치를 구분하고, 오류가 표현·기간·집계 중 어디에서 생겼는지 기록한다.</p>
+<h4 id="progress--관련-문서-3">관련 문서</h4>
+<p><a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">예상 질문 검색</a>, <a href="features/chat.md" data-web-href="/docs#chat">SQL 실행</a></p>
+<h4 id="progress--기존-계획논의-기록-3">기존 계획·논의 기록</h4>
+<p>예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</p>
+<h3 id="progress--llm-failure-handling">LLM 호출 장애 대응</h3>
+<h4 id="progress--배경과-목적-4">배경과 목적</h4>
+<p>현재 실행 횟수·시간 예산만으로 호출 공급자의 과부하와 연속 장애를 어떻게 제어할지 정리한다.</p>
+<h4 id="progress--검토할-작업-범위-3">검토할 작업 범위</h4>
+<p>레이트리밋 적용 범위와 연속 실패 시 호출 일시 중단·복구 조건을 검토한다. 기존 실행 예산·부분 결과와의 관계를 정의한다.</p>
+<h4 id="progress--결정할-사항-4">결정할 사항</h4>
+<ul>
+<li>공급자·사용자·전체 중 제한 단위.</li>
+<li>실패로 셀 오류.</li>
+<li>중단·복구 임계값.</li>
+<li>재시도와 비용 상한.</li>
+<li>사용자에게 보여줄 상태.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-4">완료 판단 기준안</h4>
+<p>정한 정책에서 반복 호출이 제한되고 복구 조건을 충족하면 재개한다. 부분 결과와 실패를 성공으로 혼동하지 않는다.</p>
+<h4 id="progress--관련-문서-4">관련 문서</h4>
+<p><a href="features/chat.md" data-web-href="/docs#chat">현재 에이전트 한도·오류 처리</a></p>
+<h4 id="progress--기존-계획논의-기록-4">기존 계획·논의 기록</h4>
+<p>요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</p>
+<h3 id="progress--widget-wrapper">위젯 래퍼</h3>
+<h4 id="progress--배경과-목적-5">배경과 목적</h4>
+<p>같은 Stage의 위젯마다 현재 데이터와 조회 시점을 이해할 공통 표시가 필요하다.</p>
+<h4 id="progress--검토할-작업-범위-4">검토할 작업 범위</h4>
+<p>현재 QueryWidget의 조회·새로고침·오류 처리 위에 자동 갱신 주기·마지막 조회 시각·잘림 여부·조회 기간 표시를 검토한다. 옵션·행동은 후속 범위로 연결한다.</p>
+<h4 id="progress--결정할-사항-5">결정할 사항</h4>
+<ul>
+<li>첫 적용 위젯.</li>
+<li>자동 갱신 기본값·중지 조건.</li>
+<li>조회 기간의 표현.</li>
+<li>잘림을 판단할 서버 정보.</li>
+<li>옵션·행동을 연결할 시점.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-5">완료 판단 기준안</h4>
+<p>선택한 위젯에서 값의 조회 시점·기간·잘림 여부를 확인할 수 있고 기존 수동 새로고침·오류 처리가 유지된다.</p>
+<h4 id="progress--관련-문서-5">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 위젯 조회</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage</a></p>
+<h4 id="progress--기존-계획논의-기록-5">기존 계획·논의 기록</h4>
+<p>위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</p>
+<h3 id="progress--widget-options">위젯 옵션</h3>
+<h4 id="progress--배경과-목적-6">배경과 목적</h4>
+<p>수동 설정과 대화로 바꾸는 위젯 표현이 같은 허용 범위를 따라야 한다.</p>
+<h4 id="progress--검토할-작업-범위-5">검토할 작업 범위</h4>
+<p>위젯별 허용 옵션과 값의 범위를 카탈로그에 정의하고 래퍼 메뉴·대화 입력을 같은 변경 경로에 연결하는 안을 검토한다.</p>
+<h4 id="progress--결정할-사항-6">결정할 사항</h4>
+<ul>
+<li>우선 지원 옵션.</li>
+<li>저장 단위.</li>
+<li>변경 이력 보관량.</li>
+<li>되돌리기 단위.</li>
+<li>기존 정의의 호환 방식.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-6">완료 판단 기준안</h4>
+<p>선택한 옵션을 두 입력 방식에서 같은 정의로 변경하고 허용되지 않은 값은 거부한다. 이력·되돌리기는 확정한 범위로 확인한다.</p>
+<h4 id="progress--관련-문서-6">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 카탈로그</a></p>
+<h4 id="progress--기존-계획논의-기록-6">기존 계획·논의 기록</h4>
+<p>위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</p>
+<h3 id="progress--widget-presentation-editing">위젯 표현(옵션) 수정 (채팅·수동)</h3>
+<h4 id="progress--배경과-목적-7">배경과 목적</h4>
+<p>이미 만든 위젯의 표현만 바꾸기 위해 데이터 질문을 처음부터 반복하지 않도록 한다.</p>
+<h4 id="progress--검토할-작업-범위-6">검토할 작업 범위</h4>
+<p>대상 위젯 선택과 변경할 표현을 특정하고 채팅·수동 입력으로 기존 위젯을 수정하는 흐름을 검토한다. 전체 옵션·전체 이력의 일괄 구현은 요구하지 않는다.</p>
+<h4 id="progress--결정할-사항-7">결정할 사항</h4>
+<ul>
+<li>처음 지원할 표현.</li>
+<li>수정 대상 식별 방식.</li>
+<li>데이터 재조회가 필요한 변경과 표현만 바뀌는 변경의 경계.</li>
+<li>허용 옵션과의 연결.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-7">완료 판단 기준안</h4>
+<p>선택한 위젯에 의도한 표현 변경이 반영되고 다른 위젯이나 조회 조건을 잘못 바꾸지 않는다.</p>
+<h4 id="progress--관련-문서-7">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 정의와 표시</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage 저장</a></p>
+<h4 id="progress--기존-계획논의-기록-7">기존 계획·논의 기록</h4>
+<p>생성된 위젯의 표현만 고치려고 질문을 다시 하지 않도록, 이미 만든 위젯을 채팅으로 요청하거나 직접(수동) 조작해 바로 수정하는 방법. 모든 옵션과 전체 변경 이력을 한꺼번에 하지 않는다</p>
+<h3 id="progress--widget-interaction">위젯 행동</h3>
+<h4 id="progress--배경과-목적-8">배경과 목적</h4>
+<p>저장한 Stage를 재사용할 때 반복해서 바꾸는 조회 조건을 식별한다.</p>
+<h4 id="progress--검토할-작업-범위-7">검토할 작업 범위</h4>
+<p>같은 위젯의 기간·차원을 바꿔 다시 조회하는 최소 범위를 먼저 비교한다. 값 보내기·받기, 전역 필터·드릴다운은 필요성과 연결 범위를 따로 정한다.</p>
+<h4 id="progress--결정할-사항-8">결정할 사항</h4>
+<ul>
+<li>반복 변경할 조건.</li>
+<li>SQL 조회 정의의 입력 자리.</li>
+<li>전달 값 검증.</li>
+<li>범용 연결의 필요성.</li>
+<li>핵심 필요성과 구현 범위에 관한 기존 이견.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-8">완료 판단 기준안</h4>
+<p>선택한 조건 변경이 조회 결과에 반영되고 허용되지 않은 입력이 SQL 실행 경로에 섞이지 않는다. 필요성·범위에 대한 결정을 기록한다.</p>
+<h4 id="progress--관련-문서-8">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 데이터 조회</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage</a></p>
+<h4 id="progress--기존-계획논의-기록-8">기존 계획·논의 기록</h4>
+<p>래퍼끼리 값을 주고받는 구조. 전역 필터·위젯 간 제어·드릴다운은 값을 내보내면 연결된 위젯이 다시 조회하는 같은 동작이다. 조회 정의에 필터를 받을 자리를 마련하는 것이 전제. 추가(2026-10-14): 최소 범위는 같은 위젯의 기간·차원만 바꿔 다시 조회하는 것. 범용 위젯 연결·드릴다운은 필수 아님. 어떤 조건을 반복해서 바꿀지 좁혀 비교한다. 분류 이견: 필요성 높음(Stage 재사용의 핵심) / 범위 판단</p>
+<h3 id="progress--data-export-review">데이터 반출 필요성 검토</h3>
+<h4 id="progress--배경과-목적-9">배경과 목적</h4>
+<p>사용자가 위젯 조회 결과를 외부 업무에서 사용해야 하는지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위-8">검토할 작업 범위</h4>
+<p>화면의 1000행 한도 결과와 전체 결과를 구분하고 파일·조회 API·반출 없음 중 필요한 방식을 검토한다.</p>
+<h4 id="progress--결정할-사항-9">결정할 사항</h4>
+<ul>
+<li>실제 반출 사용 사례.</li>
+<li>화면 결과와 전체 결과 중 범위.</li>
+<li>파일 형식 또는 API.</li>
+<li>고객 DB·사용자별 허용 권한.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-9">완료 판단 기준안</h4>
+<p>필요 여부·대상 데이터·전달 방식·권한을 결정한다. 검토 완료와 반출 기능 구현 완료를 구분한다.</p>
+<h4 id="progress--관련-문서-9">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 데이터</a>, <a href="features/admin.md" data-web-href="/docs#admin">DB 권한</a></p>
+<h4 id="progress--기존-계획논의-기록-9">기존 계획·논의 기록</h4>
+<p>위젯 조회 결과를 앱 밖에서 써야 하는지와 범위(화면 결과 1000행 한도·전체 결과), 방식(파일·조회 API·반출 없음), 권한 범위 결정</p>
+<h3 id="progress--data-event-review">데이터 값 기반 이벤트·훅 필요성 검토</h3>
+<h4 id="progress--배경과-목적-10">배경과 목적</h4>
+<p>사용자가 화면을 열지 않아도 특정 데이터 상태를 알아야 하는 상황이 있는지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위-9">검토할 작업 범위</h4>
+<p>대표 조건과 수신 대상을 정리한다. 필요하다고 결정하면 규칙·판단 이력·중복 억제·채널·웹훅 관리의 구현 범위를 정한다.</p>
+<h4 id="progress--결정할-사항-10">결정할 사항</h4>
+<ul>
+<li>조건 평가 시점.</li>
+<li>같은 상태의 중복 알림 기준.</li>
+<li>수신 채널.</li>
+<li>전달 실패 처리.</li>
+<li>외부 전송 허용 데이터.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-10">완료 판단 기준안</h4>
+<p>이벤트 필요 여부와 최소 운영 범위를 결정한다. 정기 리포트와 조건 기반 이벤트를 혼동하지 않는다.</p>
+<h4 id="progress--관련-문서-10">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 데이터 조회</a></p>
+<h4 id="progress--기존-계획논의-기록-10">기존 계획·논의 기록</h4>
+<p>조회 결과 값이 조건을 만족할 때 이벤트를 발생시키거나 외부 훅을 호출해야 하는지 결정. 필요하면 규칙·판단 이력·중복 억제·전달 채널·웹훅 관리로 확장</p>
+<h3 id="progress--scheduled-report">정기 리포트</h3>
+<h4 id="progress--배경과-목적-11">배경과 목적</h4>
+<p>저장한 조회를 매번 열어보지 않고 정해진 주기로 받아볼 필요가 있는지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위-10">검토할 작업 범위</h4>
+<p>보고 대상 위젯과 실행 주기·결과 전달 방식을 정리한다. 값 조건으로 발동하는 이벤트·훅과 구분한다.</p>
+<h4 id="progress--결정할-사항-11">결정할 사항</h4>
+<ul>
+<li>실행 주체와 권한.</li>
+<li>시간대·주기.</li>
+<li>전달 형식·수신자.</li>
+<li>조회 실패·빈 결과 처리.</li>
+<li>보고 시점의 데이터 기준.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-11">완료 판단 기준안</h4>
+<p>정한 주기에 허용된 조회만 실행하고 결과 시점·조건을 식별할 수 있는 전달물을 만든다. 세부 정책은 구현 전에 확정한다.</p>
+<h4 id="progress--관련-문서-11">관련 문서</h4>
+<p><a href="features/stage.md" data-web-href="/docs#stage">Stage 조회 정의</a>, <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 조회</a></p>
+<h4 id="progress--기존-계획논의-기록-11">기존 계획·논의 기록</h4>
+<p>저장된 위젯 조회를 정해진 때 실행해 결과를 정기적으로 전달. 이벤트·훅과 별도 기능</p>
+<h3 id="progress--widget-embed-review">임베드 필요성 검토</h3>
+<h4 id="progress--배경과-목적-12">배경과 목적</h4>
+<p>외부 서비스에서 같은 위젯을 볼 업무가 있는지 확인한다.</p>
+<h4 id="progress--검토할-작업-범위-11">검토할 작업 범위</h4>
+<p>필요하면 공개 위젯의 게시·토큰 발급·회수, 조회 API와 iframe·SDK 중 방식을 정하고 호스트가 기간 값을 전달할 필요성을 검토한다.</p>
+<h4 id="progress--결정할-사항-12">결정할 사항</h4>
+<ul>
+<li>공개 범위와 사용자 식별.</li>
+<li>게시·회수 주체.</li>
+<li>표시 방식.</li>
+<li>호스트 입력 검증.</li>
+<li>위젯 행동의 값 받기 기능 재사용 여부.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-12">완료 판단 기준안</h4>
+<p>필요 여부와 공개·회수·조회 조건의 최소 범위를 결정한다. 기존 Viewer 제공을 외부 임베드 구현으로 간주하지 않는다.</p>
+<h4 id="progress--관련-문서-12">관련 문서</h4>
+<p><a href="features/viewer.md" data-web-href="/docs#viewer">현재 Viewer</a>, <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 정의</a></p>
+<h4 id="progress--기존-계획논의-기록-12">기존 계획·논의 기록</h4>
+<p>위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</p>
+<h3 id="progress--audit-log">감사 로그</h3>
+<h4 id="progress--배경과-목적-13">배경과 목적</h4>
+<p>문제가 발생했을 때 누가 어떤 행위를 했는지 추적할 근거를 남긴다.</p>
+<h4 id="progress--검토할-작업-범위-12">검토할 작업 범위</h4>
+<p>기존 audit_events 테이블에 기록할 행위를 정하고 관리자 조회 화면의 범위를 검토한다. 2026-10-14에 제외한 사용량 화면을 이 작업에 포함하지 않는다.</p>
+<h4 id="progress--결정할-사항-13">결정할 사항</h4>
+<ul>
+<li>기록 대상 행위.</li>
+<li>저장 항목과 사용자 데이터의 제외 범위.</li>
+<li>열람 권한.</li>
+<li>보관 기간.</li>
+<li>기록 실패가 원래 작업에 미칠 영향.</li>
+</ul>
+<h4 id="progress--완료-판단-기준안-13">완료 판단 기준안</h4>
+<p>선택한 행위를 수행했을 때 필요한 추적 정보가 남고 관리자에게만 정해진 범위로 조회된다.</p>
+<h4 id="progress--관련-문서-13">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">관리 기능·권한</a>, <a href="features/auth.md" data-web-href="/docs#auth">인증</a></p>
+<h4 id="progress--기존-계획논의-기록-13">기존 계획·논의 기록</h4>
+<p>행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</p>
 </section></main>
   </div>
   <footer class="doc-footer">메인규칙·폴더 구조·기능·진행도·임시의 원본 Markdown에서 생성한 보기다.

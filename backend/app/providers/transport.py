@@ -4,6 +4,8 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from app.chat_cancellation import cancellation_checkpoint
+
 
 def validate_base_url(value: str) -> str:
     parsed = urlsplit(value)
@@ -13,6 +15,7 @@ def validate_base_url(value: str) -> str:
     return value.rstrip("/")
 
 
+@cancellation_checkpoint
 def post_json(base_url, path, *, api_key, payload, timeout=60.0):
     headers = {"Content-Type": "application/json"}
     if api_key:

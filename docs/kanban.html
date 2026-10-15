@@ -185,6 +185,37 @@
       body { background: #fff; }
       .wrap { padding: 0; }
     }
+    .card { display: block; width: 100%; text-align: left; font-family: inherit; color: inherit; cursor: pointer; }
+    .card .t, .card .n { display: block; }
+    .card .n { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    .card:hover { border-color: var(--ac, var(--blue)); }
+    .card:focus-visible, .task-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .card-more { display: block; margin-top: 8px; font-size: 11px; color: var(--blue); }
+    body.task-open { overflow: hidden; }
+    .task-dialog {
+      position: fixed; inset: 0 0 0 auto; margin: 0; border: 0; border-left: 1px solid var(--line);
+      padding: 0; width: min(760px, 100vw); max-width: none; height: 100dvh; max-height: none;
+      color: var(--ink); background: var(--card); box-shadow: -12px 0 40px rgba(0,0,0,0.12);
+    }
+    .task-dialog[open] { display: flex; flex-direction: column; }
+    .task-dialog::backdrop { background: rgba(0,0,0,0.25); }
+    .task-head { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-bottom: 1px solid var(--line); }
+    .task-heading { flex: 1; min-width: 0; }
+    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 12px; }
+    .task-title { margin: 0; color: var(--ink); font-size: 22px; line-height: 1.4; letter-spacing: -0.02em; }
+    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; cursor: pointer; }
+    .task-body { flex: 1; min-height: 0; padding: 24px 28px 48px; overflow: auto; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
+    .task-body h4 { margin: 26px 0 10px; font-size: 16px; }
+    .task-body h4:first-child { margin-top: 0; }
+    .task-body p { margin: 0 0 14px; }
+    .task-body ul, .task-body ol { margin: 0 0 18px; padding-left: 22px; }
+    .task-body a { color: var(--blue); }
+    .task-body pre { padding: 14px; background: var(--paper); overflow: auto; border-radius: 6px; }
+    .task-body code { font-size: 0.9em; background: var(--paper); padding: 1px 4px; border-radius: 3px; }
+    .task-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-body th, .task-body td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    @media (max-width: 640px) { .task-head { padding: 18px; } .task-body { padding: 20px 18px 36px; } }
+    @media print { .task-dialog[open] { display: none; } }
   </style><script>
 // 짧은 운영 주소에서도 기존 문서 상대 링크를 유지한다. 로컬 HTML 보기는 그대로 둔다.
 if (location.pathname === "/kanban" || location.pathname === "/docs") {
@@ -214,7 +245,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md" data-web-href="/docs#progress">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
   <div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">12</div></div>
 <div class="kpi wip"><div class="label">진행 중</div><div class="num">0</div></div>
-<div class="kpi verify"><div class="label">검증 대기</div><div class="num">0</div></div>
+<div class="kpi verify"><div class="label">검증 대기</div><div class="num">2</div></div>
 <div class="kpi plan"><div class="label">계획</div><div class="num">14</div></div></div>
   <div class="filters" role="group" aria-label="기능 영역 필터"><button type="button" class="chip on" data-area="all">전체</button>
 <button type="button" class="chip a0" data-area="a0">인증·프로젝트</button>
@@ -226,60 +257,63 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <button type="button" class="chip a6" data-area="a6">배포·운영</button>
 <button type="button" class="chip a7" data-area="a7">외부 연계</button></div>
   <section class="board"><div class="col done"><div class="col-head"><span class="dot"></span>완료<span class="count">12</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>2</span></div>
-<div class="card"><div class="t">로그인·세션 관리</div><div class="n">이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md" data-web-href="/docs#auth">기능</a></div></div>
-<div class="card"><div class="t">프로젝트·대화 관리</div><div class="n">생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">기능</a></div></div>
+<button type="button" class="card" data-task="authentication" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">로그인·세션 관리</span><span class="n">이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="projects-conversations" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">프로젝트·대화 관리</span><span class="n">생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a1" data-area="a1"><div class="area">DB 연결<span>1</span></div>
-<div class="card"><div class="t">DB 연결·테이블 권한 관리</div><div class="n">관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></div></div>
+<button type="button" class="card" data-task="database-permissions" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">DB 연결·테이블 권한 관리</span><span class="n">관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>4</span></div>
-<div class="card"><div class="t">질문 라우팅·일반 대화·DB 구조 설명</div><div class="n">Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
-<div class="card"><div class="t">요청 계획·SQL 조회·에이전트 실행</div><div class="n">요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
-<div class="card"><div class="t">대화 문맥·후속 질문 처리</div><div class="n">최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
-<div class="card"><div class="t">채팅 답변·처리 내역 표시</div><div class="n">본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
+<button type="button" class="card" data-task="question-routing" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">질문 라우팅·일반 대화·DB 구조 설명</span><span class="n">Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="agent-execution" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">요청 계획·SQL 조회·에이전트 실행</span><span class="n">요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="conversation-context" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">대화 문맥·후속 질문 처리</span><span class="n">최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="answer-trace" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">채팅 답변·처리 내역 표시</span><span class="n">본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>
-<div class="card"><div class="t">DB별 예상 질문 검색</div><div class="n">예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">기능</a></div></div>
+<button type="button" class="card" data-task="question-similarity" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">DB별 예상 질문 검색</span><span class="n">예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a4" data-area="a4"><div class="area">위젯·Stage<span>2</span></div>
-<div class="card"><div class="t">위젯 카탈로그·미리보기</div><div class="n">허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></div></div>
-<div class="card"><div class="t">위젯별 현재 데이터 조회</div><div class="n">결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></div></div>
+<button type="button" class="card" data-task="widget-catalog" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯 카탈로그·미리보기</span><span class="n">허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="widget-data" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯별 현재 데이터 조회</span><span class="n">결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a5" data-area="a5"><div class="area">AI 설정<span>1</span></div>
-<div class="card"><div class="t">AI 연결 설정</div><div class="n">Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></div></div>
+<button type="button" class="card" data-task="ai-settings" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">AI 연결 설정</span><span class="n">Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
-<div class="card"><div class="t">독립 배포·운영 문서 공개</div><div class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">배포</a></div></div>
+<button type="button" class="card" data-task="deployment" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">독립 배포·운영 문서 공개</span><span class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개</span><span class="card-more">상세 보기 ↗</span></button>
 </div></div>
 <div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
-<div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
+<div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">2</span></div><div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>2</span></div>
+<button type="button" class="card" data-task="question-steps" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">질문 분리·경로 순서·실행 단계 접기</span><span class="n">2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="chat-cancellation" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">채팅 응답 생성 중지</span><span class="n">2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성</span><span class="card-more">상세 보기 ↗</span></button>
+</div></div>
 <div class="col plan"><div class="col-head"><span class="dot"></span>계획<span class="count">14</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>1</span></div>
-<div class="card"><div class="t">관리자 사용자 관리</div><div class="n">현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</div></div>
+<button type="button" class="card" data-task="admin-user-management" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">관리자 사용자 관리</span><span class="n">여러 계정을 운영하기 위한 사용자 추가·비활성화·역할 지정. 프로젝트 공유는 별도 판단</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a1" data-area="a1"><div class="area">DB 연결<span>2</span></div>
-<div class="card"><div class="t">DB 구조 파악(ERD)</div><div class="n">DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</div></div>
-<div class="card"><div class="t">다른 DB 적용 가능성 검토</div><div class="n">PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</div></div>
+<button type="button" class="card" data-task="database-map" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">DB 구조 파악(ERD)</span><span class="n">SQL 판단에 부족한 관계·설명·업무 용어를 확인하고 DB 지도 도입 범위 결정</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="database-compatibility" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">다른 DB 적용 가능성 검토</span><span class="n">PostgreSQL 외 DB 수요와 SQL 검증·실행·스키마 조회의 분리 범위 검토</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>1</span></div>
-<div class="card"><div class="t">LLM 호출 장애 대응</div><div class="n">요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</div></div>
+<button type="button" class="card" data-task="llm-failure-handling" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">LLM 호출 장애 대응</span><span class="n">호출량 제한·연속 실패 시 중단·복구 정책으로 LLM 장애 영향 제한</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>
-<div class="card"><div class="t">예상 질문 검증</div><div class="n">예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</div></div>
+<button type="button" class="card" data-task="expected-question-validation" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">예상 질문 검증</span><span class="n">대표 질문별 정답과 표현·기간·집계 차이를 기준으로 예상 질문 품질 평가</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a4" data-area="a4"><div class="area">위젯·Stage<span>4</span></div>
-<div class="card"><div class="t">위젯 래퍼</div><div class="n">위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</div></div>
-<div class="card"><div class="t">위젯 옵션</div><div class="n">위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</div></div>
-<div class="card"><div class="t">위젯 표현(옵션) 수정 (채팅·수동)</div><div class="n">생성된 위젯의 표현만 고치려고 질문을 다시 하지 않도록, 이미 만든 위젯을 채팅으로 요청하거나 직접(수동) 조작해 바로 수정하는 방법. 모든 옵션과 전체 변경 이력을 한꺼번에 하지 않는다</div></div>
-<div class="card"><div class="t">위젯 행동</div><div class="n">래퍼끼리 값을 주고받는 구조. 전역 필터·위젯 간 제어·드릴다운은 값을 내보내면 연결된 위젯이 다시 조회하는 같은 동작이다. 조회 정의에 필터를 받을 자리를 마련하는 것이 전제. 추가(2026-10-14): 최소 범위는 같은 위젯의 기간·차원만 바꿔 다시 조회하는 것. 범용 위젯 연결·드릴다운은 필수 아님. 어떤 조건을 반복해서 바꿀지 좁혀 비교한다. 분류 이견: 필요성 높음(Stage 재사용의 핵심) / 범위 판단</div></div>
+<button type="button" class="card" data-task="widget-wrapper" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯 래퍼</span><span class="n">공통 위젯에 갱신 상태·조회 기간·옵션·행동 진입점을 정리</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="widget-options" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯 옵션</span><span class="n">위젯별 허용 표현 옵션을 하나의 정의로 관리하고 변경 이력·되돌리기 검토</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="widget-presentation-editing" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯 표현(옵션) 수정 (채팅·수동)</span><span class="n">기존 위젯의 표현을 채팅·직접 조작으로 수정하는 최소 흐름 정의</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="widget-interaction" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">위젯 행동</span><span class="n">기간·차원 변경과 재조회부터 검토하고 위젯 간 값 전달 범위를 별도 결정</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
-<div class="card"><div class="t">감사 로그</div><div class="n">행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</div></div>
+<button type="button" class="card" data-task="audit-log" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">감사 로그</span><span class="n">행위 기록 적재와 관리자 조회 범위 정의. 사용량 화면은 제외</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
 <div class="group a7" data-area="a7"><div class="area">외부 연계<span>4</span></div>
-<div class="card"><div class="t">데이터 반출 필요성 검토</div><div class="n">위젯 조회 결과를 앱 밖에서 써야 하는지와 범위(화면 결과 1000행 한도·전체 결과), 방식(파일·조회 API·반출 없음), 권한 범위 결정</div></div>
-<div class="card"><div class="t">데이터 값 기반 이벤트·훅 필요성 검토</div><div class="n">조회 결과 값이 조건을 만족할 때 이벤트를 발생시키거나 외부 훅을 호출해야 하는지 결정. 필요하면 규칙·판단 이력·중복 억제·전달 채널·웹훅 관리로 확장</div></div>
-<div class="card"><div class="t">정기 리포트</div><div class="n">저장된 위젯 조회를 정해진 때 실행해 결과를 정기적으로 전달. 이벤트·훅과 별도 기능</div></div>
-<div class="card"><div class="t">임베드 필요성 검토</div><div class="n">위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</div></div>
+<button type="button" class="card" data-task="data-export-review" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">데이터 반출 필요성 검토</span><span class="n">앱 밖에서 필요한 결과 범위·반출 방식·권한 결정</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="data-event-review" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">데이터 값 기반 이벤트·훅 필요성 검토</span><span class="n">조회 값의 조건 충족 시 외부 이벤트가 필요한지와 운영 범위 결정</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="scheduled-report" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">정기 리포트</span><span class="n">저장된 위젯 조회의 정기 실행과 결과 전달 방식 검토</span><span class="card-more">상세 보기 ↗</span></button>
+<button type="button" class="card" data-task="widget-embed-review" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">임베드 필요성 검토</span><span class="n">외부 화면에 위젯을 표시할 필요성과 게시·접근·조회 조건 범위 결정</span><span class="card-more">상세 보기 ↗</span></button>
 </div></div></section>
   <h2>현재 상태와 검증 범위</h2><section class="box"><h2>현재 상태</h2>
 <p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md" data-web-href="/docs#stage">stage.md</a>·<a href="features/viewer.md" data-web-href="/docs#viewer">viewer.md</a>에 유지한다.</p>
@@ -309,7 +343,420 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
     <p>원본에서 생성한 보기다. 서버의 실시간 상태·새 테스트 결과·운영 배포 완료를 자동 판정하지 않는다.</p>
   </footer>
 </div>
+<dialog class="task-dialog" id="taskDialog" aria-labelledby="taskTitle" aria-describedby="taskMeta">
+  <div class="task-head">
+    <div class="task-heading"><p class="task-meta" id="taskMeta"></p><h3 class="task-title" id="taskTitle"></h3></div>
+    <button type="button" class="task-close" id="taskClose" aria-label="상세 닫기">닫기 ×</button>
+  </div>
+  <div class="task-body" id="taskBody"></div>
+</dialog>
+<template id="task-authentication" data-title="로그인·세션 관리" data-area="인증·프로젝트" data-status="완료"><h4 id="task-authentication--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>사용자별 독립 계정과 세션으로 앱의 접근 범위를 지킨다.</p>
+<h4 id="task-authentication--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md" data-web-href="/docs#auth">기능</a></p>
+<h4 id="task-authentication--경계와-주의할-점">경계와 주의할 점</h4>
+<p>인증과 프로젝트 공유는 별개이며, 사용자 관리 화면의 구현 여부를 로그인 기능에서 추정하지 않는다.</p>
+<h4 id="task-authentication--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-projects-conversations" data-title="프로젝트·대화 관리" data-area="인증·프로젝트" data-status="완료"><h4 id="task-projects-conversations--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>프로젝트와 대화를 관리하고 삭제 시 연관 데이터를 정리한다.</p>
+<h4 id="task-projects-conversations--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">기능</a></p>
+<h4 id="task-projects-conversations--경계와-주의할-점">경계와 주의할 점</h4>
+<p>다른 소유자에 대한 접근과 삭제 범위는 현재 프로젝트 명세를 기준으로 확인한다.</p>
+<h4 id="task-projects-conversations--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-database-permissions" data-title="DB 연결·테이블 권한 관리" data-area="DB 연결" data-status="완료"><h4 id="task-database-permissions--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>허용한 고객 DB와 테이블 안에서만 조회하도록 연결과 역할 권한을 관리한다.</p>
+<h4 id="task-database-permissions--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></p>
+<h4 id="task-database-permissions--경계와-주의할-점">경계와 주의할 점</h4>
+<p>서비스 DB와 고객 DB를 혼용하지 않으며 고객 데이터 쓰기를 이 기능의 범위에 포함하지 않는다.</p>
+<h4 id="task-database-permissions--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-question-routing" data-title="질문 라우팅·일반 대화·DB 구조 설명" data-area="채팅·에이전트" data-status="완료"><h4 id="task-question-routing--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>질문의 의도에 맞는 처리 경로를 선택하고 후속 실행을 계획한다.</p>
+<h4 id="task-question-routing--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="task-question-routing--경계와-주의할-점">경계와 주의할 점</h4>
+<p>경로 분류·되묻기·조회 실행은 구분해 기록한다. 분류 성공이 답변 정확성을 보장하지 않는다.</p>
+<h4 id="task-question-routing--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-agent-execution" data-title="요청 계획·SQL 조회·에이전트 실행" data-area="채팅·에이전트" data-status="완료"><h4 id="task-agent-execution--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>요청 목표를 단계별 조회와 위젯 생성으로 해결하고 결과를 보고 재계획한다.</p>
+<h4 id="task-agent-execution--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="task-agent-execution--경계와-주의할-점">경계와 주의할 점</h4>
+<p>실행 한도·부분 결과·미완료 이유를 실제 결과와 구분해서 안내한다.</p>
+<h4 id="task-agent-execution--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-conversation-context" data-title="대화 문맥·후속 질문 처리" data-area="채팅·에이전트" data-status="완료"><h4 id="task-conversation-context--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>같은 대화의 이전 질문과 결과를 이용해 후속 질문의 대상을 해석한다.</p>
+<h4 id="task-conversation-context--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="task-conversation-context--경계와-주의할-점">경계와 주의할 점</h4>
+<p>기록된 문맥 범위 밖의 데이터나 다른 DB 응답을 같은 결과로 추정하지 않는다.</p>
+<h4 id="task-conversation-context--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-answer-trace" data-title="채팅 답변·처리 내역 표시" data-area="채팅·에이전트" data-status="완료"><h4 id="task-answer-trace--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>답변 내용과 처리 과정을 사용자가 따라갈 수 있게 표시한다.</p>
+<h4 id="task-answer-trace--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></p>
+<h4 id="task-answer-trace--경계와-주의할-점">경계와 주의할 점</h4>
+<p>처리 내역은 저장된 실행 근거이며 과거 로그를 새 실행 결과처럼 표시하지 않는다.</p>
+<h4 id="task-answer-trace--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-question-similarity" data-title="DB별 예상 질문 검색" data-area="예상 질문" data-status="완료"><h4 id="task-question-similarity--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>비슷한 질문에 연결된 SQL·위젯을 현재 조회 계획에 참고한다.</p>
+<h4 id="task-question-similarity--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">기능</a></p>
+<h4 id="task-question-similarity--경계와-주의할-점">경계와 주의할 점</h4>
+<p>유사 질문 검색 결과와 현재 DB에서 실행한 결과를 구분한다. 품질 검증 계획은 별도 항목이다.</p>
+<h4 id="task-question-similarity--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-widget-catalog" data-title="위젯 카탈로그·미리보기" data-area="위젯·Stage" data-status="완료"><h4 id="task-widget-catalog--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>허용된 위젯과 미리보기로 조회 결과를 표현한다.</p>
+<h4 id="task-widget-catalog--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></p>
+<h4 id="task-widget-catalog--경계와-주의할-점">경계와 주의할 점</h4>
+<p>채팅 미리보기와 Stage 배치는 구분하며 카탈로그 밖의 위젯을 임의로 추가하지 않는다.</p>
+<h4 id="task-widget-catalog--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-widget-data" data-title="위젯별 현재 데이터 조회" data-area="위젯·Stage" data-status="완료"><h4 id="task-widget-data--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>저장한 조회 정의를 통해 위젯을 표시할 때 현재 DB 값을 읽는다.</p>
+<h4 id="task-widget-data--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></p>
+<h4 id="task-widget-data--경계와-주의할-점">경계와 주의할 점</h4>
+<p>저장된 정의와 현재 조회 결과, 빈 결과·실패·잘림을 구분해 확인한다.</p>
+<h4 id="task-widget-data--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-ai-settings" data-title="AI 연결 설정" data-area="AI 설정" data-status="완료"><h4 id="task-ai-settings--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>Provider별 연결과 AI 동작 설정을 사용자가 관리한다.</p>
+<h4 id="task-ai-settings--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></p>
+<h4 id="task-ai-settings--경계와-주의할-점">경계와 주의할 점</h4>
+<p>설정 보관과 실제 공급자 호출 성공은 다르다. 키·모델의 존재만으로 실모델 검증을 완료 처리하지 않는다.</p>
+<h4 id="task-ai-settings--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-deployment" data-title="독립 배포·운영 문서 공개" data-area="배포·운영" data-status="완료"><h4 id="task-deployment--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>앱을 독립적으로 배포하고 운영·문서 주소를 제공한다.</p>
+<h4 id="task-deployment--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">배포</a></p>
+<h4 id="task-deployment--경계와-주의할-점">경계와 주의할 점</h4>
+<p>배포 이력은 당시 버전의 결과이며 현재 변경의 운영 반영 여부는 별도로 확인한다.</p>
+<h4 id="task-deployment--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-question-steps" data-title="질문 분리·경로 순서·실행 단계 접기" data-area="채팅·에이전트" data-status="검증 대기"><h4 id="task-question-steps--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>질문 분리와 실행 순서를 처리 내역에서 이해할 수 있게 한다.</p>
+<h4 id="task-question-steps--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시. 회귀 테스트 작성, 테스트·빌드·브라우저·실모델 검증은 다음 단계. <a href="temp/chat-question-routing-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-question-routing-2026-10-15.md">기록</a></p>
+<h4 id="task-question-steps--경계와-주의할-점">경계와 주의할 점</h4>
+<p>대역 테스트 작성과 실모델의 질문 분리 정확도 검증을 구분한다. 세부 변경은 연결된 기록을 기준으로 한다.</p>
+<h4 id="task-question-steps--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-chat-cancellation" data-title="채팅 응답 생성 중지" data-area="채팅·에이전트" data-status="검증 대기"><h4 id="task-chat-cancellation--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>진행 중인 응답 생성을 사용자가 중지할 수 있도록 한 변경이다.</p>
+<h4 id="task-chat-cancellation--기록된-범위와-근거">기록된 범위와 근거</h4>
+<p>2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성. 테스트·빌드·브라우저 검증 미실행. <a href="features/chat.md#응답-생성-중지" data-web-href="/docs#chat--응답-생성-중지">기능</a></p>
+<h4 id="task-chat-cancellation--경계와-주의할-점">경계와 주의할 점</h4>
+<p>화면 중지·요청 취소·서버 후속 실행 및 저장 차단을 나눠 확인한다. 중지 전에 완료된 작업의 소급 취소를 가정하지 않는다.</p>
+<h4 id="task-chat-cancellation--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
+<p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-admin-user-management" data-title="관리자 사용자 관리" data-area="인증·프로젝트" data-status="계획"><h4 id="task-admin-user-management--배경과-목적">배경과 목적</h4>
+<p>여러 사람이 각자의 계정으로 서비스를 사용해야 할 때 관리자가 계정을 운영할 수 있어야 한다. 개인 계정 하나로 사용하는 상황에서는 필요성이 낮으므로 필요성과 도입 시점을 먼저 판단한다.</p>
+<h4 id="task-admin-user-management--현재-상태">현재 상태</h4>
+<p>로그인·내 정보 조회·토큰 갱신과 역할 검사는 제공한다. 기본 시드 로그인 계정은 admin·viewer이며, user 역할 값이 있다는 사실과 관리자용 사용자 관리 화면이 있다는 사실은 구분한다. 현재 프로젝트·대화는 사용자 소유권으로 접근을 제한한다.</p>
+<h4 id="task-admin-user-management--작업-범위안">작업 범위안</h4>
+<ul>
+<li>관리 대상 계정의 목록과 상태 확인.</li>
+<li>관리자의 사용자 추가.</li>
+<li>기존 사용자 비활성화.</li>
+<li>사용자 역할 지정·변경과 화면·서버 권한의 일관성 확인.</li>
+</ul>
+<h4 id="task-admin-user-management--프로젝트-공유와의-관계">프로젝트 공유와의 관계</h4>
+<p>계정을 추가했다고 다른 사용자의 프로젝트를 볼 수 있는 것은 아니다. 계정 관리와 프로젝트 공유의 필요성·도입 시점은 각각 판단한다. 공유를 도입할 때에는 대상 사용자와 열람·편집 범위를 별도로 정의한다.</p>
+<h4 id="task-admin-user-management--결정할-사항">결정할 사항</h4>
+<ul>
+<li>관리자 직접 생성과 초대 중 어떤 방식으로 계정을 만들지.</li>
+<li>최초 비밀번호 설정·재설정 방식.</li>
+<li>관리자가 관리할 수 있는 사용자의 범위.</li>
+<li>비활성화 시 기존 Access·Refresh 세션의 처리 시점.</li>
+<li>비활성 사용자가 소유한 프로젝트·대화의 보관과 접근 정책.</li>
+<li>자기 계정 및 마지막 관리자 계정의 비활성화·역할 변경 허용 여부.</li>
+</ul>
+<h4 id="task-admin-user-management--완료-판단-기준안">완료 판단 기준안</h4>
+<p>정책을 확정한 뒤 관리자에게 허용된 계정 조작이 가능하고 비관리자의 조작은 서버에서 거부되는지 확인한다. 중복 계정·허용되지 않은 역할 변경을 처리하고, 비활성화·역할 변경이 확정한 인증 정책에 반영돼야 한다. 사용자 관리 조작으로 프로젝트 공유 권한이 생기지 않아야 한다.</p>
+<h4 id="task-admin-user-management--관련-문서">관련 문서</h4>
+<ul>
+<li><a href="features/auth.md" data-web-href="/docs#auth">현재 로그인·세션·역할</a></li>
+<li><a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">현재 프로젝트·대화</a></li>
+</ul>
+<h4 id="task-admin-user-management--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>현재 계정은 시드 2개(<code>admin</code>·<code>viewer</code>)뿐이고 로그인·내 정보 조회만 있다. 관리자가 사용자 추가·비활성화·역할 지정. 프로젝트 공유 등 권한 정합은 사용자 관리 이후에 함께 정리. 추가(2026-10-14): 여러 계정 운영·같은 프로젝트 공동 열람이 필요할 때 의미가 있고 개인 사용이면 불필요. 계정 관리와 공유는 각각 판단</p></template>
+<template id="task-database-map" data-title="DB 구조 파악(ERD)" data-area="DB 연결" data-status="계획"><h4 id="task-database-map--배경과-목적">배경과 목적</h4>
+<p>컬럼·PK·선언된 FK만으로 질문의 업무 의미와 관계를 해석하기 어려운지 확인한다.</p>
+<h4 id="task-database-map--검토할-작업-범위">검토할 작업 범위</h4>
+<p>실제 오답 질문을 기준으로 빠진 관계·테이블 설명·업무 용어를 정리한다. 그 정보의 보관·갱신과 ERD 화면의 필요성을 각각 검토한다.</p>
+<h4 id="task-database-map--결정할-사항">결정할 사항</h4>
+<ul>
+<li>어떤 질문이 현재 구조 정보만으로 실패하는지.</li>
+<li>선언된 FK 외 관계를 누가 확인할지.</li>
+<li>스키마 변경을 언제 감지·반영할지.</li>
+<li>영속 지도·ERD·자동 추론 중 필요한 범위.</li>
+</ul>
+<h4 id="task-database-map--완료-판단-기준안">완료 판단 기준안</h4>
+<p>대표 질문에서 부족한 구조 정보를 설명하고 필요한 보완 범위를 결정한다. 지도를 구현할 경우 갱신 전후 SQL 해석이 개선되는지 확인한다.</p>
+<h4 id="task-database-map--관련-문서">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">DB 연결과 권한</a>, <a href="features/chat.md" data-web-href="/docs#chat">SQL 계획·실행</a></p>
+<h4 id="task-database-map--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>DB 연결 시 AI가 쓸 DB 지도(테이블 관계·설명·용어)를 만들어 보관하고 스키마가 바뀌면 갱신. SQL 정확도와 필터 연결 판단의 기반. 현재는 질문마다 컬럼·PK·선언된 FK만 읽는다. 추가(2026-10-14): 컬럼·PK·FK로 부족한 관계·설명·업무 용어 보완의 가치부터 확인. 영속 DB 지도·ERD 화면·자동 관계 추론 전체는 필수 아님</p></template>
+<template id="task-database-compatibility" data-title="다른 DB 적용 가능성 검토" data-area="DB 연결" data-status="계획"><h4 id="task-database-compatibility--배경과-목적">배경과 목적</h4>
+<p>다른 DB에 실제로 연결해야 하는 사용 상황이 있는지 확인한다.</p>
+<h4 id="task-database-compatibility--검토할-작업-범위">검토할 작업 범위</h4>
+<p>필요한 DB 제품과 대표 조회를 고르고 연결·구조 조회·읽기 전용 SQL 검증에서 PostgreSQL 전용 부분을 정리한다.</p>
+<h4 id="task-database-compatibility--결정할-사항">결정할 사항</h4>
+<ul>
+<li>우선 지원할 DB와 버전.</li>
+<li>지원 범위와 제외할 SQL 문법.</li>
+<li>읽기 전용 권한 확보 방식.</li>
+<li>기존 PostgreSQL 동작 유지 범위.</li>
+</ul>
+<h4 id="task-database-compatibility--완료-판단-기준안">완료 판단 기준안</h4>
+<p>지원 여부·우선 대상·필요한 분리 작업을 결정 문서로 남긴다. 검토 완료를 다른 DB 지원 완료로 표시하지 않는다.</p>
+<h4 id="task-database-compatibility--관련-문서">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">DB 연결</a>, <a href="features/chat.md" data-web-href="/docs#chat">현재 SQL 경로</a></p>
+<h4 id="task-database-compatibility--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>PostgreSQL 외 DB(MySQL·Oracle·MSSQL 등) 연결이 필요한지 검토. 현재 SQL 검증·실행·스키마 읽기가 PostgreSQL 전용이라 적용하려면 DB별로 분리해야 한다</p></template>
+<template id="task-llm-failure-handling" data-title="LLM 호출 장애 대응" data-area="채팅·에이전트" data-status="계획"><h4 id="task-llm-failure-handling--배경과-목적">배경과 목적</h4>
+<p>현재 실행 횟수·시간 예산만으로 호출 공급자의 과부하와 연속 장애를 어떻게 제어할지 정리한다.</p>
+<h4 id="task-llm-failure-handling--검토할-작업-범위">검토할 작업 범위</h4>
+<p>레이트리밋 적용 범위와 연속 실패 시 호출 일시 중단·복구 조건을 검토한다. 기존 실행 예산·부분 결과와의 관계를 정의한다.</p>
+<h4 id="task-llm-failure-handling--결정할-사항">결정할 사항</h4>
+<ul>
+<li>공급자·사용자·전체 중 제한 단위.</li>
+<li>실패로 셀 오류.</li>
+<li>중단·복구 임계값.</li>
+<li>재시도와 비용 상한.</li>
+<li>사용자에게 보여줄 상태.</li>
+</ul>
+<h4 id="task-llm-failure-handling--완료-판단-기준안">완료 판단 기준안</h4>
+<p>정한 정책에서 반복 호출이 제한되고 복구 조건을 충족하면 재개한다. 부분 결과와 실패를 성공으로 혼동하지 않는다.</p>
+<h4 id="task-llm-failure-handling--관련-문서">관련 문서</h4>
+<p><a href="features/chat.md" data-web-href="/docs#chat">현재 에이전트 한도·오류 처리</a></p>
+<h4 id="task-llm-failure-handling--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>요청량 제한(레이트리밋)과 연속 실패 시 호출 일시 중단(서킷브레이커). 현재는 SQL 수정 5회·180초 예산·도구 호출 100회·재계획 5회 한도와 부분 결과 반환만 있다</p></template>
+<template id="task-expected-question-validation" data-title="예상 질문 검증" data-area="예상 질문" data-status="계획"><h4 id="task-expected-question-validation--배경과-목적">배경과 목적</h4>
+<p>같은 의도의 표현끼리 결과가 같아도 모두 틀렸을 수 있어 정답과 비교하는 기준이 필요하다.</p>
+<h4 id="task-expected-question-validation--검토할-작업-범위">검토할 작업 범위</h4>
+<p>대표 질문별 기대 결과를 정의하고 표현 변경·기간·집계 조건을 나눠 비교한다. 결과 검증과 SQL 구조 검증의 범위를 구분한다.</p>
+<h4 id="task-expected-question-validation--결정할-사항">결정할 사항</h4>
+<ul>
+<li>대표 질문과 정답 작성자.</li>
+<li>허용할 결과 차이.</li>
+<li>기간·집계 해석 기준.</li>
+<li>피드백·관리자 승인과 별도로 운영할 범위.</li>
+</ul>
+<h4 id="task-expected-question-validation--완료-판단-기준안">완료 판단 기준안</h4>
+<p>틀린 결과끼리의 일치와 실제 정답 일치를 구분하고, 오류가 표현·기간·집계 중 어디에서 생겼는지 기록한다.</p>
+<h4 id="task-expected-question-validation--관련-문서">관련 문서</h4>
+<p><a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">예상 질문 검색</a>, <a href="features/chat.md" data-web-href="/docs#chat">SQL 실행</a></p>
+<h4 id="task-expected-question-validation--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>예상 질문 유사도 DB 고도화. 피드백 수집 → 관리자 검토 → 반영으로 검증된 질문을 참조하고, 같은 의도를 다른 표현으로 물었을 때 결과 일관성 평가. 추가(2026-10-14): 결과뿐 아니라 기간·집계까지 대표 질문 단위로 일관성 검증. 오류 신고 전에도 필요한 품질 확인 수단이며 관리자 승인·피드백 운영과 분리해 판단. 결과 비교는 현재 구조로 가능하고, 기간·집계 비교는 SQL 구조 비교가 필요하다. 표현끼리만 비교하면 둘 다 틀린 경우를 놓치므로 정확성까지 보려면 대표 질문별 정답(기대 결과)이 있어야 한다</p></template>
+<template id="task-widget-wrapper" data-title="위젯 래퍼" data-area="위젯·Stage" data-status="계획"><h4 id="task-widget-wrapper--배경과-목적">배경과 목적</h4>
+<p>같은 Stage의 위젯마다 현재 데이터와 조회 시점을 이해할 공통 표시가 필요하다.</p>
+<h4 id="task-widget-wrapper--검토할-작업-범위">검토할 작업 범위</h4>
+<p>현재 QueryWidget의 조회·새로고침·오류 처리 위에 자동 갱신 주기·마지막 조회 시각·잘림 여부·조회 기간 표시를 검토한다. 옵션·행동은 후속 범위로 연결한다.</p>
+<h4 id="task-widget-wrapper--결정할-사항">결정할 사항</h4>
+<ul>
+<li>첫 적용 위젯.</li>
+<li>자동 갱신 기본값·중지 조건.</li>
+<li>조회 기간의 표현.</li>
+<li>잘림을 판단할 서버 정보.</li>
+<li>옵션·행동을 연결할 시점.</li>
+</ul>
+<h4 id="task-widget-wrapper--완료-판단-기준안">완료 판단 기준안</h4>
+<p>선택한 위젯에서 값의 조회 시점·기간·잘림 여부를 확인할 수 있고 기존 수동 새로고침·오류 처리가 유지된다.</p>
+<h4 id="task-widget-wrapper--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 위젯 조회</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage</a></p>
+<h4 id="task-widget-wrapper--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>위젯 정의(JSON)를 받아 위젯으로 그리는 공통 래퍼. 현재 위젯별 조회·새로고침·오류를 담당하는 <code>QueryWidget</code>을 확장해 데이터 갱신 상태(자동 갱신 주기·마지막 조회 시각·결과 잘림 여부)부터 맡기고, 이후 옵션 메뉴 진입점과 행동(값 보내기·받기)의 통로로 쓴다. 추가(2026-10-14): 어떤 기간으로 조회한 값인지 표시</p></template>
+<template id="task-widget-options" data-title="위젯 옵션" data-area="위젯·Stage" data-status="계획"><h4 id="task-widget-options--배경과-목적">배경과 목적</h4>
+<p>수동 설정과 대화로 바꾸는 위젯 표현이 같은 허용 범위를 따라야 한다.</p>
+<h4 id="task-widget-options--검토할-작업-범위">검토할 작업 범위</h4>
+<p>위젯별 허용 옵션과 값의 범위를 카탈로그에 정의하고 래퍼 메뉴·대화 입력을 같은 변경 경로에 연결하는 안을 검토한다.</p>
+<h4 id="task-widget-options--결정할-사항">결정할 사항</h4>
+<ul>
+<li>우선 지원 옵션.</li>
+<li>저장 단위.</li>
+<li>변경 이력 보관량.</li>
+<li>되돌리기 단위.</li>
+<li>기존 정의의 호환 방식.</li>
+</ul>
+<h4 id="task-widget-options--완료-판단-기준안">완료 판단 기준안</h4>
+<p>선택한 옵션을 두 입력 방식에서 같은 정의로 변경하고 허용되지 않은 값은 거부한다. 이력·되돌리기는 확정한 범위로 확인한다.</p>
+<h4 id="task-widget-options--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 카탈로그</a></p>
+<h4 id="task-widget-options--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>위젯별 허용 옵션(레전드 표시 등)을 카탈로그에 닫힌 값으로 정의. 래퍼의 설정 메뉴와 대화 두 입구로 바꾸되 정의는 하나로 둔다. 변경 이력·되돌리기 포함</p></template>
+<template id="task-widget-presentation-editing" data-title="위젯 표현(옵션) 수정 (채팅·수동)" data-area="위젯·Stage" data-status="계획"><h4 id="task-widget-presentation-editing--배경과-목적">배경과 목적</h4>
+<p>이미 만든 위젯의 표현만 바꾸기 위해 데이터 질문을 처음부터 반복하지 않도록 한다.</p>
+<h4 id="task-widget-presentation-editing--검토할-작업-범위">검토할 작업 범위</h4>
+<p>대상 위젯 선택과 변경할 표현을 특정하고 채팅·수동 입력으로 기존 위젯을 수정하는 흐름을 검토한다. 전체 옵션·전체 이력의 일괄 구현은 요구하지 않는다.</p>
+<h4 id="task-widget-presentation-editing--결정할-사항">결정할 사항</h4>
+<ul>
+<li>처음 지원할 표현.</li>
+<li>수정 대상 식별 방식.</li>
+<li>데이터 재조회가 필요한 변경과 표현만 바뀌는 변경의 경계.</li>
+<li>허용 옵션과의 연결.</li>
+</ul>
+<h4 id="task-widget-presentation-editing--완료-판단-기준안">완료 판단 기준안</h4>
+<p>선택한 위젯에 의도한 표현 변경이 반영되고 다른 위젯이나 조회 조건을 잘못 바꾸지 않는다.</p>
+<h4 id="task-widget-presentation-editing--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 정의와 표시</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage 저장</a></p>
+<h4 id="task-widget-presentation-editing--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>생성된 위젯의 표현만 고치려고 질문을 다시 하지 않도록, 이미 만든 위젯을 채팅으로 요청하거나 직접(수동) 조작해 바로 수정하는 방법. 모든 옵션과 전체 변경 이력을 한꺼번에 하지 않는다</p></template>
+<template id="task-widget-interaction" data-title="위젯 행동" data-area="위젯·Stage" data-status="계획"><h4 id="task-widget-interaction--배경과-목적">배경과 목적</h4>
+<p>저장한 Stage를 재사용할 때 반복해서 바꾸는 조회 조건을 식별한다.</p>
+<h4 id="task-widget-interaction--검토할-작업-범위">검토할 작업 범위</h4>
+<p>같은 위젯의 기간·차원을 바꿔 다시 조회하는 최소 범위를 먼저 비교한다. 값 보내기·받기, 전역 필터·드릴다운은 필요성과 연결 범위를 따로 정한다.</p>
+<h4 id="task-widget-interaction--결정할-사항">결정할 사항</h4>
+<ul>
+<li>반복 변경할 조건.</li>
+<li>SQL 조회 정의의 입력 자리.</li>
+<li>전달 값 검증.</li>
+<li>범용 연결의 필요성.</li>
+<li>핵심 필요성과 구현 범위에 관한 기존 이견.</li>
+</ul>
+<h4 id="task-widget-interaction--완료-판단-기준안">완료 판단 기준안</h4>
+<p>선택한 조건 변경이 조회 결과에 반영되고 허용되지 않은 입력이 SQL 실행 경로에 섞이지 않는다. 필요성·범위에 대한 결정을 기록한다.</p>
+<h4 id="task-widget-interaction--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 데이터 조회</a>, <a href="features/stage.md" data-web-href="/docs#stage">Stage</a></p>
+<h4 id="task-widget-interaction--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>래퍼끼리 값을 주고받는 구조. 전역 필터·위젯 간 제어·드릴다운은 값을 내보내면 연결된 위젯이 다시 조회하는 같은 동작이다. 조회 정의에 필터를 받을 자리를 마련하는 것이 전제. 추가(2026-10-14): 최소 범위는 같은 위젯의 기간·차원만 바꿔 다시 조회하는 것. 범용 위젯 연결·드릴다운은 필수 아님. 어떤 조건을 반복해서 바꿀지 좁혀 비교한다. 분류 이견: 필요성 높음(Stage 재사용의 핵심) / 범위 판단</p></template>
+<template id="task-audit-log" data-title="감사 로그" data-area="배포·운영" data-status="계획"><h4 id="task-audit-log--배경과-목적">배경과 목적</h4>
+<p>문제가 발생했을 때 누가 어떤 행위를 했는지 추적할 근거를 남긴다.</p>
+<h4 id="task-audit-log--검토할-작업-범위">검토할 작업 범위</h4>
+<p>기존 audit_events 테이블에 기록할 행위를 정하고 관리자 조회 화면의 범위를 검토한다. 2026-10-14에 제외한 사용량 화면을 이 작업에 포함하지 않는다.</p>
+<h4 id="task-audit-log--결정할-사항">결정할 사항</h4>
+<ul>
+<li>기록 대상 행위.</li>
+<li>저장 항목과 사용자 데이터의 제외 범위.</li>
+<li>열람 권한.</li>
+<li>보관 기간.</li>
+<li>기록 실패가 원래 작업에 미칠 영향.</li>
+</ul>
+<h4 id="task-audit-log--완료-판단-기준안">완료 판단 기준안</h4>
+<p>선택한 행위를 수행했을 때 필요한 추적 정보가 남고 관리자에게만 정해진 범위로 조회된다.</p>
+<h4 id="task-audit-log--관련-문서">관련 문서</h4>
+<p><a href="features/admin.md" data-web-href="/docs#admin">관리 기능·권한</a>, <a href="features/auth.md" data-web-href="/docs#auth">인증</a></p>
+<h4 id="task-audit-log--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</p></template>
+<template id="task-data-export-review" data-title="데이터 반출 필요성 검토" data-area="외부 연계" data-status="계획"><h4 id="task-data-export-review--배경과-목적">배경과 목적</h4>
+<p>사용자가 위젯 조회 결과를 외부 업무에서 사용해야 하는지 확인한다.</p>
+<h4 id="task-data-export-review--검토할-작업-범위">검토할 작업 범위</h4>
+<p>화면의 1000행 한도 결과와 전체 결과를 구분하고 파일·조회 API·반출 없음 중 필요한 방식을 검토한다.</p>
+<h4 id="task-data-export-review--결정할-사항">결정할 사항</h4>
+<ul>
+<li>실제 반출 사용 사례.</li>
+<li>화면 결과와 전체 결과 중 범위.</li>
+<li>파일 형식 또는 API.</li>
+<li>고객 DB·사용자별 허용 권한.</li>
+</ul>
+<h4 id="task-data-export-review--완료-판단-기준안">완료 판단 기준안</h4>
+<p>필요 여부·대상 데이터·전달 방식·권한을 결정한다. 검토 완료와 반출 기능 구현 완료를 구분한다.</p>
+<h4 id="task-data-export-review--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 데이터</a>, <a href="features/admin.md" data-web-href="/docs#admin">DB 권한</a></p>
+<h4 id="task-data-export-review--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>위젯 조회 결과를 앱 밖에서 써야 하는지와 범위(화면 결과 1000행 한도·전체 결과), 방식(파일·조회 API·반출 없음), 권한 범위 결정</p></template>
+<template id="task-data-event-review" data-title="데이터 값 기반 이벤트·훅 필요성 검토" data-area="외부 연계" data-status="계획"><h4 id="task-data-event-review--배경과-목적">배경과 목적</h4>
+<p>사용자가 화면을 열지 않아도 특정 데이터 상태를 알아야 하는 상황이 있는지 확인한다.</p>
+<h4 id="task-data-event-review--검토할-작업-범위">검토할 작업 범위</h4>
+<p>대표 조건과 수신 대상을 정리한다. 필요하다고 결정하면 규칙·판단 이력·중복 억제·채널·웹훅 관리의 구현 범위를 정한다.</p>
+<h4 id="task-data-event-review--결정할-사항">결정할 사항</h4>
+<ul>
+<li>조건 평가 시점.</li>
+<li>같은 상태의 중복 알림 기준.</li>
+<li>수신 채널.</li>
+<li>전달 실패 처리.</li>
+<li>외부 전송 허용 데이터.</li>
+</ul>
+<h4 id="task-data-event-review--완료-판단-기준안">완료 판단 기준안</h4>
+<p>이벤트 필요 여부와 최소 운영 범위를 결정한다. 정기 리포트와 조건 기반 이벤트를 혼동하지 않는다.</p>
+<h4 id="task-data-event-review--관련-문서">관련 문서</h4>
+<p><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">현재 데이터 조회</a></p>
+<h4 id="task-data-event-review--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>조회 결과 값이 조건을 만족할 때 이벤트를 발생시키거나 외부 훅을 호출해야 하는지 결정. 필요하면 규칙·판단 이력·중복 억제·전달 채널·웹훅 관리로 확장</p></template>
+<template id="task-scheduled-report" data-title="정기 리포트" data-area="외부 연계" data-status="계획"><h4 id="task-scheduled-report--배경과-목적">배경과 목적</h4>
+<p>저장한 조회를 매번 열어보지 않고 정해진 주기로 받아볼 필요가 있는지 확인한다.</p>
+<h4 id="task-scheduled-report--검토할-작업-범위">검토할 작업 범위</h4>
+<p>보고 대상 위젯과 실행 주기·결과 전달 방식을 정리한다. 값 조건으로 발동하는 이벤트·훅과 구분한다.</p>
+<h4 id="task-scheduled-report--결정할-사항">결정할 사항</h4>
+<ul>
+<li>실행 주체와 권한.</li>
+<li>시간대·주기.</li>
+<li>전달 형식·수신자.</li>
+<li>조회 실패·빈 결과 처리.</li>
+<li>보고 시점의 데이터 기준.</li>
+</ul>
+<h4 id="task-scheduled-report--완료-판단-기준안">완료 판단 기준안</h4>
+<p>정한 주기에 허용된 조회만 실행하고 결과 시점·조건을 식별할 수 있는 전달물을 만든다. 세부 정책은 구현 전에 확정한다.</p>
+<h4 id="task-scheduled-report--관련-문서">관련 문서</h4>
+<p><a href="features/stage.md" data-web-href="/docs#stage">Stage 조회 정의</a>, <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 조회</a></p>
+<h4 id="task-scheduled-report--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>저장된 위젯 조회를 정해진 때 실행해 결과를 정기적으로 전달. 이벤트·훅과 별도 기능</p></template>
+<template id="task-widget-embed-review" data-title="임베드 필요성 검토" data-area="외부 연계" data-status="계획"><h4 id="task-widget-embed-review--배경과-목적">배경과 목적</h4>
+<p>외부 서비스에서 같은 위젯을 볼 업무가 있는지 확인한다.</p>
+<h4 id="task-widget-embed-review--검토할-작업-범위">검토할 작업 범위</h4>
+<p>필요하면 공개 위젯의 게시·토큰 발급·회수, 조회 API와 iframe·SDK 중 방식을 정하고 호스트가 기간 값을 전달할 필요성을 검토한다.</p>
+<h4 id="task-widget-embed-review--결정할-사항">결정할 사항</h4>
+<ul>
+<li>공개 범위와 사용자 식별.</li>
+<li>게시·회수 주체.</li>
+<li>표시 방식.</li>
+<li>호스트 입력 검증.</li>
+<li>위젯 행동의 값 받기 기능 재사용 여부.</li>
+</ul>
+<h4 id="task-widget-embed-review--완료-판단-기준안">완료 판단 기준안</h4>
+<p>필요 여부와 공개·회수·조회 조건의 최소 범위를 결정한다. 기존 Viewer 제공을 외부 임베드 구현으로 간주하지 않는다.</p>
+<h4 id="task-widget-embed-review--관련-문서">관련 문서</h4>
+<p><a href="features/viewer.md" data-web-href="/docs#viewer">현재 Viewer</a>, <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">위젯 정의</a></p>
+<h4 id="task-widget-embed-review--기존-계획논의-기록">기존 계획·논의 기록</h4>
+<p>위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</p></template>
 <script>
+// 카드 요약과 progress.md의 상세를 같은 작업 ID로 연결한다.
+const taskDialog = document.getElementById("taskDialog");
+const taskBody = document.getElementById("taskBody");
+let openedCard = null;
+document.querySelector(".board").addEventListener("click", (event) => {
+  const card = event.target.closest("button[data-task]");
+  if (!card) return;
+  const detail = document.getElementById("task-" + card.dataset.task);
+  if (!detail) return;
+  openedCard = card;
+  document.getElementById("taskTitle").textContent = detail.dataset.title;
+  document.getElementById("taskMeta").textContent = detail.dataset.status + " · " + detail.dataset.area;
+  taskBody.replaceChildren(detail.content.cloneNode(true));
+  if (location.pathname === "/kanban" || location.pathname === "/docs") {
+    taskBody.querySelectorAll("a[data-web-href]").forEach((link) => {
+      link.setAttribute("href", link.dataset.webHref);
+    });
+  }
+  taskBody.scrollTop = 0;
+  document.body.classList.add("task-open");
+  taskDialog.showModal();
+});
+document.getElementById("taskClose").addEventListener("click", () => taskDialog.close());
+taskDialog.addEventListener("click", (event) => {
+  if (event.target !== taskDialog) return;
+  const bounds = taskDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+    taskDialog.close();
+  }
+});
+taskDialog.addEventListener("close", () => {
+  document.body.classList.remove("task-open");
+  if (openedCard) openedCard.focus({ preventScroll: true });
+});
 // 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.
 document.querySelectorAll(".chip").forEach((chip) => {
   chip.addEventListener("click", () => {
