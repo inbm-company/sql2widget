@@ -1,4 +1,5 @@
 import logging
+import secrets
 from contextlib import asynccontextmanager
 
 import psycopg
@@ -10,6 +11,7 @@ from psycopg.rows import dict_row
 from app import config, local_models, question_similarity
 from app.agent_service import AgentRunError, run_agent
 from app.chat_trace import message_meta
+from app.chat_turns import prepare_response
 from app.chat_cancellation import check_cancelled, run_chat
 from app.auth import (
     create_access_token,
@@ -205,12 +207,30 @@ def delete_conversation(conversation_id: str, user=Depends(get_current_user)):
     return {"ok": True}
 
 
+@app.delete("/api/conversations/{conversation_id}/messages/{message_id}")
+def delete_chat_message(conversation_id: str, message_id: str, user=Depends(get_current_user)):
+    if user["role"] == "viewer":
+        raise HTTPException(403, "읽기 전용 사용자는 메시지를 삭제할 수 없습니다.")
+    try:
+        removed = conv_repo.delete_message(conversation_id, message_id, user["tenant_id"], user["id"])
+    except Exception as exc:
+        raise HTTPException(502, "메시지를 삭제하지 못했습니다. 다시 시도해 주세요.") from exc
+    if not removed:
+        raise HTTPException(404, "삭제할 메시지를 찾을 수 없습니다.")
+    return {"ok": True}
+
+
 @app.post("/api/chat")
 async def chat(body: ChatRequest, request: Request, user=Depends(get_current_user)):
-    return await run_chat(request, lambda: _chat(body, request, user))
+    try:
+        return await run_chat(request, lambda: _chat(body, request, user))
+    except conv_repo.MessageDeletedError as exc:
+        raise HTTPException(409, str(exc)) from exc
 
 
 def _chat(body: ChatRequest, request: Request, user):
+    if user["role"] == "viewer":
+        raise HTTPException(403, "읽기 전용 사용자는 채팅을 실행할 수 없습니다.")
     conv = conv_repo.get_conversation(body.conversation_id, user["tenant_id"], user["id"])
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -219,9 +239,29 @@ def _chat(body: ChatRequest, request: Request, user):
     if len(jev_key) > 8192 or "\r" in jev_key or "\n" in jev_key:
         raise HTTPException(status_code=400, detail="Jev API 키는 8,192자 이하의 한 줄 문자열이어야 합니다.")
 
+    source, message, history, forced_route, turn = prepare_response(body, conv)
+    connection_id = body.connection_id
+    if source:
+        source_meta = source.get("meta") or {}
+        connection_id = source_meta.get("connection_id")
+        known_connection = "connection_id" in source_meta
+        if not connection_id and turn["answers"]:
+            reply_meta = turn["answers"][-1].get("meta") or {}
+            connection_id = reply_meta.get("connection_id")
+            known_connection = known_connection or "connection_id" in reply_meta
+        if not known_connection:
+            raise HTTPException(409, "원래 요청의 DB를 확인할 수 없습니다. DB를 선택해 새 질문으로 전송해 주세요.")
     check_cancelled()
-    user_msg = conv_repo.add_message(body.conversation_id, "user", body.message, None)
-    conv_repo.touch_title_from_message(body.conversation_id, body.message)
+    response_request_id = secrets.token_hex(16)
+    if source and not conv_repo.mark_response_pending(body.conversation_id, source["id"], response_request_id, body.response_mode):
+        raise HTTPException(404, "원래 질문이 삭제되어 다시 실행할 수 없습니다.")
+    user_msg = source or conv_repo.add_message(body.conversation_id, "user", message, None, meta={
+        "client_message_id": body.client_message_id, "requested_route": body.route,
+        "response_pending": True, "active_response_id": response_request_id, "pending_response_mode": body.response_mode,
+        "connection_id": connection_id,
+    })
+    if not source:
+        conv_repo.touch_title_from_message(body.conversation_id, message)
 
     llm_settings = {
         "provider": request.headers.get("X-LLM-Provider", ""),
@@ -235,7 +275,7 @@ def _chat(body: ChatRequest, request: Request, user):
     related_messages: list[dict] = []
     embedding_error: str | None = None
     embed_result = embed_text(
-        body.message,
+        message,
         runtime_provider=llm_settings["provider"] or None,
         runtime_api_key=llm_settings["api_key"] or None,
         runtime_base_url=llm_settings["base_url"] or None,
@@ -246,31 +286,27 @@ def _chat(body: ChatRequest, request: Request, user):
         related_messages = embed_repo.search_similar(
             user["tenant_id"], embed_result["embedding"], limit=5
         )
-        embed_repo.upsert_embedding(
-            tenant_id=user["tenant_id"],
-            conversation_id=body.conversation_id,
-            message_id=user_msg["id"],
-            role="user",
-            content=body.message,
-            embedding=embed_result["embedding"],
-        )
+        if not source:
+            conv_repo.with_message_lock(body.conversation_id, user_msg["id"], lambda: embed_repo.upsert_embedding(
+                tenant_id=user["tenant_id"], conversation_id=body.conversation_id, message_id=user_msg["id"],
+                role="user", content=message, embedding=embed_result["embedding"]))
     elif embed_result["error"]:
         embedding_error = embed_result["error"]
 
     check_cancelled()
     try:
         summary, artifact, meta = run_agent(
-            body.message,
+            message,
             tenant_id=user["tenant_id"],
             user_id=user["id"],
             user_role=user["role"],
             conversation_id=body.conversation_id,
-            connection_id=body.connection_id,
+            connection_id=connection_id,
             llm_settings=llm_settings,
             embedding_result=embed_result,
-            forced_route=body.route,
+            forced_route=forced_route,
             project_id=conv.get("project_id"),
-            messages=conv.get("messages"),
+            messages=history,
         )
     except AgentRunError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -283,19 +319,22 @@ def _chat(body: ChatRequest, request: Request, user):
         runtime_embedding_model=llm_settings["embedding_model"],
     )
     check_cancelled()
-    assistant_msg = conv_repo.add_message(
-        body.conversation_id, "assistant", summary, artifact, meta=message_meta(meta)
-    )
+    if user_msg.get("id"):
+        meta["reply_to_message_id"] = user_msg["id"]
+        meta["response_request_id"] = response_request_id
+    if body.response_mode:
+        meta["response_mode"] = body.response_mode
+    try:
+        assistant_msg = conv_repo.add_message(
+            body.conversation_id, "assistant", summary, artifact, meta=message_meta(meta)
+        )
+    except conv_repo.MessageDeletedError as exc:
+        raise HTTPException(409, str(exc)) from exc
 
     if assistant_embed["embedding"]:
-        embed_repo.upsert_embedding(
-            tenant_id=user["tenant_id"],
-            conversation_id=body.conversation_id,
-            message_id=assistant_msg["id"],
-            role="assistant",
-            content=summary,
-            embedding=assistant_embed["embedding"],
-        )
+        conv_repo.with_message_lock(body.conversation_id, assistant_msg["id"], lambda: embed_repo.upsert_embedding(
+            tenant_id=user["tenant_id"], conversation_id=body.conversation_id, message_id=assistant_msg["id"],
+            role="assistant", content=summary, embedding=assistant_embed["embedding"]))
 
     return {
         "user_message": user_msg,

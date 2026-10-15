@@ -3,7 +3,7 @@
 | 항목 | 내용 |
 |------|------|
 | 문서명 | 기능 문서 — 로그인/세션 |
-| 기준일 | 2026-10-06 (구현 기준, 기획과 다르면 코드가 맞음) |
+| 기준일 | 2026-10-15 (관리자 비밀번호 정책 변경 포함) |
 | 관련 문서 | [AGENTS.md](../../AGENTS.md), [01-folder-structure.md](../01-folder-structure.md) |
 | 관련 코드 | `backend/app/auth.py`, `backend/app/main.py`(`/api/auth/*`), `frontend/src/App.jsx`(`LoginForm`, `App`), `frontend/src/api.js` |
 
@@ -78,3 +78,9 @@
 로컬 `.env.local`의 기본 아이디는 `admin.local@example.com`·`viewer.local@example.com`, 운영 서버 `.env`의 기본 아이디는 `admin@example.com`·`viewer@example.com`이다. `ADMIN_EMAIL`·`VIEWER_EMAIL`로 지정하며 이메일은 소문자·trim 처리한다. 운영 비밀번호는 서버 설정에서 별도로 관리한다.
 
 `backend/scripts/seed_dev.py`는 기존 `user_admin`·`user_viewer`의 이메일만 갱신한다. 비밀번호 해시·역할·tenant·내부 사용자 ID를 보존하므로 프로젝트·대화·Stage 소유권도 유지한다. 다른 사용자 이메일과 충돌하거나 기존 역할/tenant가 예상과 다르면 초기화를 중단한다.
+
+## 운영 관리자 비밀번호
+
+`seed_dev.py`는 운영 `ADMIN_PASSWORD`의 16자 최소 길이 제한을 적용하지 않는다. 빈 값·공백만 있는 값과 개발 기본값 `demo-password`는 거부한다. Viewer 비밀번호의 16자 이상, `APP_SECRET`의 32자 이상 조건은 유지한다.
+
+서버 `.env`에 `ADMIN_PASSWORD='실제비밀번호!'`처럼 작은따옴표로 감싸면 바깥 따옴표를 제외한 특수문자를 그대로 사용한다. 기존 계정은 시작 시 비밀번호를 보존하므로 `.env` 변경과 별도로 관리자 계정의 Argon2 해시를 동기화해야 한다. 수동 회전 시 해당 관리자의 갱신 토큰을 무효화하며 기존 access 토큰은 만료 시각까지 유효하다. [운영 절차](../../deployment/README.md).

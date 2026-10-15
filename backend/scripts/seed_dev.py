@@ -70,14 +70,19 @@ def seed_user(cur, user_id: str, email: str, password: str, role: str) -> None:
         )
 
 
+def validate_production_settings() -> None:
+    if os.getenv("APP_ENV") != "production":
+        return
+    if not ADMIN_PASSWORD.strip() or ADMIN_PASSWORD == "demo-password":
+        raise RuntimeError("Production requires a non-empty, non-default ADMIN_PASSWORD")
+    if len(VIEWER_PASSWORD) < 16 or len(os.getenv("APP_SECRET", "")) < 32:
+        raise RuntimeError("Production requires VIEWER_PASSWORD of at least 16 characters and APP_SECRET of at least 32 characters")
+
+
 def main() -> None:
     if ADMIN_EMAIL == VIEWER_EMAIL:
         raise RuntimeError("Admin and viewer must use different email addresses")
-    if os.getenv("APP_ENV") == "production" and (
-        len(ADMIN_PASSWORD) < 16 or len(VIEWER_PASSWORD) < 16
-        or len(os.getenv("APP_SECRET", "")) < 32
-    ):
-        raise RuntimeError("Production requires strong ADMIN_PASSWORD, VIEWER_PASSWORD and APP_SECRET")
+    validate_production_settings()
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
             cur.execute(

@@ -15,9 +15,12 @@
       --plan-dim: rgba(180, 83, 9, 0.1);
       --verify: #7c3aed;
       --verify-dim: rgba(124, 58, 237, 0.1);
+      --next: #0f766e;
+      --na: #717171;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; }
+    html { scrollbar-gutter: stable; }
     body {
       font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
       color: var(--ink);
@@ -26,7 +29,7 @@
         var(--paper);
       line-height: 1.5;
     }
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+    .wrap { max-width: 1600px; margin: 0 auto; padding: 40px 24px 72px; }
     header.top {
       display: flex; justify-content: space-between; align-items: flex-end;
       gap: 24px; margin-bottom: 28px; padding-bottom: 20px;
@@ -54,7 +57,7 @@
     .thesis em { font-style: normal; color: var(--blue); font-weight: 600; }
 
     .kpis {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;
       margin-bottom: 28px;
     }
     .kpi {
@@ -65,6 +68,8 @@
     .kpi.wip { border-top-color: var(--wip); }
     .kpi.plan { border-top-color: var(--plan); }
     .kpi.verify { border-top-color: var(--verify); }
+    .kpi.next { border-top-color: var(--next); }
+    .kpi.na { border-top-color: var(--na); }
     .kpi .label { font-size: 11px; color: var(--mute); letter-spacing: 0.04em; text-transform: uppercase; }
     .kpi .num {
       font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
@@ -80,7 +85,7 @@
     h2 span.hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; color: var(--mute); }
 
     .board {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px;
     }
     .col {
       background: var(--card); border: 1px solid var(--line); border-radius: 12px;
@@ -99,6 +104,8 @@
     .col.wip .dot { background: var(--wip); }
     .col.plan .dot { background: var(--plan); }
     .col.verify .dot { background: var(--verify); }
+    .col.next .dot { background: var(--next); }
+    .col.na .dot { background: var(--na); }
 
     .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
     .chip {
@@ -170,6 +177,9 @@
     footer a { color: var(--blue); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
+    @media (max-width: 1280px) {
+      .board, .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     @media (max-width: 960px) {
       .board { grid-template-columns: 1fr 1fr; }
       .kpis { grid-template-columns: 1fr 1fr; }
@@ -191,28 +201,32 @@
     .card:hover { border-color: var(--ac, var(--blue)); }
     .card:focus-visible, .task-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
     .card-more { display: block; margin-top: 8px; font-size: 11px; color: var(--blue); }
-    body.task-open { overflow: hidden; }
+    html.task-open { overflow: hidden; }
     .task-dialog {
       position: fixed; inset: 0 0 0 auto; margin: 0; border: 0; border-left: 1px solid var(--line);
-      padding: 0; width: min(760px, 100vw); max-width: none; height: 100dvh; max-height: none;
+      padding: 0; width: min(560px, 100vw); max-width: none; height: 100dvh; max-height: none;
       color: var(--ink); background: var(--card); box-shadow: -12px 0 40px rgba(0,0,0,0.12);
     }
     .task-dialog[open] { display: flex; flex-direction: column; }
+    .task-dialog[data-side="left"] {
+      inset: 0 auto 0 0; border-left: 0; border-right: 1px solid var(--line);
+      box-shadow: 12px 0 40px rgba(0,0,0,0.12);
+    }
     .task-dialog::backdrop { background: rgba(0,0,0,0.25); }
-    .task-head { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-bottom: 1px solid var(--line); }
+    .task-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px; border-bottom: 1px solid var(--line); }
     .task-heading { flex: 1; min-width: 0; }
-    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 12px; }
-    .task-title { margin: 0; color: var(--ink); font-size: 22px; line-height: 1.4; letter-spacing: -0.02em; }
-    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; cursor: pointer; }
-    .task-body { flex: 1; min-height: 0; padding: 24px 28px 48px; overflow: auto; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
-    .task-body h4 { margin: 26px 0 10px; font-size: 16px; }
+    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 11px; }
+    .task-title { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.4; letter-spacing: -0.02em; }
+    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+    .task-body { flex: 1; min-height: 0; padding: 20px 24px 40px; overflow: auto; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+    .task-body h4 { margin: 22px 0 10px; font-size: 15px; }
     .task-body h4:first-child { margin-top: 0; }
     .task-body p { margin: 0 0 14px; }
     .task-body ul, .task-body ol { margin: 0 0 18px; padding-left: 22px; }
     .task-body a { color: var(--blue); }
     .task-body pre { padding: 14px; background: var(--paper); overflow: auto; border-radius: 6px; }
     .task-body code { font-size: 0.9em; background: var(--paper); padding: 1px 4px; border-radius: 3px; }
-    .task-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-body table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .task-body th, .task-body td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     @media (max-width: 640px) { .task-head { padding: 18px; } .task-body { padding: 20px 18px 36px; } }
     @media print { .task-dialog[open] { display: none; } }
@@ -242,11 +256,13 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   <header class="top"><div><p class="kicker">sql2widget</p><h1>진행도</h1></div>
     <div class="meta"><strong>2026-10-15</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
   </header>
-  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md" data-web-href="/docs#progress">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
+  <div class="thesis"><p>완료·검증 대기·진행 중·다음·계획·해당없음을 <em>기능 영역별</em>로 <a href="progress.md" data-web-href="/docs#progress">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
   <div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">12</div></div>
+<div class="kpi verify"><div class="label">검증 대기</div><div class="num">3</div></div>
 <div class="kpi wip"><div class="label">진행 중</div><div class="num">0</div></div>
-<div class="kpi verify"><div class="label">검증 대기</div><div class="num">2</div></div>
-<div class="kpi plan"><div class="label">계획</div><div class="num">14</div></div></div>
+<div class="kpi next"><div class="label">다음</div><div class="num">0</div></div>
+<div class="kpi plan"><div class="label">계획</div><div class="num">14</div></div>
+<div class="kpi na"><div class="label">해당없음</div><div class="num">0</div></div></div>
   <div class="filters" role="group" aria-label="기능 영역 필터"><button type="button" class="chip on" data-area="all">전체</button>
 <button type="button" class="chip a0" data-area="a0">인증·프로젝트</button>
 <button type="button" class="chip a1" data-area="a1">DB 연결</button>
@@ -282,11 +298,13 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
 <button type="button" class="card" data-task="deployment" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">독립 배포·운영 문서 공개</span><span class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개</span><span class="card-more">상세 보기 ↗</span></button>
 </div></div>
-<div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
-<div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">2</span></div><div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>2</span></div>
+<div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">3</span></div><div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>3</span></div>
+<button type="button" class="card" data-task="chat-turn-actions" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">다시 생성·계속하기·메시지 개별 삭제</span><span class="n">원래 질문 재사용·답변 보존·미완료 복원·처리 내역 아래 버튼·소유 범위 삭제·프로젝트 자원 보존. 테스트·빌드·브라우저 미실행</span><span class="card-more">상세 보기 ↗</span></button>
 <button type="button" class="card" data-task="question-steps" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">질문 분리·경로 순서·실행 단계 접기</span><span class="n">2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시</span><span class="card-more">상세 보기 ↗</span></button>
 <button type="button" class="card" data-task="chat-cancellation" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">채팅 응답 생성 중지</span><span class="n">2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성</span><span class="card-more">상세 보기 ↗</span></button>
 </div></div>
+<div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
+<div class="col next"><div class="col-head"><span class="dot"></span>다음<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
 <div class="col plan"><div class="col-head"><span class="dot"></span>계획<span class="count">14</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>1</span></div>
 <button type="button" class="card" data-task="admin-user-management" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">관리자 사용자 관리</span><span class="n">여러 계정을 운영하기 위한 사용자 추가·비활성화·역할 지정. 프로젝트 공유는 별도 판단</span><span class="card-more">상세 보기 ↗</span></button>
 </div>
@@ -314,7 +332,8 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <button type="button" class="card" data-task="data-event-review" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">데이터 값 기반 이벤트·훅 필요성 검토</span><span class="n">조회 값의 조건 충족 시 외부 이벤트가 필요한지와 운영 범위 결정</span><span class="card-more">상세 보기 ↗</span></button>
 <button type="button" class="card" data-task="scheduled-report" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">정기 리포트</span><span class="n">저장된 위젯 조회의 정기 실행과 결과 전달 방식 검토</span><span class="card-more">상세 보기 ↗</span></button>
 <button type="button" class="card" data-task="widget-embed-review" aria-haspopup="dialog" aria-controls="taskDialog"><span class="t">임베드 필요성 검토</span><span class="n">외부 화면에 위젯을 표시할 필요성과 게시·접근·조회 조건 범위 결정</span><span class="card-more">상세 보기 ↗</span></button>
-</div></div></section>
+</div></div>
+<div class="col na"><div class="col-head"><span class="dot"></span>해당없음<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div></section>
   <h2>현재 상태와 검증 범위</h2><section class="box"><h2>현재 상태</h2>
 <p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md" data-web-href="/docs#stage">stage.md</a>·<a href="features/viewer.md" data-web-href="/docs#viewer">viewer.md</a>에 유지한다.</p>
 <p>기능 영역: 인증·프로젝트 · DB 연결 · 채팅·에이전트 · 예상 질문 · 위젯·Stage · 외부 연계 · AI 설정 · 배포·운영.</p>
@@ -446,6 +465,12 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <p>배포 이력은 당시 버전의 결과이며 현재 변경의 운영 반영 여부는 별도로 확인한다.</p>
 <h4 id="task-deployment--검증-근거와-후속-확인">검증 근거와 후속 확인</h4>
 <p>연결된 명세·기록에 적힌 검증 시점과 대역/실모델·로컬/운영 범위를 확인한다. 이 상세 정리는 새 테스트 통과를 의미하지 않는다. 현재 작업 상태는 위 상태 표를 기준으로 읽고, 후속 검증은 승인된 범위에서 수행한 뒤 결과와 상태를 함께 갱신한다.</p></template>
+<template id="task-chat-turn-actions" data-title="다시 생성·계속하기·메시지 개별 삭제" data-area="채팅·에이전트" data-status="검증 대기"><h4 id="task-chat-turn-actions--목적과-사용자-동작">목적과 사용자 동작</h4>
+<p>답변/위젯/처리 내역 아래에서 다시 생성하거나 저장된 요청을 이어가고, 질문과 답변 각각에 삭제 버튼을 제공해 선택한 메시지 한 개만 삭제한다.</p>
+<h4 id="task-chat-turn-actions--구현-범위와-경계">구현 범위와 경계</h4>
+<p>질문은 중복 저장하지 않고 답변을 원래 질문에 연결한다. 과거 답변은 보존하며 최신 답변과 이어진 결과로 다음 문맥을 구성한다. 계속하기는 저장된 채팅 기반이며 미저장 모델 실행 상태의 복원이 아니다. 삭제는 선택한 메시지 한 개에만 적용하고 다른 질문·답변과 프로젝트 자원을 보존한다. 질문 삭제 시 남은 답변을 다른 질문에 연결하지 않는다. <a href="features/chat.md#답변-다시-생성계속하기메시지-개별-삭제" data-web-href="/docs#chat--답변-다시-생성계속하기메시지-개별-삭제">기능</a>, <a href="temp/chat-turn-actions-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-turn-actions-2026-10-15.md">기록</a>.</p>
+<h4 id="task-chat-turn-actions--검증-범위">검증 범위</h4>
+<p>대역 API/문맥 테스트·PostgreSQL 트랜잭션 삭제/동시 요청 보호 테스트·프런트 질문 연결 테스트를 작성했다. 아직 실행하지 않았다. 브라우저 검증·실모델 호출·배포도 수행하지 않았다.</p></template>
 <template id="task-question-steps" data-title="질문 분리·경로 순서·실행 단계 접기" data-area="채팅·에이전트" data-status="검증 대기"><h4 id="task-question-steps--목적과-사용자-동작">목적과 사용자 동작</h4>
 <p>질문 분리와 실행 순서를 처리 내역에서 이해할 수 있게 한다.</p>
 <h4 id="task-question-steps--기록된-범위와-근거">기록된 범위와 근거</h4>
@@ -733,6 +758,9 @@ document.querySelector(".board").addEventListener("click", (event) => {
   const detail = document.getElementById("task-" + card.dataset.task);
   if (!detail) return;
   openedCard = card;
+  const cardBounds = card.getBoundingClientRect();
+  taskDialog.dataset.side = cardBounds.left + cardBounds.width / 2 <= document.documentElement.clientWidth / 2
+    ? "right" : "left";
   document.getElementById("taskTitle").textContent = detail.dataset.title;
   document.getElementById("taskMeta").textContent = detail.dataset.status + " · " + detail.dataset.area;
   taskBody.replaceChildren(detail.content.cloneNode(true));
@@ -742,7 +770,7 @@ document.querySelector(".board").addEventListener("click", (event) => {
     });
   }
   taskBody.scrollTop = 0;
-  document.body.classList.add("task-open");
+  document.documentElement.classList.add("task-open");
   taskDialog.showModal();
 });
 document.getElementById("taskClose").addEventListener("click", () => taskDialog.close());
@@ -754,7 +782,7 @@ taskDialog.addEventListener("click", (event) => {
   }
 });
 taskDialog.addEventListener("close", () => {
-  document.body.classList.remove("task-open");
+  document.documentElement.classList.remove("task-open");
   if (openedCard) openedCard.focus({ preventScroll: true });
 });
 // 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.

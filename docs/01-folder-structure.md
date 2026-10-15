@@ -12,6 +12,10 @@
 | `backend/app/main.py` | 이 앱의 인증·프로젝트·대화·채팅 API와 DB/Stage API |
 | `backend/tests/test_question_plan.py`, `frontend/tests/chatTrace.test.js` | 하위 질문 조건 보존·누락 거부, 경로 순서/반복과 재계획 질문 표시 회귀 검사 |
 | `backend/tests/test_question_steps.py` | 여러 질문 실행·동일 경로 복귀·부분 실패·되묻기·재계획 질문 연결 검사(모델/DB 대역) |
+| `backend/app/chat_turns.py` | 기존/신규 질문과 답변 연결·재생성/계속하기 문맥 구성·활성 답변 선택 |
+| `frontend/src/MessageDeleteButton.jsx` | 질문/답변 각각의 삭제 버튼·선택한 메시지만 삭제하는 범위 확인 |
+| `frontend/src/ChatTurnActions.jsx` | 답변 아래 다시 생성·계속하기 UI |
+| `backend/tests/test_chat_actions.py`, `test_chat_turn_storage.py`, `frontend/tests/chatTurns.test.js` | 답변 연결/원문 재사용·미래 문맥 제외·개별 삭제 권한/범위/늦은 저장 차단·다른 메시지/자원 보존 회귀 검사 |
 | `backend/app/chat_cancellation.py` | 채팅 연결 종료 감지·요청별 취소 신호·동기 작업 경계 확인 |
 | `backend/app/agent_service.py` | 계획·단계별 분류/실행·평가·재계획 루프와 결과 병합, data_query/schema_qa/general_chat 실행 |
 | `backend/app/agent_plan.py` | 원래 요청의 단계 계획·목표 평가·재계획 결정, 모델 시간 예산과 루프 상한 |
@@ -30,6 +34,7 @@
 | `backend/tests/test_jev_chat_api.py` | 채팅 요청 Jev 키 우선순위·형식 검사·모델 입력 및 응답/저장 데이터 비노출 검증 |
 | `backend/tests/test_widget_queries.py`, `test_widget_queries_live.py` | 데이터 비저장·조회 권한·기존 정의 호환·실 고객 DB SELECT와 임시 Stage 저장 검증 |
 | `backend/tests/test_widget_props.py` | 신규 분석 위젯의 SQL 변환·빈 결과·잘못된 구간·Artifact/Stage JSON 경로 검증 |
+| `backend/tests/test_seed_password_policy.py` | 짧은 관리자 비밀번호 허용·빈 값/개발 기본값 거부·Viewer와 APP_SECRET 기존 정책 보존 회귀 검사 |
 | `backend/tests/` | 앱별 기능·권한·독립성·토큰 격리 검증 |
 | `frontend/src/App.jsx` | 같은 기본 로그인·사이드바·채팅·설정·분할 패널 UI |
 | `frontend/src/chatMessages.js`, `frontend/tests/chatMessages.test.js` | 서버 조회와 임시 질문의 중복 표시 방지, 과거 동일 질문·대화 범위 회귀 테스트 |

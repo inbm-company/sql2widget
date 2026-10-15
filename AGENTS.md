@@ -24,7 +24,7 @@
 |------|-----------|-----------|
 | 로그인/세션 | 이메일·비밀번호 로그인, JWT access+refresh, `admin`/`user`/`viewer` 역할 구분, 로컬/운영 로그인 아이디 분리 | [auth.md](docs/features/auth.md) |
 | 프로젝트·대화 | 프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제 | [projects-conversations.md](docs/features/projects-conversations.md) |
-| 채팅(에이전트) | 요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내 | [chat.md](docs/features/chat.md) |
+| 채팅(에이전트) | 요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내. 답변 다시 생성·기록 기반 계속하기·질문·답변 개별 삭제 | [chat.md](docs/features/chat.md) |
 | 채팅 의도 라우팅 | 질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 테이블 구조·인사·잡담·일반 개념은 전체 본문 답변(구조 설명은 테이블별 표 지원), 설명용 MarkdownBlock을 생성하지 않음. 확신이 낮으면 세 경로 선택지 버튼을 반환 | [chat.md](docs/features/chat.md) |
 | 예상 질문 유사도 DB | 사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성 | [similarity-search-design.md](docs/features/similarity-search-design.md) |
 | Artifact/위젯 표시 | 허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장) | [widgets-artifact.md](docs/features/widgets-artifact.md) |
@@ -57,7 +57,7 @@
 | [docs/01-folder-structure.md](docs/01-folder-structure.md) | 폴더·파일 단위 설명 | 완료 |
 | [docs/project-separation-proposal.md](docs/project-separation-proposal.md) | DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록 | 구현 완료 — 로컬 독립 실행·테스트와 sql2widget 운영 배포 검증 |
 | [docs/features/*.md](docs/features/README.md) | 기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리) | 완료 — `docs/기능명세서.md` 대체함(삭제됨) |
-| [docs/progress.md](docs/progress.md) | 기능 영역별 진행도 (완료/진행 중/검증 대기/계획) | 완료 — `docs/현황.html` 대체함(삭제됨) |
+| [docs/progress.md](docs/progress.md) | 기능 영역별 진행도 (완료/검증 대기/진행 중/다음/계획/해당없음) | 완료 — `docs/현황.html` 대체함(삭제됨) |
 | [docs/dashboard.html](docs/dashboard.html) | `AGENTS.md`·폴더 구조·`features/*.md`·`progress.md`를 좌측 목차 + 본문으로 묶은 HTML. `scripts/render_docs.py`가 생성 | 완료 |
 | [docs/kanban.html](docs/kanban.html) | `progress.md`를 기능 영역 필터가 있는 칸반으로 보여주는 HTML. `scripts/render_docs.py`가 생성 | 완료 |
 | [docs/PLAN.md](docs/PLAN.md) | 최초 기획서 (P0~P6 로드맵). 구현과 다르면 구현이 기준 | 유지 — 히스토리 참고용 |
@@ -139,7 +139,7 @@
 |------|------------------|
 | 기능 동작·API·응답 형태 | `docs/features/*.md` 해당 문서와 그 문서의 기준일 |
 | 파일·모듈 추가/삭제/역할 변경 | `docs/01-folder-structure.md` |
-| 작업 상태 변화(완료/진행 중/검증 대기/계획) | `docs/progress.md` → `python3 scripts/render_docs.py` (3.5절) |
+| 작업 상태 변화(완료/검증 대기/진행 중/다음/계획/해당없음) | `docs/progress.md` → `python3 scripts/render_docs.py` (3.5절) |
 | 환경변수 추가/변경 | `.env.example`, `README.md`, 운영에 필요하면 `deployment/README.md` |
 | 새 세션이 알아야 할 동작·경로·주의사항 | `PROJECT_HANDOFF.md`, 본 문서 2절 기능 개요 표 |
 | 본 문서 문구 | `python3 scripts/render_docs.py` (3.5절) |
@@ -155,7 +155,7 @@
 - 언어: 한국어. 코드 식별자·경로는 원문 그대로.
 - 새 파일명은 영문 kebab-case (`01-folder-structure.md`, `features/chat.md`). 기존 한국어 파일명(`기능명세서.md` 등)은 대체되며 신규 명명 규칙을 따르지 않는다.
 - 기능 문서는 `docs/기능명세서.md`의 관례를 유지: **기획이 아니라 현재 동작하는 구현이 기준.** 코드와 문서가 다르면 코드가 맞다.
-- `docs/progress.md`의 상태 라벨은 4종으로 고정: `완료` / `진행 중` / `검증 대기` / `계획`. 각 행은 `영역 | 항목 | 내용 | 칸반` 4열이며 영역은 칸반 필터가 된다. `칸반` 열은 `표시`/`미표시`로, 기능 단위 항목만 `표시`하고 세부 변경 기록은 `미표시`로 둔다.
+- `docs/progress.md`의 상태 라벨과 칸반 열 순서는 6종으로 고정: `완료` / `검증 대기` / `진행 중` / `다음` / `계획` / `해당없음`. `다음`은 우선 착수할 작업, `해당없음`은 현재 적용하지 않기로 판단한 작업이다. 각 행은 `영역 | 항목 | 내용 | 칸반` 4열이며 영역은 칸반 필터가 된다. `칸반` 열은 `표시`/`미표시`로, 기능 단위 항목만 `표시`하고 세부 변경 기록은 `미표시`로 둔다.
 - 표시 카드의 항목은 `[제목](#작업-id)`로 같은 문서의 `## 작업 상세`에 연결한다. 상세는 `### 제목` 다음에 `작업 ID:`와 백틱으로 감싼 영문 ID를 적고, 같은 ID의 Markdown 앵커를 둔다. ID는 제목·상태 변경에도 유지한다. 상태·영역은 상태 표에서만 관리하고 계획의 범위안·미정 정책·완료 기준안을 확정된 구현과 구분한다.
 - 각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).
 

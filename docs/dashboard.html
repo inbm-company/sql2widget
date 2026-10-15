@@ -22,6 +22,8 @@
     --wip: #0066cc;
     --plan: #b45309;
     --verify: #717171;
+    --next: #0f766e;
+    --na: #717171;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -124,6 +126,8 @@
   .badge.wip { color: var(--wip); background: var(--blue-dim); }
   .badge.plan { color: var(--plan); background: rgba(180,83,9,0.1); }
   .badge.verify { color: var(--verify); background: rgba(113,113,113,0.12); }
+  .badge.next { color: var(--next); background: rgba(15,118,110,0.1); }
+  .badge.na { color: var(--na); background: rgba(113,113,113,0.12); }
   .badge.high { color: #c2410c; background: rgba(194,65,12,0.1); }
 
   .note {
@@ -198,7 +202,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <a href="#similarity-search-design" data-id="similarity-search-design">기능: DB별 예상 질문 유사도 검색</a>
 <a href="#graph-rag-sources" data-id="graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a>
 <div class="group-label">4. 진행도</div>
-<a href="#progress" data-id="progress">완료·진행·검증 대기·계획</a>
+<a href="#progress" data-id="progress">완료·검증 대기·진행 중·다음·계획·해당없음</a>
 <div class="group-label">5. 임시</div><a href="temp/" data-web-href="https://github.com/inbm-company/sql2widget/tree/main/docs/temp">기록 폴더 ↗</a>
 <a href="kanban.html">칸반 ↗</a></nav>
     </aside>
@@ -219,7 +223,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <table><thead><tr><th>기능</th><th>한 줄 설명</th><th>상세 문서</th></tr></thead><tbody>
 <tr><td>로그인/세션</td><td>이메일·비밀번호 로그인, JWT access+refresh, <code>admin</code>/<code>user</code>/<code>viewer</code> 역할 구분, 로컬/운영 로그인 아이디 분리</td><td><a href="features/auth.md" data-web-href="/docs#auth">auth.md</a></td></tr>
 <tr><td>프로젝트·대화</td><td>프로젝트(최상위 단위) 아래 여러 대화(conversation)를 생성·이름변경·삭제</td><td><a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">projects-conversations.md</a></td></tr>
-<tr><td>채팅(에이전트)</td><td>요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내</td><td><a href="features/chat.md" data-web-href="/docs#chat">chat.md</a></td></tr>
+<tr><td>채팅(에이전트)</td><td>요청 계획·분류 → SQL 데이터셋 생성·실행 → 실제 결과로 복수 위젯 선택·개별 생성. 각 도구 호출 결과를 받아 다음 작업 결정, 원래 목표 평가·재계획. 같은 SQL을 여러 위젯의 컬럼 연결로 공유하며 데이터 없는 정의를 반환하고 각 위젯이 현재 데이터 조회. 실패·한도 중단 시 부분 결과와 미완료 안내. 답변 다시 생성·기록 기반 계속하기·질문·답변 개별 삭제</td><td><a href="features/chat.md" data-web-href="/docs#chat">chat.md</a></td></tr>
 <tr><td>채팅 의도 라우팅</td><td>질문을 데이터 조회 / 테이블 구조 답변 / 일반 대화로 분류(TypeSafe Jev → 실패 시 채팅 LLM 판단). 테이블 구조·인사·잡담·일반 개념은 전체 본문 답변(구조 설명은 테이블별 표 지원), 설명용 MarkdownBlock을 생성하지 않음. 확신이 낮으면 세 경로 선택지 버튼을 반환</td><td><a href="features/chat.md" data-web-href="/docs#chat">chat.md</a></td></tr>
 <tr><td>예상 질문 유사도 DB</td><td>사용자 질문을 DB별로 검색하고 연결된 SQL·위젯 정보를 참조해 답변 생성, 관리자 전체 DB 예상 질문 생성</td><td><a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">similarity-search-design.md</a></td></tr>
 <tr><td>Artifact/위젯 표시</td><td>허용 위젯을 제목 포함 320px 채팅 미리보기·JSON 토글로 표시, 가능한 경우 실행된 SQL도 표시. BarChart와 누적 막대·히트맵·산점도·히스토그램은 TanStack Charts, 나머지 차트는 Recharts. 처리 내역에서 선택 경로·SQL 테이블 선택·유사 질문·복구 결과 확인(대화에 저장)</td><td><a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">widgets-artifact.md</a></td></tr>
@@ -244,7 +248,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td><a href="01-folder-structure.md" data-web-href="/docs#structure">docs/01-folder-structure.md</a></td><td>폴더·파일 단위 설명</td><td>완료</td></tr>
 <tr><td><a href="project-separation-proposal.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/project-separation-proposal.md">docs/project-separation-proposal.md</a></td><td>DB 위젯 / 문서 지식그래프 기능 조사·분리안·사용자 결정 기록</td><td>구현 완료 — 로컬 독립 실행·테스트와 sql2widget 운영 배포 검증</td></tr>
 <tr><td><a href="features/README.md" data-web-href="/docs#feature-index">docs/features/*.md</a></td><td>기능별 상세 명세 (F-01 로그인처럼 기능 단위로 파일 분리)</td><td>완료 — <code>docs/기능명세서.md</code> 대체함(삭제됨)</td></tr>
-<tr><td><a href="progress.md" data-web-href="/docs#progress">docs/progress.md</a></td><td>기능 영역별 진행도 (완료/진행 중/검증 대기/계획)</td><td>완료 — <code>docs/현황.html</code> 대체함(삭제됨)</td></tr>
+<tr><td><a href="progress.md" data-web-href="/docs#progress">docs/progress.md</a></td><td>기능 영역별 진행도 (완료/검증 대기/진행 중/다음/계획/해당없음)</td><td>완료 — <code>docs/현황.html</code> 대체함(삭제됨)</td></tr>
 <tr><td><a href="dashboard.html">docs/dashboard.html</a></td><td><code>AGENTS.md</code>·폴더 구조·<code>features/*.md</code>·<code>progress.md</code>를 좌측 목차 + 본문으로 묶은 HTML. <code>scripts/render_docs.py</code>가 생성</td><td>완료</td></tr>
 <tr><td><a href="kanban.html">docs/kanban.html</a></td><td><code>progress.md</code>를 기능 영역 필터가 있는 칸반으로 보여주는 HTML. <code>scripts/render_docs.py</code>가 생성</td><td>완료</td></tr>
 <tr><td><a href="PLAN.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/PLAN.md">docs/PLAN.md</a></td><td>최초 기획서 (P0~P6 로드맵). 구현과 다르면 구현이 기준</td><td>유지 — 히스토리 참고용</td></tr>
@@ -314,7 +318,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <table><thead><tr><th>변경</th><th>같이 갱신할 문서</th></tr></thead><tbody>
 <tr><td>기능 동작·API·응답 형태</td><td><code>docs/features/*.md</code> 해당 문서와 그 문서의 기준일</td></tr>
 <tr><td>파일·모듈 추가/삭제/역할 변경</td><td><code>docs/01-folder-structure.md</code></td></tr>
-<tr><td>작업 상태 변화(완료/진행 중/검증 대기/계획)</td><td><code>docs/progress.md</code> → <code>python3 scripts/render_docs.py</code> (3.5절)</td></tr>
+<tr><td>작업 상태 변화(완료/검증 대기/진행 중/다음/계획/해당없음)</td><td><code>docs/progress.md</code> → <code>python3 scripts/render_docs.py</code> (3.5절)</td></tr>
 <tr><td>환경변수 추가/변경</td><td><code>.env.example</code>, <code>README.md</code>, 운영에 필요하면 <code>deployment/README.md</code></td></tr>
 <tr><td>새 세션이 알아야 할 동작·경로·주의사항</td><td><code>PROJECT_HANDOFF.md</code>, 본 문서 2절 기능 개요 표</td></tr>
 <tr><td>본 문서 문구</td><td><code>python3 scripts/render_docs.py</code> (3.5절)</td></tr>
@@ -327,7 +331,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <li>언어: 한국어. 코드 식별자·경로는 원문 그대로.</li>
 <li>새 파일명은 영문 kebab-case (<code>01-folder-structure.md</code>, <code>features/chat.md</code>). 기존 한국어 파일명(<code>기능명세서.md</code> 등)은 대체되며 신규 명명 규칙을 따르지 않는다.</li>
 <li>기능 문서는 <code>docs/기능명세서.md</code>의 관례를 유지: <strong>기획이 아니라 현재 동작하는 구현이 기준.</strong> 코드와 문서가 다르면 코드가 맞다.</li>
-<li><code>docs/progress.md</code>의 상태 라벨은 4종으로 고정: <code>완료</code> / <code>진행 중</code> / <code>검증 대기</code> / <code>계획</code>. 각 행은 <code>영역 | 항목 | 내용 | 칸반</code> 4열이며 영역은 칸반 필터가 된다. <code>칸반</code> 열은 <code>표시</code>/<code>미표시</code>로, 기능 단위 항목만 <code>표시</code>하고 세부 변경 기록은 <code>미표시</code>로 둔다.</li>
+<li><code>docs/progress.md</code>의 상태 라벨과 칸반 열 순서는 6종으로 고정: <code>완료</code> / <code>검증 대기</code> / <code>진행 중</code> / <code>다음</code> / <code>계획</code> / <code>해당없음</code>. <code>다음</code>은 우선 착수할 작업, <code>해당없음</code>은 현재 적용하지 않기로 판단한 작업이다. 각 행은 <code>영역 | 항목 | 내용 | 칸반</code> 4열이며 영역은 칸반 필터가 된다. <code>칸반</code> 열은 <code>표시</code>/<code>미표시</code>로, 기능 단위 항목만 <code>표시</code>하고 세부 변경 기록은 <code>미표시</code>로 둔다.</li>
 <li>표시 카드의 항목은 <code>[제목](#작업-id)</code>로 같은 문서의 <code>## 작업 상세</code>에 연결한다. 상세는 <code>### 제목</code> 다음에 <code>작업 ID:</code>와 백틱으로 감싼 영문 ID를 적고, 같은 ID의 Markdown 앵커를 둔다. ID는 제목·상태 변경에도 유지한다. 상태·영역은 상태 표에서만 관리하고 계획의 범위안·미정 정책·완료 기준안을 확정된 구현과 구분한다.</li>
 <li>각 문서 상단에 표로 문서명·기준일·관련 문서를 적는다 (본 문서와 동일한 형식).</li>
 </ul>
@@ -347,6 +351,10 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td><code>backend/app/main.py</code></td><td>이 앱의 인증·프로젝트·대화·채팅 API와 DB/Stage API</td></tr>
 <tr><td><code>backend/tests/test_question_plan.py</code>, <code>frontend/tests/chatTrace.test.js</code></td><td>하위 질문 조건 보존·누락 거부, 경로 순서/반복과 재계획 질문 표시 회귀 검사</td></tr>
 <tr><td><code>backend/tests/test_question_steps.py</code></td><td>여러 질문 실행·동일 경로 복귀·부분 실패·되묻기·재계획 질문 연결 검사(모델/DB 대역)</td></tr>
+<tr><td><code>backend/app/chat_turns.py</code></td><td>기존/신규 질문과 답변 연결·재생성/계속하기 문맥 구성·활성 답변 선택</td></tr>
+<tr><td><code>frontend/src/MessageDeleteButton.jsx</code></td><td>질문/답변 각각의 삭제 버튼·선택한 메시지만 삭제하는 범위 확인</td></tr>
+<tr><td><code>frontend/src/ChatTurnActions.jsx</code></td><td>답변 아래 다시 생성·계속하기 UI</td></tr>
+<tr><td><code>backend/tests/test_chat_actions.py</code>, <code>test_chat_turn_storage.py</code>, <code>frontend/tests/chatTurns.test.js</code></td><td>답변 연결/원문 재사용·미래 문맥 제외·개별 삭제 권한/범위/늦은 저장 차단·다른 메시지/자원 보존 회귀 검사</td></tr>
 <tr><td><code>backend/app/chat_cancellation.py</code></td><td>채팅 연결 종료 감지·요청별 취소 신호·동기 작업 경계 확인</td></tr>
 <tr><td><code>backend/app/agent_service.py</code></td><td>계획·단계별 분류/실행·평가·재계획 루프와 결과 병합, data_query/schema_qa/general_chat 실행</td></tr>
 <tr><td><code>backend/app/agent_plan.py</code></td><td>원래 요청의 단계 계획·목표 평가·재계획 결정, 모델 시간 예산과 루프 상한</td></tr>
@@ -365,6 +373,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td><code>backend/tests/test_jev_chat_api.py</code></td><td>채팅 요청 Jev 키 우선순위·형식 검사·모델 입력 및 응답/저장 데이터 비노출 검증</td></tr>
 <tr><td><code>backend/tests/test_widget_queries.py</code>, <code>test_widget_queries_live.py</code></td><td>데이터 비저장·조회 권한·기존 정의 호환·실 고객 DB SELECT와 임시 Stage 저장 검증</td></tr>
 <tr><td><code>backend/tests/test_widget_props.py</code></td><td>신규 분석 위젯의 SQL 변환·빈 결과·잘못된 구간·Artifact/Stage JSON 경로 검증</td></tr>
+<tr><td><code>backend/tests/test_seed_password_policy.py</code></td><td>짧은 관리자 비밀번호 허용·빈 값/개발 기본값 거부·Viewer와 APP_SECRET 기존 정책 보존 회귀 검사</td></tr>
 <tr><td><code>backend/tests/</code></td><td>앱별 기능·권한·독립성·토큰 격리 검증</td></tr>
 <tr><td><code>frontend/src/App.jsx</code></td><td>같은 기본 로그인·사이드바·채팅·설정·분할 패널 UI</td></tr>
 <tr><td><code>frontend/src/chatMessages.js</code>, <code>frontend/tests/chatMessages.test.js</code></td><td>서버 조회와 임시 질문의 중복 표시 방지, 과거 동일 질문·대화 범위 회귀 테스트</td></tr>
@@ -419,7 +428,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <h1 id="auth--기능-로그인세션">기능: 로그인/세션</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능 문서 — 로그인/세션</td></tr>
-<tr><td>기준일</td><td>2026-10-06 (구현 기준, 기획과 다르면 코드가 맞음)</td></tr>
+<tr><td>기준일</td><td>2026-10-15 (관리자 비밀번호 정책 변경 포함)</td></tr>
 <tr><td>관련 문서</td><td><a href="../AGENTS.md" data-web-href="/docs#overview">AGENTS.md</a>, <a href="01-folder-structure.md" data-web-href="/docs#structure">01-folder-structure.md</a></td></tr>
 <tr><td>관련 코드</td><td><code>backend/app/auth.py</code>, <code>backend/app/main.py</code>(<code>/api/auth/*</code>), <code>frontend/src/App.jsx</code>(<code>LoginForm</code>, <code>App</code>), <code>frontend/src/api.js</code></td></tr>
 </tbody></table>
@@ -481,12 +490,15 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <h2 id="auth--로컬운영-로그인-아이디-분리">로컬·운영 로그인 아이디 분리</h2>
 <p>로컬 <code>.env.local</code>의 기본 아이디는 <code>admin.local@example.com</code>·<code>viewer.local@example.com</code>, 운영 서버 <code>.env</code>의 기본 아이디는 <code>admin@example.com</code>·<code>viewer@example.com</code>이다. <code>ADMIN_EMAIL</code>·<code>VIEWER_EMAIL</code>로 지정하며 이메일은 소문자·trim 처리한다. 운영 비밀번호는 서버 설정에서 별도로 관리한다.</p>
 <p><code>backend/scripts/seed_dev.py</code>는 기존 <code>user_admin</code>·<code>user_viewer</code>의 이메일만 갱신한다. 비밀번호 해시·역할·tenant·내부 사용자 ID를 보존하므로 프로젝트·대화·Stage 소유권도 유지한다. 다른 사용자 이메일과 충돌하거나 기존 역할/tenant가 예상과 다르면 초기화를 중단한다.</p>
+<h2 id="auth--운영-관리자-비밀번호">운영 관리자 비밀번호</h2>
+<p><code>seed_dev.py</code>는 운영 <code>ADMIN_PASSWORD</code>의 16자 최소 길이 제한을 적용하지 않는다. 빈 값·공백만 있는 값과 개발 기본값 <code>demo-password</code>는 거부한다. Viewer 비밀번호의 16자 이상, <code>APP_SECRET</code>의 32자 이상 조건은 유지한다.</p>
+<p>서버 <code>.env</code>에 <code>ADMIN_PASSWORD=&#x27;실제비밀번호!&#x27;</code>처럼 작은따옴표로 감싸면 바깥 따옴표를 제외한 특수문자를 그대로 사용한다. 기존 계정은 시작 시 비밀번호를 보존하므로 <code>.env</code> 변경과 별도로 관리자 계정의 Argon2 해시를 동기화해야 한다. 수동 회전 시 해당 관리자의 갱신 토큰을 무효화하며 기존 access 토큰은 만료 시각까지 유효하다. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">운영 절차</a>.</p>
 </section>
 <section id="projects-conversations">
 <h1 id="projects-conversations--기능-프로젝트--대화">기능: 프로젝트 · 대화</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능 문서 — 프로젝트 · 대화</td></tr>
-<tr><td>기준일</td><td>2026-10-02 (구현 기준)</td></tr>
+<tr><td>기준일</td><td>2026-10-15 (질문·답변 개별 삭제)</td></tr>
 <tr><td>관련 문서</td><td><a href="features/chat.md" data-web-href="/docs#chat">chat.md</a>, <a href="features/stage.md" data-web-href="/docs#stage">stage.md</a></td></tr>
 <tr><td>관련 코드</td><td><code>backend/app/repositories/projects.py</code>, <code>backend/app/repositories/conversations.py</code>, <code>backend/app/main.py</code>, <code>frontend/src/App.jsx</code>(<code>Workspace</code>, <code>ProjectHeader</code>, <code>ConversationItem</code>)</td></tr>
 </tbody></table>
@@ -551,12 +563,21 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <tr><td>POST</td><td><code>/api/conversations</code></td></tr>
 <tr><td>GET/PATCH/DELETE</td><td><code>/api/conversations/{id}</code></td></tr>
 </tbody></table>
+<h2 id="projects-conversations--질문답변-개별-삭제">질문·답변 개별 삭제</h2>
+<p><code>DELETE /api/conversations/{conversation_id}/messages/{message_id}</code>는 로그인한 소유자·테넌트 범위의 선택한 메시지 <strong>한 개만</strong> 삭제한다. 사용자 질문과 어시스턴트 답변 모두 지원한다. viewer는 403, 대상이 없거나 다른 소유자/대화에 속하면 404다. 질문에는 “질문 삭제”, 답변마다 “답변 삭제”를 표시하고 대상 메시지만 삭제한다는 안내 후 확인한다.</p>
+<ul>
+<li>질문을 삭제해도 연결된 답변·재생성 답변은 남는다. 과거 ID 연결이 없는 답변은 삭제 전에 원래 질문 ID를 기록해 다른 앞 질문에 잘못 붙지 않도록 한다. 질문이 사라진 답변은 독립적으로 표시하며 삭제할 수 있다. 원래 질문이 필요한 다시 생성/계속하기는 제공하지 않는다.</li>
+<li>답변 한 개를 삭제해도 원래 질문·다른 재생성 답변·다음 질문은 유지한다. 해당 답변에 들어 있던 채팅 위젯·표·출처·처리 내역만 함께 사라진다.</li>
+<li>대상 메시지를 잠근 뒤 삭제한다. 처리 중 원래 질문이 삭제되면 늦은 새 답변을 저장하지 않는다. 이미 저장된 답변은 삭제하지 않는다.</li>
+<li>실제 사용자 메시지는 이번 구현 과정에서 삭제하지 않았다. 앱에서 사용자가 메시지 삭제를 확인할 때 실행된다.</li>
+</ul>
+<p>Stage 위젯과 프로젝트는 유지한다. 삭제할 답변을 참조하던 과거 Stage 위젯에는 삭제 전에 SQL·DB 조회 참조만 보존한다(배치·표시 설정 유지). 검색용 벡터 사본도 삭제한 메시지 ID 한 개만 정리한다. 벡터 정리가 실패하면 서비스 DB 삭제는 롤백한다. 두 DB의 커밋은 별개이므로 서비스 DB 최종 커밋만 실패하면 벡터 사본이 먼저 지워질 수 있다. 삭제 후 늦은 임베딩 저장으로 사본이 되살아나지 않도록 메시지 잠금 안에서 저장한다.</p>
 </section>
 <section id="chat">
 <h1 id="chat--기능-db-채팅">기능: DB 채팅</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>기능: DB 채팅</td></tr>
-<tr><td>기준일</td><td>2026-10-15 (질문 분리·실행 경로 순서·위젯 생성 표시명·채팅 중지)</td></tr>
+<tr><td>기준일</td><td>2026-10-15 (다시 생성·계속하기·메시지 개별 삭제)</td></tr>
 <tr><td>관련 문서</td><td><a href="../README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/README.md">README</a>, <a href="features/README.md" data-web-href="/docs#feature-index">기능 색인</a></td></tr>
 </tbody></table>
 <h2 id="chat--db-선택과-질문">DB 선택과 질문</h2>
@@ -637,6 +658,18 @@ messages(id, conversation_id, role, content, artifact jsonb, created_at)
 <li>각 단계는 실제 하위 질문을 실행 기록에 직접 남긴다. 재계획으로 최초 계획과 실행 순서가 달라져도 질문과 경로의 연결을 유지한다. 다단계 계획에 질문이 빠졌으면 전체 원문을 임의로 복사해 여러 번 실행하지 않고 계획 오류로 처리한다. doc2graph의 다단계 질문을 500자에서 자르던 제한은 제거해 뒤 조건을 보존한다. 계획 단계 수 한도·자동 승인 금지·사용자가 직접 선택한 경로의 제약은 유지한다.</li>
 <li>같은 요청 안에서 완료된 질문·답변·위젯 정의는 기존 같은 DB 대화 문맥을 통해 다음 단계에 전달한다. SQL 데이터셋·위젯 생성 도구 호출은 하위 질문 내부 작업이며 질문 분리 단계 수와 구분한다.</li>
 <li>질문 분리·경로 반복/복귀·재계획·되묻기·저장 보존 회귀 테스트를 작성했다. 이번 변경의 테스트·검증용 빌드·브라우저 확인·실모델 호출은 실행하지 않았으며 다음 검증 단계로 남긴다. <a href="temp/chat-question-routing-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-question-routing-2026-10-15.md">작업 기록</a>을 참고한다.</li>
+</ul>
+<h2 id="chat--답변-다시-생성계속하기메시지-개별-삭제">답변 다시 생성·계속하기·메시지 개별 삭제</h2>
+<ul>
+<li>완료된 답변 아래, 처리 내역 바깥에 “다시 생성”을 표시한다. 미완료·중지·실패한 요청에는 “계속하기”를 표시한다. 질문에는 “질문 삭제”, 각 답변에는 “답변 삭제”를 제공한다. viewer에게는 표시하지 않으며 요청 처리 중에는 동작을 비활성화한다.</li>
+<li><code>POST /api/chat</code>은 선택적 <code>reply_to_message_id</code>(현재 대화의 원래 사용자 메시지 ID), <code>response_mode</code>(<code>regenerate</code> / <code>continue</code>)를 함께 받는다. 둘 중 하나만 있으면 400, 원래 질문이 현재 소유 대화에 없거나 사용자 메시지가 아니면 404다. 서버에 저장된 질문을 사용하며 클라이언트가 보낸 대체 본문·경로로 원래 질문을 바꾸지 않는다. 질문 말풍선을 새로 저장하지 않는다.</li>
+<li>다시 생성은 원래 질문 이전의 대화로 문맥을 구성하고 질문 분리·실제 경로 선택을 다시 수행한다. 원래 요청에서 사용자가 직접 경로를 골랐다면 유지한다. 선택한 질문의 이전 답변과 나중 질문은 재생성 입력 문맥에 섞지 않는다. 기존 답변·위젯·처리 내역은 비교할 수 있도록 유지하고 새 답변을 같은 질문 아래 추가한다.</li>
+<li>계속하기는 저장된 원래 질문과 활성 답변·후속 계속하기 답변을 문맥에 포함해 이미 완료한 부분을 반복하지 않고 남은 요청을 처리하도록 모델에 전달한다. 저장된 답변이 없으면 원래 질문을 다시 시작한다. 모델 호출 도중의 정확한 토큰 위치나 미저장 내부 작업을 복원하는 기능은 아니다. 중지된 재생성의 계속하기는 이전 완료 답변의 남은 작업으로 오인하지 않도록 재생성으로 다시 진입한다.</li>
+<li>새 사용자 메시지 meta에 요청 경로·미완료 상태(<code>response_pending</code>)·현재 응답 ID(<code>active_response_id</code>)·중지된 응답 종류(<code>pending_response_mode</code>)를 저장한다. 답변 meta에는 원래 질문 ID(<code>reply_to_message_id</code>), 응답 종류(<code>response_mode</code>), 응답 요청 ID(<code>response_request_id</code>)를 남긴다. 새로고침 후에도 저장된 미완료 질문에서 이어갈 수 있다. 이전 요청의 늦은 응답이 최신 요청을 덮거나 삭제된 질문을 되살리지 않도록 질문 행을 잠그고 응답 ID를 확인한 뒤 저장한다. 답변 저장과 미완료 해제는 같은 트랜잭션이다.</li>
+<li>이후 일반 질문의 문맥에는 질문별 최신 재생성 답변과 그 뒤의 계속하기 답변만 포함한다. 이전 대안 답변은 화면에 남지만 모델 문맥에 중복 전달하지 않는다. 기존 ID 연결이 없는 답변은 앞선 사용자 메시지로 묶고, 같은 본문의 서로 다른 질문은 합치지 않는다.</li>
+<li>개별 삭제는 <code>DELETE /api/conversations/{conversation_id}/messages/{message_id}</code>다. 질문을 삭제해도 연결된 답변은 남고, 답변 한 개를 삭제해도 원래 질문·다른 답변은 유지한다. 삭제한 답변에 포함된 채팅 위젯·표·처리 내역만 함께 사라진다. 질문이 삭제된 답변은 다른 질문에 붙이지 않고 독립적으로 표시하며, 원래 질문이 필요한 다시 생성/계속하기는 제공하지 않는다. 상세 범위는 <a href="features/projects-conversations.md#질문답변-개별-삭제" data-web-href="/docs#projects-conversations--질문답변-개별-삭제">프로젝트·대화</a>를 따른다.</li>
+<li>답변 묶음은 본문 → 위젯/차트/표 → 처리 내역 → 다시 생성/계속하기/삭제 순서다. 재생성은 원래 저장된 DB 연결을 사용한다. DB 이력을 확인할 수 없는 과거 질문은 임의의 현재 DB로 바꾸지 않고 409로 안내한다. 신규 요청의 <code>client_message_id</code>로 서버 질문과 임시 말풍선을 연결한다. Stage에 이미 추가한 위젯은 재생성·채팅 삭제로 교체/삭제하지 않는다.</li>
+<li>회귀 테스트를 작성했으며 테스트·검증용 빌드·브라우저·실모델 확인은 아직 실행하지 않았다. <a href="temp/chat-turn-actions-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-turn-actions-2026-10-15.md">작업 기록</a>을 참고한다.</li>
 </ul>
 </section>
 <section id="widgets-artifact">
@@ -1009,14 +1042,15 @@ docker compose exec backend pytest -q
 <p><code>backend/app/graph_backend.py</code>에 선택적 Neo4j 연결·읽기 실행·종료·오류 처리만 남겼다. 기본 <code>GRAPH_ENABLED=false</code>이며 SQL 채팅과 서버 시작에서 접속하지 않는다. 별도 UI나 공개 그래프 API는 제공하지 않는다.</p>
 <p>필요 시 내부 기능에서 사용할 연결 설정은 <code>GRAPH_ENABLED</code>, <code>NEO4J_URI</code>, <code>NEO4J_USERNAME</code>, <code>NEO4J_PASSWORD</code>다. 사용 대상을 새로 정의한 것은 아니므로 그래프 서버 없이도 DB 앱 전체가 실행된다.</p>
 </section>
-<section id="progress"><span class="badge done">완료 12</span> <span class="badge wip">진행 중 0</span> <span class="badge verify">검증 대기 2</span> <span class="badge plan">계획 14</span>
+<section id="progress"><span class="badge done">완료 12</span> <span class="badge verify">검증 대기 3</span> <span class="badge wip">진행 중 0</span> <span class="badge next">다음 0</span> <span class="badge plan">계획 14</span> <span class="badge na">해당없음 0</span>
 <h1 id="progress--sql2widget-진행도">sql2widget 진행도</h1>
 <table><thead><tr><th>항목</th><th>내용</th></tr></thead><tbody>
 <tr><td>문서명</td><td>진행도</td></tr>
 <tr><td>기준일</td><td>2026-10-15</td></tr>
 <tr><td>관련 문서</td><td><a href="../AGENTS.md" data-web-href="/docs#overview">AGENTS.md</a>, <a href="features/README.md" data-web-href="/docs#feature-index">docs/features/</a>, <a href="../PROJECT_HANDOFF.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/PROJECT_HANDOFF.md">PROJECT_HANDOFF.md</a>, <a href="temp/progress-history-2026-10-14.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/progress-history-2026-10-14.md">이전 기록</a></td></tr>
 </tbody></table>
-<p>현재 구현·진행 상황·계획을 기능 영역별로 관리한다. 상태는 <code>완료</code> / <code>진행 중</code> / <code>검증 대기</code> / <code>계획</code> 네 가지다. 각 행의 <code>칸반</code> 열이 <code>표시</code>인 항목만 칸반 카드가 되고, <code>미표시</code> 항목은 이 문서와 대시보드에만 남는다. 이 문서를 고친 뒤 <code>python3 scripts/render_docs.py</code>로 칸반·대시보드를 생성한다.</p>
+<p>현재 구현·진행 상황·계획을 기능 영역별로 관리한다. 각 행의 <code>칸반</code> 열이 <code>표시</code>인 항목만 칸반 카드가 되고, <code>미표시</code> 항목은 이 문서와 대시보드에만 남는다. 이 문서를 고친 뒤 <code>python3 scripts/render_docs.py</code>로 칸반·대시보드를 생성한다.</p>
+<p>상태와 칸반 열은 <code>완료</code> → <code>검증 대기</code> → <code>진행 중</code> → <code>다음</code> → <code>계획</code> → <code>해당없음</code> 순서다. <code>다음</code>은 우선 착수할 작업, <code>계획</code>은 아직 착수 순서를 정하지 않은 작업, <code>해당없음</code>은 현재 적용하지 않기로 판단한 작업이다.</p>
 <h2 id="progress--현재-상태">현재 상태</h2>
 <p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md" data-web-href="/docs#stage">stage.md</a>·<a href="features/viewer.md" data-web-href="/docs#viewer">viewer.md</a>에 유지한다.</p>
 <p>기능 영역: 인증·프로젝트 · DB 연결 · 채팅·에이전트 · 예상 질문 · 위젯·Stage · 외부 연계 · AI 설정 · 배포·운영.</p>
@@ -1035,14 +1069,13 @@ docker compose exec backend pytest -q
 <tr><td>AI 설정</td><td><a href="progress.md#ai-settings" data-web-href="/docs#progress--ai-settings">AI 연결 설정</a></td><td>Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장</td><td>표시</td></tr>
 <tr><td>배포·운영</td><td><a href="progress.md#deployment" data-web-href="/docs#progress--deployment">독립 배포·운영 문서 공개</a></td><td>Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개</td><td>표시</td></tr>
 </tbody></table>
-<h2 id="progress--진행-중">진행 중</h2>
-<table><thead><tr><th>영역</th><th>항목</th><th>상태</th><th>칸반</th></tr></thead><tbody>
-</tbody></table>
 <h2 id="progress--검증-대기">검증 대기</h2>
 <p>구현은 끝났고 테스트·실제 화면·실모델 확인이 남은 항목이다.</p>
 <table><thead><tr><th>영역</th><th>항목</th><th>남은 확인</th><th>칸반</th></tr></thead><tbody>
+<tr><td>인증·프로젝트</td><td>운영 관리자 비밀번호 길이 제한 변경</td><td>2026-10-15 관리자 16자 하한 제거, 빈 값·개발 기본값 거부 및 Viewer/APP_SECRET 조건 유지. 회귀 테스트 6개 작성. 테스트·실제 로그인 검증 승인 대기. <a href="features/auth.md#운영-관리자-비밀번호" data-web-href="/docs#auth--운영-관리자-비밀번호">기능</a></td><td>미표시</td></tr>
+<tr><td>채팅·에이전트</td><td><a href="progress.md#chat-turn-actions" data-web-href="/docs#progress--chat-turn-actions">다시 생성·계속하기·메시지 개별 삭제</a></td><td>원래 질문 재사용·답변 보존·미완료 복원·처리 내역 아래 버튼·소유 범위 삭제·프로젝트 자원 보존. 테스트·빌드·브라우저 미실행</td><td>표시</td></tr>
 <tr><td>AI 설정</td><td>Together AI 프로바이더</td><td>2026-10-15 독립 프로필·OpenAI 호환 호출·Qwen3.5-9B 기본값·전용 임베딩 제한 안내. 회귀 테스트 작성, 테스트·빌드·동기화 검사·실모델·브라우저 미실행. <a href="features/admin.md#together-ai" data-web-href="/docs#admin--together-ai">기능</a></td><td>미표시</td></tr>
-<tr><td>배포·운영</td><td>칸반 작업 상세·사이드패널</td><td>2026-10-15 상태 표의 요약과 고유 작업 ID별 상세를 분리하고 카드 클릭·닫기·Esc·외부 클릭·포커스 복원 구현. 생성기 회귀 테스트 작성. 테스트·동기화 검사·브라우저 검증 미실행</td><td>미표시</td></tr>
+<tr><td>배포·운영</td><td>칸반 작업 상세·사이드패널</td><td>2026-10-15 상태 표의 요약과 고유 작업 ID별 상세를 분리하고 카드 클릭·닫기·Esc·외부 클릭·포커스 복원 구현. 카드의 실제 위치 반대편에 패널 열기. 완료→검증 대기→진행 중→다음→계획→해당없음 6열 구성. 패널 최대 폭 560px·본문 13px로 축소. 문서 루트의 스크롤바 자리 유지·배경 스크롤 잠금으로 열기/닫기 시 가로 재배치 방지. 생성기 회귀 테스트 작성. 테스트·동기화 검사·브라우저 검증 미실행</td><td>미표시</td></tr>
 <tr><td>채팅·에이전트</td><td><a href="progress.md#question-steps" data-web-href="/docs#progress--question-steps">질문 분리·경로 순서·실행 단계 접기</a></td><td>2026-10-15 의미별 질문 분리 기준·실행 질문 직접 기록·재계획/되묻기 보존·번호와 화살표로 반복 경로 표시</td><td>표시</td></tr>
 <tr><td>채팅·에이전트</td><td>처리 내역 위젯 생성 표시명</td><td>2026-10-15 <code>data_query</code>의 처리 내역 표시명을 데이터 조회에서 위젯 생성으로 변경. 내부 경로·실행 방식 유지. 기존 경로 요약 테스트·문서 동기화 확인은 승인 대기. <a href="features/chat.md#처리-내역의-질문별-경로-표시" data-web-href="/docs#chat--처리-내역의-질문별-경로-표시">기능</a></td><td>미표시</td></tr>
 <tr><td>채팅·에이전트</td><td><a href="progress.md#chat-cancellation" data-web-href="/docs#progress--chat-cancellation">채팅 응답 생성 중지</a></td><td>2026-10-15 중지 버튼·요청 취소·서버 후속 실행/저장 차단, 회귀 테스트 작성</td><td>표시</td></tr>
@@ -1052,6 +1085,13 @@ docker compose exec backend pytest -q
 <tr><td>채팅·에이전트</td><td>SOC 문서 출처 제거</td><td>2026-10-14 고정 Mock 문서 출처 경로 삭제, 관련 테스트 수정. 테스트 미실행</td><td>미표시</td></tr>
 <tr><td>위젯·Stage</td><td>채팅 미리보기 320px</td><td>2026-10-14 제목 포함 높이 고정. 테스트·빌드·브라우저 미실행</td><td>미표시</td></tr>
 <tr><td>AI 설정</td><td>Gemini 3.8 Flash 기본값</td><td>2026-10-14 기본 모델 변경, 저장된 3.6 모델·키 유지. 테스트·실모델 호출·브라우저 미실행</td><td>미표시</td></tr>
+</tbody></table>
+<h2 id="progress--진행-중">진행 중</h2>
+<table><thead><tr><th>영역</th><th>항목</th><th>상태</th><th>칸반</th></tr></thead><tbody>
+</tbody></table>
+<h2 id="progress--다음">다음</h2>
+<p>계획 가운데 우선 착수하기로 정한 작업이다. 아직 시작하지 않았으며 착수하면 같은 작업 ID를 유지해 진행 중으로 옮긴다.</p>
+<table><thead><tr><th>영역</th><th>항목</th><th>선정 이유·다음 행동</th><th>칸반</th></tr></thead><tbody>
 </tbody></table>
 <h2 id="progress--계획">계획</h2>
 <p>2026-10-14 기능 제안 논의에서 정했다. 이름이 <code>필요성 검토</code>·<code>가능성 검토</code>인 항목은 결정이 완료 기준이며, 구현은 결정 뒤 별도 항목으로 올린다.</p>
@@ -1070,6 +1110,10 @@ docker compose exec backend pytest -q
 <tr><td>외부 연계</td><td><a href="progress.md#scheduled-report" data-web-href="/docs#progress--scheduled-report">정기 리포트</a></td><td>저장된 위젯 조회의 정기 실행과 결과 전달 방식 검토</td><td>표시</td></tr>
 <tr><td>외부 연계</td><td><a href="progress.md#widget-embed-review" data-web-href="/docs#progress--widget-embed-review">임베드 필요성 검토</a></td><td>외부 화면에 위젯을 표시할 필요성과 게시·접근·조회 조건 범위 결정</td><td>표시</td></tr>
 <tr><td>배포·운영</td><td><a href="progress.md#audit-log" data-web-href="/docs#progress--audit-log">감사 로그</a></td><td>행위 기록 적재와 관리자 조회 범위 정의. 사용량 화면은 제외</td><td>표시</td></tr>
+</tbody></table>
+<h2 id="progress--해당없음">해당없음</h2>
+<p>현재 적용하지 않기로 판단한 항목이다. 작업 상세에 제외 사유와 재검토 조건을 남긴다. 기존 항목을 자동으로 옮기지 않는다.</p>
+<table><thead><tr><th>영역</th><th>항목</th><th>제외 사유</th><th>칸반</th></tr></thead><tbody>
 </tbody></table>
 <h2 id="progress--검증-기록">검증 기록</h2>
 <p>아래는 기존 기록의 요약이며 이번 정리에서 재실행한 결과가 아니다. 당시 서술 원문은 <a href="temp/progress-history-2026-10-14.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/progress-history-2026-10-14.md">이전 기록</a>에 보관한다.</p>
@@ -1485,6 +1529,13 @@ docker compose exec backend pytest -q
 <p><a href="features/admin.md" data-web-href="/docs#admin">관리 기능·권한</a>, <a href="features/auth.md" data-web-href="/docs#auth">인증</a></p>
 <h4 id="progress--기존-계획논의-기록-13">기존 계획·논의 기록</h4>
 <p>행위 기록 적재와 관리자 조회 화면. <code>audit_events</code> 테이블은 있지만 현재 기록하는 코드가 없다. 사용량 화면은 2026-10-14 결정에 따라 제외</p>
+<h3 id="progress--chat-turn-actions">다시 생성·계속하기·메시지 개별 삭제</h3>
+<h4 id="progress--목적과-사용자-동작-14">목적과 사용자 동작</h4>
+<p>답변/위젯/처리 내역 아래에서 다시 생성하거나 저장된 요청을 이어가고, 질문과 답변 각각에 삭제 버튼을 제공해 선택한 메시지 한 개만 삭제한다.</p>
+<h4 id="progress--구현-범위와-경계">구현 범위와 경계</h4>
+<p>질문은 중복 저장하지 않고 답변을 원래 질문에 연결한다. 과거 답변은 보존하며 최신 답변과 이어진 결과로 다음 문맥을 구성한다. 계속하기는 저장된 채팅 기반이며 미저장 모델 실행 상태의 복원이 아니다. 삭제는 선택한 메시지 한 개에만 적용하고 다른 질문·답변과 프로젝트 자원을 보존한다. 질문 삭제 시 남은 답변을 다른 질문에 연결하지 않는다. <a href="features/chat.md#답변-다시-생성계속하기메시지-개별-삭제" data-web-href="/docs#chat--답변-다시-생성계속하기메시지-개별-삭제">기능</a>, <a href="temp/chat-turn-actions-2026-10-15.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/chat-turn-actions-2026-10-15.md">기록</a>.</p>
+<h4 id="progress--검증-범위">검증 범위</h4>
+<p>대역 API/문맥 테스트·PostgreSQL 트랜잭션 삭제/동시 요청 보호 테스트·프런트 질문 연결 테스트를 작성했다. 아직 실행하지 않았다. 브라우저 검증·실모델 호출·배포도 수행하지 않았다.</p>
 </section></main>
   </div>
   <footer class="doc-footer">메인규칙·폴더 구조·기능·진행도·임시의 원본 Markdown에서 생성한 보기다.

@@ -10,7 +10,8 @@ from urllib.parse import quote, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-STATUSES = (("완료", "done"), ("진행 중", "wip"), ("검증 대기", "verify"), ("계획", "plan"))
+STATUSES = (("완료", "done"), ("검증 대기", "verify"), ("진행 중", "wip"),
+            ("다음", "next"), ("계획", "plan"), ("해당없음", "na"))
 REPOSITORY = "https://github.com/inbm-company/sql2widget"
 
 
@@ -245,7 +246,7 @@ def outputs():
                ("2. 폴더 구조", [("structure", "디렉터리와 파일 역할", DOCS / "01-folder-structure.md")]),
                ("3. 기능", [("feature-index", "기능 색인", DOCS / "features/README.md")]
                 + [(path.stem, label, path) for label, path in features]),
-               ("4. 진행도", [("progress", "완료·진행·검증 대기·계획", progress)])]
+               ("4. 진행도", [("progress", "완료·검증 대기·진행 중·다음·계획·해당없음", progress)])]
     toc = []
     body = []
     documents_by_path = {}

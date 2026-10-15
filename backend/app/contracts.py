@@ -35,9 +35,12 @@ class UpdateProjectRequest(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    reply_to_message_id: str | None = Field(default=None, min_length=1, max_length=128)
+    response_mode: Literal["regenerate", "continue"] | None = None
     conversation_id: str
     message: str
     connection_id: str | None = None
+    client_message_id: str | None = Field(default=None, min_length=1, max_length=128)
     route: Literal["data_query", "schema_qa", "general_chat"] | None = None
 
 

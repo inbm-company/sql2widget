@@ -19,6 +19,8 @@ docker compose --env-file .env.local up -d --build
 - 서비스 DB 5544, SOC 5546, Global 5547, Northwind 5548, SKAX NMS 5549, pgvector 5550. 포트는 Compose의 `*_PORT` 변수로 조정할 수 있다.
 - `.env.local`은 A 전용이며 B 설정을 공유하지 않는다. 운영 파일은 별도의 강한 비밀번호·APP_SECRET과 이미지명을 요구한다.
 
+운영 `ADMIN_PASSWORD`는 16자 최소 길이 제한 없이 서버에서 지정한 값을 사용한다(빈 값·개발 기본값 제외). 특수문자가 있으면 `.env`에서 값 전체를 작은따옴표로 감싼다. 기존 관리자 계정의 비밀번호 변경은 DB 해시 동기화가 필요하다. [운영 절차](deployment/README.md).
+
 ## 기능과 설정
 
 DB 연결·테이블 권한·예상 질문·DB 조회/구조 질문·일반 대화·위젯·Stage·Viewer를 제공한다. 인사·잡담·일반 개념 설명은 SQL·위젯 생성 없이 대화 문맥을 참고한 전체 본문으로 답한다. SOC와 Global Sales는 동등한 데모이고 Northwind·SKAX NMS 샘플도 준비한다. 고객 DB는 읽기 전용 SELECT만 실행한다.

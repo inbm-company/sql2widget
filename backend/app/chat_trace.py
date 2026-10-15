@@ -6,6 +6,7 @@ from copy import deepcopy
 def message_meta(meta: dict) -> dict:
     # Never persist request headers, credentials, raw provider errors or SQL plans here.
     result = {key: deepcopy(meta[key]) for key in (
+        "reply_to_message_id", "response_mode", "response_request_id",
         "route", "route_source", "route_confidence", "route_candidate",
         "model", "retried", "connection_id", "plan", "steps", "loop_stop", "replans",
         "tool_calls", "decision_calls",

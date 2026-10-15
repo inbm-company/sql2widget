@@ -15,9 +15,12 @@
       --plan-dim: rgba(180, 83, 9, 0.1);
       --verify: #7c3aed;
       --verify-dim: rgba(124, 58, 237, 0.1);
+      --next: #0f766e;
+      --na: #717171;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; }
+    html { scrollbar-gutter: stable; }
     body {
       font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
       color: var(--ink);
@@ -26,7 +29,7 @@
         var(--paper);
       line-height: 1.5;
     }
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+    .wrap { max-width: 1600px; margin: 0 auto; padding: 40px 24px 72px; }
     header.top {
       display: flex; justify-content: space-between; align-items: flex-end;
       gap: 24px; margin-bottom: 28px; padding-bottom: 20px;
@@ -54,7 +57,7 @@
     .thesis em { font-style: normal; color: var(--blue); font-weight: 600; }
 
     .kpis {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;
       margin-bottom: 28px;
     }
     .kpi {
@@ -65,6 +68,8 @@
     .kpi.wip { border-top-color: var(--wip); }
     .kpi.plan { border-top-color: var(--plan); }
     .kpi.verify { border-top-color: var(--verify); }
+    .kpi.next { border-top-color: var(--next); }
+    .kpi.na { border-top-color: var(--na); }
     .kpi .label { font-size: 11px; color: var(--mute); letter-spacing: 0.04em; text-transform: uppercase; }
     .kpi .num {
       font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
@@ -80,7 +85,7 @@
     h2 span.hint { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; color: var(--mute); }
 
     .board {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px;
     }
     .col {
       background: var(--card); border: 1px solid var(--line); border-radius: 12px;
@@ -99,6 +104,8 @@
     .col.wip .dot { background: var(--wip); }
     .col.plan .dot { background: var(--plan); }
     .col.verify .dot { background: var(--verify); }
+    .col.next .dot { background: var(--next); }
+    .col.na .dot { background: var(--na); }
 
     .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
     .chip {
@@ -170,6 +177,9 @@
     footer a { color: var(--blue); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
+    @media (max-width: 1280px) {
+      .board, .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     @media (max-width: 960px) {
       .board { grid-template-columns: 1fr 1fr; }
       .kpis { grid-template-columns: 1fr 1fr; }
@@ -191,28 +201,32 @@
     .card:hover { border-color: var(--ac, var(--blue)); }
     .card:focus-visible, .task-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
     .card-more { display: block; margin-top: 8px; font-size: 11px; color: var(--blue); }
-    body.task-open { overflow: hidden; }
+    html.task-open { overflow: hidden; }
     .task-dialog {
       position: fixed; inset: 0 0 0 auto; margin: 0; border: 0; border-left: 1px solid var(--line);
-      padding: 0; width: min(760px, 100vw); max-width: none; height: 100dvh; max-height: none;
+      padding: 0; width: min(560px, 100vw); max-width: none; height: 100dvh; max-height: none;
       color: var(--ink); background: var(--card); box-shadow: -12px 0 40px rgba(0,0,0,0.12);
     }
     .task-dialog[open] { display: flex; flex-direction: column; }
+    .task-dialog[data-side="left"] {
+      inset: 0 auto 0 0; border-left: 0; border-right: 1px solid var(--line);
+      box-shadow: 12px 0 40px rgba(0,0,0,0.12);
+    }
     .task-dialog::backdrop { background: rgba(0,0,0,0.25); }
-    .task-head { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-bottom: 1px solid var(--line); }
+    .task-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px; border-bottom: 1px solid var(--line); }
     .task-heading { flex: 1; min-width: 0; }
-    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 12px; }
-    .task-title { margin: 0; color: var(--ink); font-size: 22px; line-height: 1.4; letter-spacing: -0.02em; }
-    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; cursor: pointer; }
-    .task-body { flex: 1; min-height: 0; padding: 24px 28px 48px; overflow: auto; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
-    .task-body h4 { margin: 26px 0 10px; font-size: 16px; }
+    .task-meta { margin: 0 0 6px; color: var(--mute); font-size: 11px; }
+    .task-title { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.4; letter-spacing: -0.02em; }
+    .task-close { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+    .task-body { flex: 1; min-height: 0; padding: 20px 24px 40px; overflow: auto; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+    .task-body h4 { margin: 22px 0 10px; font-size: 15px; }
     .task-body h4:first-child { margin-top: 0; }
     .task-body p { margin: 0 0 14px; }
     .task-body ul, .task-body ol { margin: 0 0 18px; padding-left: 22px; }
     .task-body a { color: var(--blue); }
     .task-body pre { padding: 14px; background: var(--paper); overflow: auto; border-radius: 6px; }
     .task-body code { font-size: 0.9em; background: var(--paper); padding: 1px 4px; border-radius: 3px; }
-    .task-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-body table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .task-body th, .task-body td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     @media (max-width: 640px) { .task-head { padding: 18px; } .task-body { padding: 20px 18px 36px; } }
     @media print { .task-dialog[open] { display: none; } }
@@ -242,7 +256,7 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   <header class="top"><div><p class="kicker">sql2widget</p><h1>진행도</h1></div>
     <div class="meta"><strong>{{date}}</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
   </header>
-  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
+  <div class="thesis"><p>완료·검증 대기·진행 중·다음·계획·해당없음을 <em>기능 영역별</em>로 <a href="progress.md">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
   <div class="kpis">{{kpis}}</div>
   <div class="filters" role="group" aria-label="기능 영역 필터">{{filters}}</div>
   <section class="board">{{board}}</section>
@@ -271,6 +285,9 @@ document.querySelector(".board").addEventListener("click", (event) => {
   const detail = document.getElementById("task-" + card.dataset.task);
   if (!detail) return;
   openedCard = card;
+  const cardBounds = card.getBoundingClientRect();
+  taskDialog.dataset.side = cardBounds.left + cardBounds.width / 2 <= document.documentElement.clientWidth / 2
+    ? "right" : "left";
   document.getElementById("taskTitle").textContent = detail.dataset.title;
   document.getElementById("taskMeta").textContent = detail.dataset.status + " · " + detail.dataset.area;
   taskBody.replaceChildren(detail.content.cloneNode(true));
@@ -280,7 +297,7 @@ document.querySelector(".board").addEventListener("click", (event) => {
     });
   }
   taskBody.scrollTop = 0;
-  document.body.classList.add("task-open");
+  document.documentElement.classList.add("task-open");
   taskDialog.showModal();
 });
 document.getElementById("taskClose").addEventListener("click", () => taskDialog.close());
@@ -292,7 +309,7 @@ taskDialog.addEventListener("click", (event) => {
   }
 });
 taskDialog.addEventListener("close", () => {
-  document.body.classList.remove("task-open");
+  document.documentElement.classList.remove("task-open");
   if (openedCard) openedCard.focus({ preventScroll: true });
 });
 // 기능 영역 칩을 누르면 해당 영역 카드 묶음만 남긴다.

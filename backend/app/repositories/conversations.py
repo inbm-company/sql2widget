@@ -3,7 +3,9 @@ import secrets
 from typing import Any
 
 from app.db import execute, fetch_all, fetch_one, get_conn
+from app.chat_turns import message_turns
 from app.widget_queries import widget_definition
+from app.repositories import message_embeddings
 
 
 def _id(prefix: str) -> str:
@@ -137,6 +139,19 @@ def add_message(
     msg_id = _id("msg")
     with get_conn() as conn:
         with conn.cursor() as cur:
+            parent = (meta or {}).get("reply_to_message_id")
+            if role == "assistant" and parent:
+                cur.execute("SELECT id, meta FROM messages WHERE id = %s AND conversation_id = %s AND role = 'user' FOR UPDATE",
+                            (parent, conversation_id))
+                source = cur.fetchone()
+                if not source:
+                    raise MessageDeletedError("원래 질문이 삭제되어 답변을 저장하지 않았습니다.")
+                source_meta = source.get("meta") or {}
+                if isinstance(source_meta, str):
+                    source_meta = json.loads(source_meta)
+                attempt = (meta or {}).get("response_request_id")
+                if attempt and source_meta.get("active_response_id") != attempt:
+                    raise MessageDeletedError("더 최근에 시작한 응답이 있어 이전 응답을 저장하지 않았습니다.")
             cur.execute(
                 """
                 INSERT INTO messages (id, conversation_id, role, content, artifact, meta)
@@ -153,6 +168,9 @@ def add_message(
                 ),
             )
             row = cur.fetchone()
+            if role == "assistant" and parent and (meta or {}).get("response_request_id"):
+                cur.execute("UPDATE messages SET meta = COALESCE(meta, '{}'::jsonb) || '{\"response_pending\":false}'::jsonb WHERE id = %s",
+                            (parent,))
             cur.execute(
                 "UPDATE conversations SET updated_at = now() WHERE id = %s",
                 (conversation_id,),
@@ -213,3 +231,83 @@ def delete_conversation(conversation_id: str, tenant_id: str, user_id: str) -> b
                 (conversation_id, tenant_id, user_id),
             )
             return cur.rowcount > 0
+
+
+class MessageDeletedError(Exception):
+    pass
+
+
+def delete_message(conversation_id: str, message_id: str, tenant_id: str, user_id: str) -> bool:
+    """Delete exactly one owned message, preserving all other questions and replies."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT m.id, m.role, m.meta, m.artifact FROM messages m
+                JOIN conversations c ON c.id = m.conversation_id
+                WHERE m.id = %s AND m.conversation_id = %s
+                  AND c.tenant_id = %s AND c.user_id = %s FOR UPDATE OF m""",
+                (message_id, conversation_id, tenant_id, user_id))
+            selected = cur.fetchone()
+            if not selected:
+                return False
+            if isinstance(selected.get("meta"), str):
+                selected["meta"] = json.loads(selected["meta"])
+            if selected["role"] == "user":
+                # Freeze legacy associations before removing the question. Its retained
+                # answers must not become answers to an unrelated preceding question.
+                cur.execute("SELECT id, role, content, meta FROM messages WHERE conversation_id = %s ORDER BY created_at ASC",
+                            (conversation_id,))
+                messages = cur.fetchall()
+                for message in messages:
+                    if isinstance(message.get("meta"), str):
+                        message["meta"] = json.loads(message["meta"])
+                turn = next(turn for turn in message_turns(messages)
+                            if (turn["question"] or {}).get("id") == message_id)
+                for answer in turn["answers"]:
+                    if not (answer.get("meta") or {}).get("reply_to_message_id"):
+                        cur.execute("UPDATE messages SET meta = COALESCE(meta, '{}'::jsonb) || %s::jsonb WHERE id = %s AND conversation_id = %s",
+                                    (json.dumps({"reply_to_message_id": message_id}), answer["id"], conversation_id))
+            if selected["role"] == "assistant":
+                # Older pinned widgets can rely on the source answer for their DB.
+                # Copy its reference only; preserve Stage layout and display settings.
+                artifact = selected.get("artifact") or {}
+                if isinstance(artifact, str):
+                    artifact = json.loads(artifact)
+                for widget in artifact.get("widgets") or []:
+                    definition = widget_definition(widget, (selected.get("meta") or {}).get("connection_id"))
+                    reference = definition.get("query_ref") or {}
+                    if reference.get("sql") and reference.get("connection_id"):
+                        cur.execute(
+                            """UPDATE stage_widgets sw SET props = jsonb_set(sw.props, '{__query_ref}', %s::jsonb)
+                            FROM stages st, conversations c WHERE sw.stage_id = st.id AND st.project_id = c.project_id
+                              AND c.id = %s AND c.tenant_id = %s AND c.user_id = %s
+                              AND sw.source_artifact_id = %s AND sw.source_widget_id = %s
+                              AND sw.props->'__query_ref'->>'connection_id' IS NULL""",
+                            (json.dumps(reference), conversation_id, tenant_id, user_id,
+                             artifact.get("artifact_id"), widget.get("widget_id")))
+            cur.execute("DELETE FROM messages WHERE conversation_id = %s AND id = %s", (conversation_id, message_id))
+            message_embeddings.delete_message_embeddings(tenant_id, [message_id])
+            cur.execute("UPDATE conversations SET updated_at = now() WHERE id = %s", (conversation_id,))
+            cur.execute("UPDATE projects SET updated_at = now() WHERE id = (SELECT project_id FROM conversations WHERE id = %s)",
+                        (conversation_id,))
+            return True
+
+
+def with_message_lock(conversation_id, message_id, work):
+    """Do not recreate a vector copy after a concurrent message deletion."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM messages WHERE id = %s AND conversation_id = %s FOR UPDATE",
+                        (message_id, conversation_id))
+            if not cur.fetchone():
+                raise MessageDeletedError("메시지가 삭제되어 작업을 중지했습니다.")
+            work()
+
+
+def mark_response_pending(conversation_id, question_id, request_id, mode):
+    row = fetch_one(
+        """UPDATE messages SET meta = COALESCE(meta, '{}'::jsonb) || %s::jsonb
+        WHERE id = %s AND conversation_id = %s AND role = 'user' RETURNING id""",
+        (json.dumps({"response_pending": True, "active_response_id": request_id, "pending_response_mode": mode}),
+         question_id, conversation_id))
+    return row is not None

@@ -86,3 +86,12 @@ def delete_conversation_embeddings(tenant_id: str, conversation_ids: list[str]) 
                 "DELETE FROM message_embeddings WHERE tenant_id = %s AND conversation_id = ANY(%s)",
                 (tenant_id, conversation_ids),
             )
+
+
+def delete_message_embeddings(tenant_id: str, message_ids: list[str]) -> None:
+    if not message_ids:
+        return
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM message_embeddings WHERE tenant_id = %s AND message_id = ANY(%s)",
+                        (tenant_id, message_ids))

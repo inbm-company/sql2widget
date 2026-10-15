@@ -164,7 +164,9 @@ export const api = {
     request(`/api/conversations/${id}`, {
       method: "DELETE",
     }),
-  chat: (conversationId, message, connectionId, route = null, signal = undefined) =>
+  deleteMessage: (conversationId, messageId) =>
+    request(`/api/conversations/${conversationId}/messages/${messageId}`, { method: "DELETE" }),
+  chat: (conversationId, message, connectionId, route = null, signal = undefined, responseOptions = {}) =>
     request("/api/chat", {
       method: "POST",
       signal,
@@ -175,6 +177,7 @@ export const api = {
         message,
         connection_id: connectionId || null,
         route,
+        ...responseOptions,
       }),
     }),
   getStage: (projectId) => request(`/api/projects/${projectId}/stage`),

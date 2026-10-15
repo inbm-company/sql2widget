@@ -22,7 +22,9 @@ import { widgetDefinition } from "./widgets/widgetData.js";
 import ChatTrace from "./ChatTrace.jsx";
 import ChatText from "./ChatText.jsx";
 import { assistantPresentation } from "./chatText.js";
-import { shouldShowPendingMessage } from "./chatMessages.js";
+import { conversationTurns, shouldShowPendingMessage } from "./chatMessages.js";
+import ChatTurnActions from "./ChatTurnActions.jsx";
+import MessageDeleteButton from "./MessageDeleteButton.jsx";
 
 function LoginForm({ onSuccess }) {
   // 개발 서버(vite dev)에서만 데모 계정을 미리 채운다. 운영 빌드에서는 빈 값이며 문자열도 번들에서 제거된다.
@@ -192,8 +194,6 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
   return (
     <div className="assistant-block">
       {presentation.content ? <ChatText content={presentation.content} /> : null}
-      <ChatTrace meta={meta} />
-
 
       {artifact?.choices?.length ? (
         <div className="prompt-suggestions">
@@ -264,6 +264,7 @@ function AssistantAnswer({ content, artifact, meta, projectId, conversationId, o
           )}
         </div>
       ) : null}
+      <ChatTrace meta={meta} />
     </div>
   );
 }
@@ -564,10 +565,12 @@ function Workspace({ user, onLogout }) {
   }, [connections, connectionId]);
 
   useEffect(() => {
-    if (sending) {
+    if (sending && pendingMessage?.replyToMessageId) {
+      document.getElementById(`chat-turn-${pendingMessage.replyToMessageId}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } else if (sending) {
       messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
     }
-  }, [sending]);
+  }, [sending, pendingMessage]);
 
   useEffect(() => () => chatRequestRef.current?.abort(), []);
 
@@ -596,7 +599,7 @@ function Workspace({ user, onLogout }) {
     }
   }
 
-  async function sendMessage(text, route = null) {
+  async function sendMessage(text, route = null, responseOptions = {}) {
     const message = text.trim();
     if (!message || !activeId || chatRequestRef.current) return;
     const controller = new AbortController();
@@ -604,33 +607,79 @@ function Workspace({ user, onLogout }) {
     const requestConversationId = activeId;
     setChatNotice(null);
     setSending(true);
+    const clientMessageId = crypto.randomUUID();
     setPendingMessage({
+      id: clientMessageId,
+      replyToMessageId: responseOptions.reply_to_message_id,
       conversationId: activeId,
       content: message,
       existingMessageIds: (conversation?.messages || []).map((m) => m.id),
     });
     setChatError("");
-    if (text === input) setInput("");
+    if (!responseOptions.reply_to_message_id && text === input) setInput("");
     try {
-      await api.chat(activeId, message, connectionId || null, route, controller.signal);
+      await api.chat(activeId, message, connectionId || null, route, controller.signal, { ...responseOptions, client_message_id: clientMessageId });
       await mutateConv();
       await mutateConvs();
       await swrMutate(storeKeys.stage(activeProjectId));
     } catch (err) {
       if (controller.signal.aborted) {
-        setChatNotice({ conversationId: requestConversationId, text: "응답 생성을 중지했습니다." });
+        setChatNotice({ conversationId: requestConversationId, text: "응답 생성을 중지했습니다.",
+          replyToMessageId: responseOptions.reply_to_message_id, clientMessageId, responseMode: responseOptions.response_mode, content: message });
         // Keep the question already saved by the server, without a duplicate draft.
         swrMutate(storeKeys.conversation(requestConversationId)).catch(() => {});
         mutateConvs().catch(() => {});
       } else {
         setChatError(err?.message || "응답 생성에 실패했습니다. 다시 시도해 주세요.");
-        if (text === input || !input) setInput(message);
+        if (!responseOptions.reply_to_message_id && (text === input || !input)) setInput(message);
       }
     } finally {
       chatRequestRef.current = null;
       setSending(false);
       setPendingMessage(null);
     }
+  }
+
+  function wasInterrupted(question) {
+    return chatNotice?.conversationId === activeId && (chatNotice.replyToMessageId === question?.id
+      || Boolean(question?.meta?.client_message_id && question.meta.client_message_id === chatNotice.clientMessageId));
+  }
+
+  async function repeatResponse(question, mode) {
+    const stoppedHere = chatNotice?.conversationId === activeId && (chatNotice.replyToMessageId === question.id
+      || Boolean(question.meta?.client_message_id && question.meta.client_message_id === chatNotice.clientMessageId));
+    const stoppedRegeneration = (stoppedHere && chatNotice.responseMode === "regenerate")
+      || (question.meta?.response_pending && question.meta.pending_response_mode === "regenerate");
+    if (mode === "continue" && stoppedRegeneration) mode = "regenerate";
+    await sendMessage(question.content, null, {
+      reply_to_message_id: question.id, response_mode: mode,
+    });
+  }
+
+  async function continueStoppedResponse() {
+    const notice = chatNotice;
+    if (!notice || notice.conversationId !== activeId || sending) return;
+    try {
+      const latest = await api.getConversation(activeId);
+      await swrMutate(storeKeys.conversation(activeId), latest, { revalidate: false });
+      const question = (latest.messages || []).find((message) => message.role === "user"
+        && message.meta?.client_message_id === notice.clientMessageId);
+      if (question) await repeatResponse(question, "continue");
+      else await sendMessage(notice.content);
+    } catch (err) {
+      setChatError(err?.message || "이어서 처리할 질문을 확인하지 못했습니다.");
+    }
+  }
+
+  async function deleteMessage(message) {
+    await api.deleteMessage(activeId, message.id);
+    if (chatNotice?.conversationId === activeId && (chatNotice.replyToMessageId === message.id
+      || Boolean(message.meta?.client_message_id && message.meta.client_message_id === chatNotice.clientMessageId))) {
+      setChatNotice(null);
+    }
+    await swrMutate(storeKeys.conversation(activeId));
+    await mutateConvs();
+    await mutateProjects();
   }
 
   async function send() {
@@ -815,25 +864,44 @@ function Workspace({ user, onLogout }) {
                 </div>
               ) : null}
 
-              {(conversation?.messages || []).map((m) => (
-                <div key={m.id} className={`msg ${m.role}`}>
-                  {m.role === "user" ? (
-                    <div className="msg-content user-bubble">{m.content}</div>
-                  ) : (
-                    <AssistantAnswer
-                      content={m.content}
-                      artifact={m.artifact}
-                      meta={m.meta}
-                      projectId={activeProjectId}
-                      conversationId={activeId}
-                      onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
-                      onChoose={(choice) => sendMessage(choice.message, choice.route)}
-                      readOnly={isViewer || sending}
-                    />
-                  )}
-                </div>
+              {conversationTurns(conversation?.messages).map((turn, index) => (
+                <section className="chat-turn" id={`chat-turn-${turn.question?.id || index}`} key={turn.question?.id || turn.answers[0]?.id || `legacy-${index}`}>
+                  {turn.question ? <div className="msg user">
+                    <div className="msg-content user-bubble">{turn.question.content}</div>
+                    <div className="chat-message-actions chat-message-actions--user">
+                      {!turn.answers.length ? <ChatTurnActions question={turn.question} answers={[]}
+                        interrupted={wasInterrupted(turn.question)} busy={sending} readOnly={isViewer}
+                        onRegenerate={(question) => repeatResponse(question, "regenerate")}
+                        onContinue={(question) => repeatResponse(question, "continue")} /> : null}
+                      <MessageDeleteButton message={turn.question} busy={sending} readOnly={isViewer} onDelete={deleteMessage} />
+                    </div>
+                  </div> : null}
+                  {turn.answers.map((m, answerIndex) => <div key={m.id} className="msg assistant">
+                    {turn.answers.length > 1 ? <p className="chat-response-label">
+                      {answerIndex === 0 ? "처음 답변" : m.meta?.response_mode === "continue" ? "이어서 생성한 답변" : "다시 생성한 답변"}
+                    </p> : null}
+                    <AssistantAnswer content={m.content} artifact={m.artifact} meta={m.meta}
+                        projectId={activeProjectId}
+                        conversationId={activeId}
+                        onAdded={() => swrMutate(storeKeys.stage(activeProjectId))}
+                        onChoose={(choice) => sendMessage(choice.message, choice.route)}
+                        readOnly={isViewer || sending} />
+                    <div className="chat-message-actions">
+                      <ChatTurnActions question={turn.question} answers={turn.answers} busy={sending}
+                        interrupted={wasInterrupted(turn.question)} readOnly={isViewer}
+                        allowContinue={answerIndex === turn.answers.length - 1}
+                        onRegenerate={(question) => repeatResponse(question, "regenerate")}
+                        onContinue={(question) => repeatResponse(question, "continue")} />
+                      <MessageDeleteButton message={m} busy={sending} readOnly={isViewer} onDelete={deleteMessage} />
+                    </div>
+                  </div>)}
+                  {sending && pendingMessage?.conversationId === activeId && pendingMessage.replyToMessageId === turn.question?.id
+                    ? <div className="msg assistant assistant-pending" role="status" aria-live="polite">
+                      <span className="loading-dots" aria-hidden="true">•••</span> 답변 생성 중…
+                    </div> : null}
+                </section>
               ))}
-              {sending && pendingMessage?.conversationId === activeId ? (
+              {sending && pendingMessage?.conversationId === activeId && !pendingMessage.replyToMessageId ? (
                 <>
                   {shouldShowPendingMessage(conversation, pendingMessage) ? (
                     <div className="msg user pending-user">
@@ -851,7 +919,11 @@ function Workspace({ user, onLogout }) {
             {canEdit ? (
               <div className="composer-wrap">
                 {chatError ? <p className="error chat-send-error">{chatError}</p> : null}
-                {chatNotice?.conversationId === activeId ? <p className="muted" role="status">{chatNotice.text}</p> : null}
+                {chatNotice?.conversationId === activeId ? <div role="status">
+                  <p className="muted">{chatNotice.text}</p>
+                  {!chatNotice.replyToMessageId && !(conversation?.messages || []).some((message) => message.meta?.client_message_id === chatNotice.clientMessageId)
+                    ? <button type="button" className="text-btn" disabled={sending} onClick={continueStoppedResponse}>계속하기</button> : null}
+                </div> : null}
                 <div className="composer-box">
                   <textarea
                     rows={1}

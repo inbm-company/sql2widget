@@ -57,6 +57,20 @@
 .chat-trace-step-question { margin: 0 0 4px; font-weight: 500; white-space: pre-wrap; }
 .chat-trace-step-route { color: var(--muted); margin-bottom: 4px; }
 
+
+.chat-turn { min-width: 0; }
+.chat-message-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 14px; margin: 8px 0 16px; }
+.chat-message-actions--user { justify-content: flex-end; }
+.chat-message-delete { max-width: 100%; }
+.chat-message-actions .text-btn { padding: 4px 0; }
+.chat-turn-action-row { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.chat-turn-action-row .text-btn { padding: 4px 0; }
+.chat-turn-delete { color: var(--muted); }
+.chat-turn-delete-confirm { padding: 8px 10px; margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.chat-turn-delete-confirm p { margin: 0 0 8px; }
+.chat-turn-delete-confirm button + button { margin-left: 12px; }
+.chat-response-label { color: var(--muted); font-size: 12px; margin: 6px 0; }
+
 /* Thin overlay-style scrollbars */
 * {
   box-sizing: border-box;
