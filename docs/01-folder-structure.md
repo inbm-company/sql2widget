@@ -51,5 +51,5 @@
 | `docs/dashboard.html`, `docs/kanban.html` | `scripts/render_docs.py`가 위 마크다운에서 생성한 HTML. 직접 수정하지 않음 |
 | `docs/templates/` | 두 HTML의 틀(스타일·영역 필터 스크립트) |
 | `docs/temp/` | 보관 기록. 진행도 이전 형식의 히스토리(`progress-history-2026-10-14.md`) |
-| `scripts/render_docs.py` | 마크다운에서 두 HTML 생성, `--check`로 동기화 검사. 외부 의존성 없음 |
+| `scripts/render_docs.py` | 마크다운에서 두 HTML 생성·제목 앵커와 웹 문서 링크 지정, `--check`로 동기화 검사. 외부 의존성 없음 |
 | `docs/project-separation-proposal.md` | 합의된 범위·기능 소유권·구현 결과 |

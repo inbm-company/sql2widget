@@ -162,6 +162,10 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   document.head.appendChild(base);
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("a[href]").forEach((link) => {
+      if (link.dataset.webHref) {
+        link.setAttribute("href", link.dataset.webHref);
+        return;
+      }
       const href = link.getAttribute("href");
       if (href.startsWith("#")) link.setAttribute("href", location.pathname + location.search + href);
       else if (/^dashboard\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^dashboard\.html/, "/docs"));

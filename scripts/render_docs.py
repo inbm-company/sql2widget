@@ -6,10 +6,39 @@ import html
 import os
 from pathlib import Path
 import re
+from urllib.parse import quote, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 STATUSES = (("완료", "done"), ("진행 중", "wip"), ("검증 대기", "verify"), ("계획", "plan"))
+REPOSITORY = "https://github.com/inbm-company/sql2widget"
+
+
+def web_links(content, documents):
+    """Annotate web destinations while preserving relative links for local HTML files."""
+    def anchor(match):
+        tag = match[0]
+        attribute = re.search(r'href="([^"]+)"', tag)
+        target = urlsplit(html.unescape(attribute[1]))
+        if target.scheme or target.netloc or not target.path:
+            return tag
+        path = (DOCS / unquote(target.path)).resolve()
+        if not path.is_relative_to(ROOT) or not path.exists():
+            return tag
+        if path in documents and "data-source-link" not in tag:
+            identifier, headings = documents[path]
+            heading = identifier + "--" + unquote(target.fragment)
+            destination = "/docs#" + (heading if heading in headings else identifier)
+        elif path.suffix == ".md" or path.is_dir():
+            kind = "tree" if path.is_dir() else "blob"
+            destination = f"{REPOSITORY}/{kind}/main/{quote(path.relative_to(ROOT).as_posix())}"
+            if target.fragment:
+                destination += "#" + target.fragment
+        else:
+            return tag
+        return tag[:-1] + ' data-web-href="' + html.escape(destination, quote=True) + '">'
+
+    return re.sub(r'<a\b[^>]*\bhref="[^"]+"[^>]*>', anchor, content)
 
 
 def link_target(target, source):
@@ -49,10 +78,11 @@ def cells(line):
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def render(markdown, source):
+def render(markdown, source, document_id=None):
     """Render headings, paragraphs, tables, lists, quotes and fenced code used in these docs."""
     lines = markdown.splitlines()
     output = []
+    headings = {}
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -73,7 +103,14 @@ def render(markdown, source):
         heading = re.match(r"^(#{1,6}) (.+)$", line)
         if heading:
             level = len(heading[1])
-            output.append(f"<h{level}>{inline(heading[2], source)}</h{level}>")
+            attribute = ""
+            if document_id:
+                slug = re.sub(r"[^\w\- ]", "", heading[2].lower()).replace(" ", "-")
+                count = headings.get(slug, 0)
+                headings[slug] = count + 1
+                anchor = f"{document_id}--{slug}" + (f"-{count}" if count else "")
+                attribute = f' id="{html.escape(anchor, quote=True)}"'
+            output.append(f"<h{level}{attribute}>{inline(heading[2], source)}</h{level}>")
             i += 1
             continue
         if re.fullmatch(r"\s*-{3,}\s*", line):
@@ -173,6 +210,7 @@ def outputs():
                ("4. 진행도", [("progress", "완료·진행·검증 대기·계획", progress)])]
     toc = []
     body = []
+    documents_by_path = {}
     for group, documents in entries:
         toc.append('<div class="group-label">' + html.escape(group) + "</div>")
         for identifier, label, path in documents:
@@ -180,7 +218,9 @@ def outputs():
             badges = ""
             if identifier == "progress":
                 badges = " ".join(f'<span class="badge {key}">{title} {counts[title]}</span>' for title, key in STATUSES)
-            body.append(f'<section id="{identifier}">{badges}\n{render(path.read_text(), path)}\n</section>')
+            rendered = render(path.read_text(), path, identifier)
+            documents_by_path[path.resolve()] = (identifier, set(re.findall(r'<h[1-6] id="([^"]+)"', rendered)))
+            body.append(f'<section id="{identifier}">{badges}\n{rendered}\n</section>')
     toc.append('<div class="group-label">5. 임시</div><a href="temp/">기록 폴더 ↗</a>')
     toc.append('<a href="kanban.html">칸반 ↗</a>')
     dashboard = (DOCS / "templates/dashboard.html").read_text().replace("{{toc}}", "\n".join(toc))
@@ -214,7 +254,7 @@ def outputs():
     summary = render("## 현재 상태\n" + sections["현재 상태"]
                      + "\n## 검증 기록\n" + sections["검증 기록"], progress)
     cards = ['<div class="box"><h3><a href="dashboard.html#' + path.stem + '">'
-             + html.escape(label) + '</a></h3><a href="features/' + path.name + '">원문 ↗</a></div>'
+             + html.escape(label) + '</a></h3><a data-source-link href="features/' + path.name + '">원문 ↗</a></div>'
              for label, path in features]
     date = re.search(r"기준일(?::| \|) (\d{4}-\d{2}-\d{2})", progress.read_text())[1]
     kanban = (DOCS / "templates/kanban.html").read_text()
@@ -222,7 +262,8 @@ def outputs():
                                ("board", "\n".join(columns)),
                                ("summary", summary), ("features", "\n".join(cards))):
         kanban = kanban.replace("{{" + token + "}}", replacement)
-    return {DOCS / "dashboard.html": dashboard, DOCS / "kanban.html": kanban}
+    return {DOCS / "dashboard.html": web_links(dashboard, documents_by_path),
+            DOCS / "kanban.html": web_links(kanban, documents_by_path)}
 
 
 def main():

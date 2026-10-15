@@ -193,6 +193,10 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
   document.head.appendChild(base);
   document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("a[href]").forEach((link) => {
+      if (link.dataset.webHref) {
+        link.setAttribute("href", link.dataset.webHref);
+        return;
+      }
       const href = link.getAttribute("href");
       if (href.startsWith("#")) link.setAttribute("href", location.pathname + location.search + href);
       else if (/^dashboard\.html(?:[?#]|$)/.test(href)) link.setAttribute("href", href.replace(/^dashboard\.html/, "/docs"));
@@ -205,9 +209,9 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <!-- scripts/render_docs.py에서 생성: docs/progress.md를 수정한다. -->
 <div class="wrap">
   <header class="top"><div><p class="kicker">sql2widget</p><h1>진행도</h1></div>
-    <div class="meta"><strong>2026-10-14</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
+    <div class="meta"><strong>2026-10-15</strong><a href="dashboard.html#progress">문서 대시보드 ↗</a></div>
   </header>
-  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
+  <div class="thesis"><p>완료·진행 중·검증 대기·계획을 <em>기능 영역별</em>로 <a href="progress.md" data-web-href="/docs#progress">진행도 원본</a>에서 관리한다. 과거 시험 결과는 현재 검증과 구분한다.</p></div>
   <div class="kpis"><div class="kpi done"><div class="label">완료</div><div class="num">12</div></div>
 <div class="kpi wip"><div class="label">진행 중</div><div class="num">0</div></div>
 <div class="kpi verify"><div class="label">검증 대기</div><div class="num">0</div></div>
@@ -222,30 +226,30 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <button type="button" class="chip a6" data-area="a6">배포·운영</button>
 <button type="button" class="chip a7" data-area="a7">외부 연계</button></div>
   <section class="board"><div class="col done"><div class="col-head"><span class="dot"></span>완료<span class="count">12</span></div><div class="group a0" data-area="a0"><div class="area">인증·프로젝트<span>2</span></div>
-<div class="card"><div class="t">로그인·세션 관리</div><div class="n">이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md">기능</a></div></div>
-<div class="card"><div class="t">프로젝트·대화 관리</div><div class="n">생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md">기능</a></div></div>
+<div class="card"><div class="t">로그인·세션 관리</div><div class="n">이메일 로그인, JWT access·refresh 갱신, <code>admin</code>·<code>user</code>·<code>viewer</code> 역할, 로컬·운영 계정 분리. <a href="features/auth.md" data-web-href="/docs#auth">기능</a></div></div>
+<div class="card"><div class="t">프로젝트·대화 관리</div><div class="n">생성·이름 변경·삭제, 프로젝트 삭제 시 대화·임베딩·Stage 정리. <a href="features/projects-conversations.md" data-web-href="/docs#projects-conversations">기능</a></div></div>
 </div>
 <div class="group a1" data-area="a1"><div class="area">DB 연결<span>1</span></div>
-<div class="card"><div class="t">DB 연결·테이블 권한 관리</div><div class="n">관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md">기능</a></div></div>
+<div class="card"><div class="t">DB 연결·테이블 권한 관리</div><div class="n">관리자 고객 DB 연결 등록·테스트, 역할별 허용 테이블. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></div></div>
 </div>
 <div class="group a2" data-area="a2"><div class="area">채팅·에이전트<span>4</span></div>
-<div class="card"><div class="t">질문 라우팅·일반 대화·DB 구조 설명</div><div class="n">Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md">기능</a></div></div>
-<div class="card"><div class="t">요청 계획·SQL 조회·에이전트 실행</div><div class="n">요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md">기능</a></div></div>
-<div class="card"><div class="t">대화 문맥·후속 질문 처리</div><div class="n">최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md">기능</a></div></div>
-<div class="card"><div class="t">채팅 답변·처리 내역 표시</div><div class="n">본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md">기능</a></div></div>
+<div class="card"><div class="t">질문 라우팅·일반 대화·DB 구조 설명</div><div class="n">Jev 분류 후 실패하면 채팅 LLM이 판단해 데이터 조회·테이블 구조·일반 대화로 나누고, 불명확하면 경로 선택지 제공. 설명은 채팅 본문 표시. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
+<div class="card"><div class="t">요청 계획·SQL 조회·에이전트 실행</div><div class="n">요청을 단계로 계획한 뒤 SQL 생성·실행, 결과에 맞는 위젯 선택. 도구 결과에 따라 수정·추가 조회·재계획, 끝나면 원래 목표 평가, 한도 도달 시 부분 결과. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
+<div class="card"><div class="t">대화 문맥·후속 질문 처리</div><div class="n">최근 20개 메시지 중 같은 DB 응답 이력으로 이전 결과를 가리키는 후속 질문 해석. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
+<div class="card"><div class="t">채팅 답변·처리 내역 표시</div><div class="n">본문 표·목록·코드, 경로·SQL 선택·복구 처리 내역 저장, IME 조합 중 전송 방지. <a href="features/chat.md" data-web-href="/docs#chat">기능</a></div></div>
 </div>
 <div class="group a3" data-area="a3"><div class="area">예상 질문<span>1</span></div>
-<div class="card"><div class="t">DB별 예상 질문 검색</div><div class="n">예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md">기능</a></div></div>
+<div class="card"><div class="t">DB별 예상 질문 검색</div><div class="n">예상 질문 생성·검색, 연결된 SQL·위젯 정보를 조회 계획에 참고, 허용 테이블 20개 초과 시 계획 스키마 축소. <a href="features/similarity-search-design.md" data-web-href="/docs#similarity-search-design">기능</a></div></div>
 </div>
 <div class="group a4" data-area="a4"><div class="area">위젯·Stage<span>2</span></div>
-<div class="card"><div class="t">위젯 카탈로그·미리보기</div><div class="n">허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md">기능</a></div></div>
-<div class="card"><div class="t">위젯별 현재 데이터 조회</div><div class="n">결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md">기능</a></div></div>
+<div class="card"><div class="t">위젯 카탈로그·미리보기</div><div class="n">허용 위젯 카탈로그, SQL 보기·JSON 복사, 제목 포함 320px 채팅 미리보기. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></div></div>
+<div class="card"><div class="t">위젯별 현재 데이터 조회</div><div class="n">결과 대신 원본 DB·SQL 정의 저장, 위젯별 조회·새로고침·로딩·빈 결과·오류 표시. <a href="features/widgets-artifact.md" data-web-href="/docs#widgets-artifact">기능</a></div></div>
 </div>
 <div class="group a5" data-area="a5"><div class="area">AI 설정<span>1</span></div>
-<div class="card"><div class="t">AI 연결 설정</div><div class="n">Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md">기능</a></div></div>
+<div class="card"><div class="t">AI 연결 설정</div><div class="n">Provider별 모델·연결 설정, 로컬 OpenAI 호환 모델 선택, Provider 공통 Jev 키 저장. <a href="features/admin.md" data-web-href="/docs#admin">기능</a></div></div>
 </div>
 <div class="group a6" data-area="a6"><div class="area">배포·운영<span>1</span></div>
-<div class="card"><div class="t">독립 배포·운영 문서 공개</div><div class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md">배포</a></div></div>
+<div class="card"><div class="t">독립 배포·운영 문서 공개</div><div class="n">Actions 테스트·이미지 게시·VPS 배포, HTTPS, doc2graph와 분리된 계정·DB·볼륨, 운영 <code>/kanban</code>·<code>/docs</code> 공개. <a href="../deployment/README.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/deployment/README.md">배포</a></div></div>
 </div></div>
 <div class="col wip"><div class="col-head"><span class="dot"></span>진행 중<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
 <div class="col verify"><div class="col-head"><span class="dot"></span>검증 대기<span class="count">0</span></div><p class="mono">현재 기록된 항목 없음</p></div>
@@ -278,10 +282,10 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <div class="card"><div class="t">임베드 필요성 검토</div><div class="n">위젯을 외부 서비스 화면에 끼워 넣어 보여줄 필요가 있는지 검토. 필요하면 게시 관리(공개 위젯·토큰 발급·회수)·조회 API·iframe·SDK와, 호스트가 기간 등 값을 넘기는 방식(위젯 행동의 값 받기 재사용)을 정한다</div></div>
 </div></div></section>
   <h2>현재 상태와 검증 범위</h2><section class="box"><h2>현재 상태</h2>
-<p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md">stage.md</a>·<a href="features/viewer.md">viewer.md</a>에 유지한다.</p>
+<p>앱은 로그인·프로젝트·대화, 관리자 DB 연결·테이블 권한, 질문 라우팅과 요청 계획 기반 SQL 조회, 결과에 맞는 위젯 생성, 위젯별 현재 데이터 조회, Stage 배치와 Viewer 읽기 전용 화면을 제공한다. 위젯은 결과 값 대신 원본 DB·SQL 정의를 저장하고 표시할 때마다 현재 데이터를 조회한다. 기본 Stage 배치·Viewer 화면은 별도 카드로 두지 않고 <a href="features/stage.md" data-web-href="/docs#stage">stage.md</a>·<a href="features/viewer.md" data-web-href="/docs#viewer">viewer.md</a>에 유지한다.</p>
 <p>기능 영역: 인증·프로젝트 · DB 연결 · 채팅·에이전트 · 예상 질문 · 위젯·Stage · 외부 연계 · AI 설정 · 배포·운영.</p>
 <h2>검증 기록</h2>
-<p>아래는 기존 기록의 요약이며 이번 정리에서 재실행한 결과가 아니다. 당시 서술 원문은 <a href="temp/progress-history-2026-10-14.md">이전 기록</a>에 보관한다.</p>
+<p>아래는 기존 기록의 요약이며 이번 정리에서 재실행한 결과가 아니다. 당시 서술 원문은 <a href="temp/progress-history-2026-10-14.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/temp/progress-history-2026-10-14.md">이전 기록</a>에 보관한다.</p>
 <table><thead><tr><th>시점</th><th>범위</th><th>기록된 결과</th><th>한계</th></tr></thead><tbody>
 <tr><td>10-01</td><td>질문 라우팅</td><td>단위 테스트, 실제 Jev 호출(<code>jev-1.13.0</code>)로 Jev 경로·401 폴백·되묻기 확인</td><td><code>ROUTE_MIN_CONFIDENCE</code> 0.5는 검증 전 초기값</td></tr>
 <tr><td>10-01</td><td>운영 배포 파이프라인</td><td>Actions 테스트·이미지 게시·VPS 실배포, SKAX 운영 DB 복원·권한 등록</td><td>—</td></tr>
@@ -292,16 +296,16 @@ if (location.pathname === "/kanban" || location.pathname === "/docs") {
 <tr><td>10-13</td><td>대화 문맥·IME</td><td>백엔드 70·프런트 4 테스트·빌드</td><td>테스트 대역, 실모델·브라우저 IME 미실행</td></tr>
 <tr><td>10-14</td><td>실모델 동작</td><td>사용자 확인: 에이전트 실행 루프 재구성·일반 대화 경로를 실모델로 확인</td><td>자동 테스트·빌드는 미실행</td></tr>
 </tbody></table></section>
-  <h2>기능 문서</h2><section class="cols2"><div class="box"><h3><a href="dashboard.html#auth">기능: 로그인/세션</a></h3><a href="features/auth.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#projects-conversations">기능: 프로젝트 · 대화</a></h3><a href="features/projects-conversations.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#chat">기능: DB 채팅</a></h3><a href="features/chat.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#widgets-artifact">기능: Artifact / 위젯 카탈로그</a></h3><a href="features/widgets-artifact.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#stage">기능: Stage (핀보드)</a></h3><a href="features/stage.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#viewer">기능: Viewer 화면</a></h3><a href="features/viewer.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a></h3><a href="features/admin.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#similarity-search-design">기능: DB별 예상 질문 유사도 검색</a></h3><a href="features/similarity-search-design.md">원문 ↗</a></div>
-<div class="box"><h3><a href="dashboard.html#graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a></h3><a href="features/graph-rag-sources.md">원문 ↗</a></div></section>
-  <footer><a href="../AGENTS.md">메인규칙</a> · <a href="01-folder-structure.md">폴더 구조</a> · <a href="features/README.md">기능</a> · <a href="progress.md">진행도</a> · <a href="temp/">임시</a>
+  <h2>기능 문서</h2><section class="cols2"><div class="box"><h3><a href="dashboard.html#auth">기능: 로그인/세션</a></h3><a data-source-link href="features/auth.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/auth.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#projects-conversations">기능: 프로젝트 · 대화</a></h3><a data-source-link href="features/projects-conversations.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/projects-conversations.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#chat">기능: DB 채팅</a></h3><a data-source-link href="features/chat.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/chat.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#widgets-artifact">기능: Artifact / 위젯 카탈로그</a></h3><a data-source-link href="features/widgets-artifact.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/widgets-artifact.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#stage">기능: Stage (핀보드)</a></h3><a data-source-link href="features/stage.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/stage.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#viewer">기능: Viewer 화면</a></h3><a data-source-link href="features/viewer.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/viewer.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#admin">기능: 관리자 — DB 연결 · 테이블 권한 · AI 설정</a></h3><a data-source-link href="features/admin.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/admin.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#similarity-search-design">기능: DB별 예상 질문 유사도 검색</a></h3><a data-source-link href="features/similarity-search-design.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/similarity-search-design.md">원문 ↗</a></div>
+<div class="box"><h3><a href="dashboard.html#graph-rag-sources">기능: 최소 그래프 기반과 문서 기능 분리</a></h3><a data-source-link href="features/graph-rag-sources.md" data-web-href="https://github.com/inbm-company/sql2widget/blob/main/docs/features/graph-rag-sources.md">원문 ↗</a></div></section>
+  <footer><a href="../AGENTS.md" data-web-href="/docs#overview">메인규칙</a> · <a href="01-folder-structure.md" data-web-href="/docs#structure">폴더 구조</a> · <a href="features/README.md" data-web-href="/docs#feature-index">기능</a> · <a href="progress.md" data-web-href="/docs#progress">진행도</a> · <a href="temp/" data-web-href="https://github.com/inbm-company/sql2widget/tree/main/docs/temp">임시</a>
     <p>원본에서 생성한 보기다. 서버의 실시간 상태·새 테스트 결과·운영 배포 완료를 자동 판정하지 않는다.</p>
   </footer>
 </div>
